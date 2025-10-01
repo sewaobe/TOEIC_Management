@@ -79,10 +79,40 @@ export const useAuthViewModel = () => {
     }
   };
 
+  // -------- LoginWithGoolg ----------
+  const loginWithGoogle = async (tokenId: string) => {
+    try {
+      const success = await authService.loginWithGoogle(tokenId);
+      if(!success) {
+        throw new Error("Unauthorized");
+      }
+      dispatch(setAuth(true));
+      await dispatch(getUserThunk());
+      showToastAndRedirect(
+        'success',
+        'Bạn đã đăng nhập thành công',
+        '/home',
+        'login-toast',
+      );
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || 'Đăng nhập thất bại!';
+      showToastAndRedirect(
+        'error',
+        errorMessage,
+        '',
+        'login-toast',
+      );
+      console.error(error);
+      throw error; // Re-throw để component có thể handle loading state
+    }
+  };
+
+
   return {
     useLoginForm,
     useRegisterForm,
     login,
     register,
+    loginWithGoogle
   };
 };

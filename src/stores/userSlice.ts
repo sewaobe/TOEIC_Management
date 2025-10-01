@@ -15,8 +15,7 @@ export const getUserThunk = createAsyncThunk<User>(
   async (_, { rejectWithValue }) => {
     try {
       const res = await userService.getProfile();
-      console.log(res)
-      if(res.user.role_name === "student") {
+      if (res.user.role_name === "student") {
         throw new Error("Unauthorized");
       }
       return res.user;
@@ -60,12 +59,14 @@ const userSlice = createSlice({
         state.error = null;
       })
       .addCase(getUserThunk.fulfilled, (state, action: PayloadAction<User>) => {
+
         state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
         state.initialized = true;
       })
       .addCase(getUserThunk.rejected, (state, action) => {
+
         state.loading = false;
         state.user = null;
         state.isAuthenticated = false;

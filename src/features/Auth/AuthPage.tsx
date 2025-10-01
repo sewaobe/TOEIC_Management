@@ -24,6 +24,9 @@ import {
 import { Controller } from 'react-hook-form';
 import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
 import { signInWithGoogle } from '../../hooks/useFirebaseAuth';
+import authService from '../../services/auth.service';
+import { ApiResponse } from '../../types/ApiResponse';
+import { User } from '../../types/User';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -32,7 +35,7 @@ const AuthPage = () => {
   const [socialLoading, setSocialLoading] = useState(false); // riêng cho social
   const [rememberMe, setRememberMe] = useState(false);
 
-  const { useLoginForm, useRegisterForm, login, register } = useAuthViewModel();
+  const { useLoginForm, useRegisterForm, login, register, loginWithGoogle } = useAuthViewModel();
 
   const loginForm = useLoginForm();
   const registerForm = useRegisterForm();
@@ -63,15 +66,7 @@ const AuthPage = () => {
       if (cred) {
         const { user } = cred;
         const idToken = await user.getIdToken();
-        console.log('Google User:', {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          idToken,
-        });
-
-        // 👉 TODO: gửi idToken về backend hoặc dispatch Redux để tạo session
+        loginWithGoogle(idToken)
       }
     } catch (err) {
       console.error('Google login failed:', err);
