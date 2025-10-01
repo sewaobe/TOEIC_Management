@@ -13,7 +13,7 @@ export const RouteWrapper = ({ element, guard, requireAuth = false }: RouteWrapp
   const { user, isAuthenticated, loading, initialized } = useSelector((state: RootState) => state.user);
   console.log(user, isAuthenticated);
   // Show loading while checking authentication
-  if (!initialized && loading) {
+  if (!initialized) {
     return (
       <Box
         sx={{
