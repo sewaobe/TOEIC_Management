@@ -13,6 +13,10 @@ export type ResetPasswordPayload = Omit<
 >;
 const authService = {
   login: (data: LoginFormInputs) => axiosClient.post('/auth/login', data),
+  loginWithGoogle: async (idToken: String): Promise<boolean> => {
+    const res = await axiosClient.post("/auth/google", {idToken})
+    return res.success
+  },
   register: (data: RegisterFormInputs) =>
     axiosClient.post('/auth/register', data),
   sendOtp: (data: Step1Inputs) => axiosClient.post('/auth/request-otp', data),

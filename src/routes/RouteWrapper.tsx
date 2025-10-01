@@ -11,7 +11,7 @@ interface RouteWrapperProps {
 
 export const RouteWrapper = ({ element, guard, requireAuth = false }: RouteWrapperProps) => {
   const { user, isAuthenticated, loading, initialized } = useSelector((state: RootState) => state.user);
-
+  console.log(user, isAuthenticated);
   // Show loading while checking authentication
   if (!initialized && loading) {
     return (
