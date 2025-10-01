@@ -34,18 +34,18 @@ export const RouteWrapper = ({ element, guard, requireAuth = false }: RouteWrapp
   }
 
   // If route requires authentication but user is not authenticated
-  if (requireAuth && !isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
+  // if (requireAuth && !isAuthenticated) {
+  //   return <Navigate to="/auth" replace />;
+  // }
 
   // If user is authenticated and trying to access auth page, redirect to home
-  if (isAuthenticated && (window.location.pathname === '/auth' || window.location.pathname === '/login')) {
-    return <Navigate to="/home" replace />;
-  }
-  // Nếu route có yêu cầu role mà user không hợp lệ -> redirect
-  if (guard?.role && user?.role_name !== guard.role) {
-    return <Navigate to="/401" replace />;
-  }
+  // if (isAuthenticated && (window.location.pathname === '/auth' || window.location.pathname === '/login')) {
+  //   return <Navigate to="/home" replace />;
+  // }
+  // // Nếu route có yêu cầu role mà user không hợp lệ -> redirect
+  // if (guard?.role && user?.role_name !== guard.role) {
+  //   return <Navigate to="/401" replace />;
+  // }
 
   return <>{element}</>;
 };

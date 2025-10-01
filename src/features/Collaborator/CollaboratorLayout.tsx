@@ -1,0 +1,42 @@
+import { Box, CssBaseline, ThemeProvider } from "@mui/material";
+import { useState, useMemo } from "react";
+import { Outlet } from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
+import { lightTheme, darkTheme } from "../../theme";
+
+const CollaboratorLayout = () => {
+  const [mode, setMode] = useState<"light" | "dark">("light");
+  const theme = useMemo(
+    () => (mode === "light" ? lightTheme : darkTheme),
+    [mode]
+  );
+
+  const toggleTheme = () => {
+    setMode((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box
+        sx={{
+          display: "flex",
+          height: "100vh",
+          bgcolor: theme.palette.background.default,
+          color: theme.palette.text.primary,
+        }}
+      >
+        <Sidebar /> {/* Sidebar cố định */}
+        <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+          <Header toggleTheme={toggleTheme} isDarkMode={mode === "dark"} />
+          <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+            <Outlet /> {/* React Router render nội dung con */}
+          </Box>
+        </Box>
+      </Box>
+    </ThemeProvider>
+  );
+};
+
+export default CollaboratorLayout;

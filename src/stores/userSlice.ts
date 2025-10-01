@@ -15,6 +15,7 @@ export const getUserThunk = createAsyncThunk<User>(
   async (_, { rejectWithValue }) => {
     try {
       const res = await userService.getProfile();
+      console.log(res)
       if(res.user.role_name === "student") {
         throw new Error("Unauthorized");
       }
