@@ -90,11 +90,27 @@ const EditFullTestPage = () => {
   const handleNext = () => setActiveStep((prev) => prev + 1);
   const handleBack = () => setActiveStep((prev) => prev - 1);
 
-  const handleSave = () => {
-    const payload = { ...form, questions };
-    console.log("📌 Full payload UPDATE BE:", { id, ...payload });
-    // TODO: gọi API PUT sau này
-    navigate("/ctv/full-tests");
+  const handleSave = async () => {
+    if (!id) return;
+    try {
+      const payload = {
+        ...form,
+        groups: Object.values(questions).flatMap((p: any) =>
+          Array.isArray(p) ? p : p.groups || []
+        ),
+      };
+
+      console.log("📌 Payload UPDATE gửi BE:", payload);
+
+      const res = await fullTestService.update(id, payload);
+
+      if ((res as any).success) {
+        console.log("✅ Cập nhật thành công:", res);
+        navigate("/ctv/full-tests");
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi update:", error);
+    }
   };
 
   if (loading) {

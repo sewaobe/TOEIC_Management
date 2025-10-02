@@ -1,12 +1,5 @@
-import {
-  Box,
-  Button,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  IconButton,
-} from "@mui/material";
+import { useState } from "react";
+import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GroupForm from "../GroupForm";
@@ -28,6 +21,8 @@ interface Props {
   onRemoveGroup?: (groupIndex: number) => void; // mới thêm
 }
 
+const MAX_PART7_QUESTIONS = 54;
+
 const PartRenderer: React.FC<Props> = ({
   partIndex,
   groups,
@@ -39,59 +34,122 @@ const PartRenderer: React.FC<Props> = ({
   onAddGroup,
   onRemoveGroup,
 }) => {
+  const theme = useTheme();
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const toggleAccordion = (idx: number) => {
+    setOpenIndex(openIndex === idx ? null : idx);
+  };
+
+  // Đếm tổng số câu trong Part 7
+  const totalQuestionsPart7 =
+    partIndex === 7
+      ? groups.reduce((sum, g) => sum + (g.questions?.length || 0), 0)
+      : 0;
+
   return (
-    <Box>
-      {groups.map((g, idx) => (
-        <Accordion key={idx} sx={{ mb: 2 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
+    <div className="space-y-3">
+      {groups.map((g, idx) => {
+        const isOpen = openIndex === idx;
+        return (
+          <div
+            key={idx}
+            className="rounded-md overflow-hidden"
+            style={{
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+              color: theme.palette.text.primary,
+            }}
+          >
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-4 py-2 cursor-pointer select-none"
+              style={{
+                backgroundColor: isOpen
+                  ? theme.palette.action.hover
+                  : theme.palette.background.paper,
               }}
+              onClick={() => toggleAccordion(idx)}
             >
-              <Typography fontWeight={600}>Group {idx + 1}</Typography>
+              <span
+                className="font-semibold"
+                style={{ fontFamily: theme.typography.fontFamily }}
+              >
+                Group {idx + 1}
+              </span>
 
-              {/* Chỉ Part 7 mới có nút xóa group */}
-              {partIndex === 7 && onRemoveGroup && (
-                <IconButton
-                  color="error"
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveGroup(idx);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <GroupForm
-              groupIndex={idx}
-              group={g}
-              tagOptions={tagOptions}
-              onChange={onChangeGroup}
-              onChangeQuestion={onChangeQuestion}
-              onRemoveQuestion={onRemoveQuestion}
-              onAddQuestion={onAddQuestion}
-            />
-          </AccordionDetails>
-        </Accordion>
-      ))}
+              <div className="flex items-center gap-2">
+                <ExpandMoreIcon
+                  className={`transition-transform ${
+                    isOpen ? "rotate-180" : "rotate-0"
+                  }`}
+                  htmlColor={theme.palette.text.secondary}
+                />
 
-      {/* Part 7 cho phép thêm group */}
-      {partIndex === 7 && onAddGroup && (
-        <Box textAlign="center" mt={2}>
-          <Button variant="outlined" onClick={onAddGroup}>
+                {partIndex === 7 && onRemoveGroup && (
+                  <button
+                    className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveGroup(idx);
+                    }}
+                  >
+                    <DeleteIcon
+                      fontSize="small"
+                      htmlColor={theme.palette.error.main}
+                    />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            {isOpen && (
+              <div
+                className="p-4"
+                style={{
+                  borderTop: `1px solid ${theme.palette.divider}`,
+                }}
+              >
+                <GroupForm
+                  groupIndex={idx}
+                  group={g}
+                  tagOptions={tagOptions}
+                  onChange={onChangeGroup}
+                  onChangeQuestion={onChangeQuestion}
+                  onRemoveQuestion={onRemoveQuestion}
+                  onAddQuestion={onAddQuestion}
+                  totalQuestionsPart7={totalQuestionsPart7}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Part 7 cho phép thêm group nếu chưa đủ 54 câu */}
+      {partIndex === 7 && onAddGroup && totalQuestionsPart7 < MAX_PART7_QUESTIONS - 1 && (
+        <div className="text-center mt-2">
+          <button
+            className="px-3 py-1.5 rounded text-sm font-medium"
+            style={{
+              border: `1px solid ${theme.palette.divider}`,
+              color: theme.palette.primary.main,
+              fontFamily: theme.typography.button?.fontFamily,
+            }}
+            onClick={onAddGroup}
+          >
             + Thêm Group mới
-          </Button>
-        </Box>
+          </button>
+          <p
+            className="text-xs mt-1"
+            style={{ color: theme.palette.text.secondary }}
+          >
+            ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu)
+          </p>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

@@ -1,12 +1,5 @@
-import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  Tabs,
-  Tab,
-} from "@mui/material";
-import { useState, useCallback, useEffect } from "react";
+import { Box, Paper, Typography, Button, Tabs, Tab } from "@mui/material";
+import { useState, useCallback } from "react";
 import PartRenderer from "./PartRenderer";
 import { examParts } from "../../../../constants/examParts";
 
@@ -29,7 +22,8 @@ const parts = [
 ];
 
 // ===== Helpers =====
-const makeEmptyQuestion = (part: number) => ({
+const makeEmptyQuestion = (part: number, idx?: number) => ({
+  name: `Question ${idx ? idx + 1 : 1}`, // thêm name mặc định
   textQuestion: "",
   choices: { A: "", B: "", C: "", D: "" },
   correctAnswer: "A",
@@ -41,12 +35,14 @@ const makeEmptyQuestion = (part: number) => ({
 
 const makeEmptyGroup = (part: number, size: number) => ({
   type: "TEST",
-  partIndex: part,
+  part,
   transcriptEnglish: "",
   transcriptTranslation: "",
-  audioUrl: null, // { url, type: "AUDIO" }
-  imagesUrl: [], // array các { url, type: "IMAGE" }
-  questions: Array.from({ length: size }, () => makeEmptyQuestion(part)),
+  audioUrl: null,
+  imagesUrl: [],
+  questions: Array.from({ length: size }, (_, idx) =>
+    makeEmptyQuestion(part, idx)
+  ),
 });
 
 // khởi tạo groups cố định theo TOEIC
@@ -71,8 +67,6 @@ const initGroups = (partIdx: number) => {
   }
 };
 
-const PAGE_SIZE = 6;
-
 const FullTestStep2Questions: React.FC<Props> = ({
   value,
   onChange,
@@ -80,7 +74,6 @@ const FullTestStep2Questions: React.FC<Props> = ({
   onNext,
 }) => {
   const [activePart, setActivePart] = useState(0);
-  const [visibleCount, setVisibleCount] = useState<Record<number, number>>({});
 
   // helper get groups (lazy init)
   const getGroups = useCallback(
@@ -107,17 +100,7 @@ const FullTestStep2Questions: React.FC<Props> = ({
     [value, onChange]
   );
 
-  const totalGroups = getGroups(activePart);
-  const currentVisibleCount = visibleCount[activePart] || PAGE_SIZE;
-  const groups = totalGroups.slice(0, currentVisibleCount);
-
-  // reset visibleCount khi đổi tab
-  useEffect(() => {
-    setVisibleCount((prev) => ({
-      ...prev,
-      [activePart]: PAGE_SIZE,
-    }));
-  }, [activePart]);
+  const groups = getGroups(activePart);
 
   const tagOptions =
     examParts[activePart + 1]?.tags?.map((t: any) => t.name) || [];
@@ -157,13 +140,13 @@ const FullTestStep2Questions: React.FC<Props> = ({
           groups={groups}
           tagOptions={tagOptions}
           onChangeGroup={(groupIndex, field, valueField) => {
-            const newGroups = totalGroups.map((g: any, i: number) =>
+            const newGroups = groups.map((g: any, i: number) =>
               i === groupIndex ? { ...g, [field]: valueField } : g
             );
             setGroups(activePart, newGroups);
           }}
           onChangeQuestion={(groupIndex, questionIndex, field, valueField) => {
-            const newGroups = totalGroups.map((g: any, i: number) =>
+            const newGroups = groups.map((g: any, i: number) =>
               i === groupIndex
                 ? {
                     ...g,
@@ -176,7 +159,7 @@ const FullTestStep2Questions: React.FC<Props> = ({
             setGroups(activePart, newGroups);
           }}
           onRemoveQuestion={(groupIndex, questionIndex) => {
-            const newGroups = totalGroups.map((g: any, i: number) =>
+            const newGroups = groups.map((g: any, i: number) =>
               i === groupIndex
                 ? {
                     ...g,
@@ -189,7 +172,7 @@ const FullTestStep2Questions: React.FC<Props> = ({
             setGroups(activePart, newGroups);
           }}
           onAddQuestion={(groupIndex) => {
-            const newGroups = totalGroups.map((g: any, i: number) =>
+            const newGroups = groups.map((g: any, i: number) =>
               i === groupIndex
                 ? {
                     ...g,
@@ -204,12 +187,12 @@ const FullTestStep2Questions: React.FC<Props> = ({
           }}
           onAddGroup={() =>
             setGroups(activePart, [
-              ...totalGroups,
+              ...groups,
               makeEmptyGroup(7, 2), // default Part 7 group có 2 câu
             ])
           }
           onRemoveGroup={(groupIndex) => {
-            const newGroups = totalGroups.filter(
+            const newGroups = groups.filter(
               (_: any, i: number) => i !== groupIndex
             );
             setGroups(activePart, newGroups);
@@ -217,7 +200,7 @@ const FullTestStep2Questions: React.FC<Props> = ({
         />
       </Box>
 
-      {/* View More */}
+      {/* View More (commented out)
       {currentVisibleCount < totalGroups.length && (
         <Box sx={{ textAlign: "center", mt: 2 }}>
           <Button
@@ -235,7 +218,7 @@ const FullTestStep2Questions: React.FC<Props> = ({
             Xem thêm
           </Button>
         </Box>
-      )}
+      )} */}
 
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
         <Button variant="outlined" onClick={onBack}>

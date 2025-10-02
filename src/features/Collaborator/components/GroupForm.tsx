@@ -27,7 +27,10 @@ interface Props {
   ) => void;
   onRemoveQuestion?: (groupIndex: number, questionIndex: number) => void;
   onAddQuestion?: (groupIndex: number) => void;
+  totalQuestionsPart7?: number; // ✅ thêm prop tổng số câu toàn Part 7
 }
+
+const MAX_PART7_QUESTIONS = 54;
 
 const GroupForm: React.FC<Props> = ({
   groupIndex,
@@ -37,6 +40,7 @@ const GroupForm: React.FC<Props> = ({
   onChangeQuestion,
   onRemoveQuestion,
   onAddQuestion,
+  totalQuestionsPart7 = 0,
 }) => {
   // Xóa 1 ảnh khỏi danh sách
   const handleRemoveImage = (idx: number) => {
@@ -108,7 +112,11 @@ const GroupForm: React.FC<Props> = ({
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   Audio:
                 </Typography>
-                <audio controls src={group.audioUrl.url} style={{ width: "100%" }} />
+                <audio
+                  controls
+                  src={group.audioUrl.url}
+                  style={{ width: "100%" }}
+                />
                 <IconButton
                   size="small"
                   color="error"
@@ -218,27 +226,29 @@ const GroupForm: React.FC<Props> = ({
               <TextField
                 variant="standard"
                 placeholder={q.name || `Question ${qIdx + 1}`}
-                value={q.title || ""}
+                value={q.name || `Question ${qIdx + 1}`}
                 onClick={(e) => e.stopPropagation()}
                 onFocus={(e) => e.stopPropagation()}
                 onChange={(e) =>
-                  onChangeQuestion(groupIndex, qIdx, "title", e.target.value)
+                  onChangeQuestion(groupIndex, qIdx, "name", e.target.value)
                 }
                 sx={{ flexGrow: 1, mr: 1 }}
               />
 
-              {group.partIndex === 7 && onRemoveQuestion && (
-                <IconButton
-                  color="error"
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveQuestion(groupIndex, qIdx);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              )}
+              {group.partIndex === 7 &&
+                onRemoveQuestion &&
+                group.questions.length > 2 && (
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveQuestion(groupIndex, qIdx);
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                )}
             </Box>
           </AccordionSummary>
 
@@ -263,15 +273,24 @@ const GroupForm: React.FC<Props> = ({
       ))}
 
       {/* Nút thêm câu hỏi cho Part 7 */}
-      {group.partIndex === 7 && (
+      {group.part === 7 && (
         <Box textAlign="center" mt={2}>
           <Button
             variant="outlined"
             onClick={() => onAddQuestion && onAddQuestion(groupIndex)}
-            disabled={group.questions.length >= 5}
+            disabled={
+              group.questions.length >= 5 ||
+              totalQuestionsPart7 >= MAX_PART7_QUESTIONS
+            }
           >
             + Add Question
           </Button>
+          <Typography
+            variant="caption"
+            sx={{ display: "block", mt: 1, color: "text.secondary" }}
+          >
+            {/* ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu trong Part 7) */}
+          </Typography>
         </Box>
       )}
     </Box>
