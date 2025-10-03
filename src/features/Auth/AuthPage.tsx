@@ -1,397 +1,211 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  IconButton,
-  InputAdornment,
-  Divider,
-  Checkbox,
-  FormControlLabel,
-  Link,
-  Avatar,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Google as GoogleIcon,
-  Facebook as FacebookIcon,
-} from '@mui/icons-material';
-import { Controller } from 'react-hook-form';
-import { useAuthViewModel } from '../../viewmodels/useAuthViewModel';
-import { signInWithGoogle } from '../../hooks/useFirebaseAuth';
-import authService from '../../services/auth.service';
-import { ApiResponse } from '../../types/ApiResponse';
-import { User } from '../../types/User';
+import { useState } from "react"
+import { Box, Container, Paper, Button, Typography, Avatar, CircularProgress } from "@mui/material"
+import { Google as GoogleIcon, Facebook as FacebookIcon } from "@mui/icons-material"
+import { useAuthViewModel } from "../../viewmodels/useAuthViewModel"
+import { signInWithGoogle } from "../../hooks/useFirebaseAuth"
 
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState(false); // riêng cho social
-  const [rememberMe, setRememberMe] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [facebookLoading, setFacebookLoading] = useState(false)
 
-  const { useLoginForm, useRegisterForm, login, register, loginWithGoogle } = useAuthViewModel();
-
-  const loginForm = useLoginForm();
-  const registerForm = useRegisterForm();
-
-  const handleSubmit = async (data: any) => {
-    setIsLoading(true);
-    try {
-      if (isLogin) {
-        await login(data);
-      } else {
-        await register(data, () => setIsLogin(true));
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleAuthMode = () => {
-    setIsLogin(!isLogin);
-    loginForm.reset();
-    registerForm.reset();
-  };
+  const { loginWithGoogle } = useAuthViewModel()
 
   const handleGoogleLogin = async () => {
     try {
-      setSocialLoading(true);
-      const cred = await signInWithGoogle();
+      setGoogleLoading(true)
+      const cred = await signInWithGoogle()
       if (cred) {
-        const { user } = cred;
-        const idToken = await user.getIdToken();
+        const { user } = cred
+        const idToken = await user.getIdToken()
         loginWithGoogle(idToken)
       }
-    } catch (err) {
-      console.error('Google login failed:', err);
+    } catch (err: any) {
+      console.error("Google login failed:", err)
+      if (err.code === "auth/popup-closed-by-user") {
+        console.warn("User closed the popup.");
+      }
     } finally {
-      setSocialLoading(false);
+      setGoogleLoading(false)
     }
-  };
+  }
+
+  const handleFacebookLogin = async () => {
+    try {
+      setFacebookLoading(true)
+      // TODO: Implement Facebook login
+      console.log("Facebook login not implemented yet")
+    } catch (err) {
+      console.error("Facebook login failed:", err)
+    } finally {
+      setFacebookLoading(false)
+    }
+  }
+
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         padding: 2,
       }}
     >
       <Container maxWidth="xs">
         <Paper
-          elevation={3}
+          elevation={8}
           sx={{
-            padding: 4,
-            borderRadius: 2,
-            backgroundColor: 'white',
-            maxWidth: 400,
-            mx: 'auto',
+            padding: 5,
+            borderRadius: 3,
+            backgroundColor: "white",
+            maxWidth: 420,
+            mx: "auto",
           }}
         >
           {/* Logo/Brand */}
-          <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
+          <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
             <Avatar
               sx={{
-                width: 32,
-                height: 32,
-                backgroundColor: '#1976d2',
-                mr: 1,
+                width: 64,
+                height: 64,
+                backgroundColor: "#2563EB",
+                mb: 2,
+                boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
               }}
             >
-              <Typography variant="body2" color="white" fontWeight="bold">
+              <Typography variant="h4" color="white" fontWeight="bold">
                 T
               </Typography>
             </Avatar>
             <Typography
-              variant="h6"
+              variant="h5"
               sx={{
-                color: '#1976d2',
-                fontWeight: 'bold',
+                color: "#1e293b",
+                fontWeight: "bold",
+                mb: 1,
               }}
             >
               TOEIC Management
             </Typography>
-          </Box>
-
-          {/* Title */}
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              textAlign: 'center',
-              fontWeight: 'bold',
-              color: '#333',
-              mb: 3,
-            }}
-          >
-            {isLogin ? 'Sign in' : 'Sign up'}
-          </Typography>
-
-          {/* Form */}
-          <Box
-            component="form"
-            onSubmit={
-              isLogin
-                ? loginForm.handleSubmit(handleSubmit)
-                : registerForm.handleSubmit(handleSubmit)
-            }
-            noValidate
-          >
-            {/* --- Login Fields --- */}
-            {isLogin ? (
-              <>
-                <Controller
-                  name="username"
-                  control={loginForm.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Username"
-                      variant="outlined"
-                      margin="normal"
-                      error={!!error}
-                      helperText={error?.message}
-                      disabled={isLoading}
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-
-                <Controller
-                  name="password"
-                  control={loginForm.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Password"
-                      type={showPassword ? 'text' : 'password'}
-                      variant="outlined"
-                      margin="normal"
-                      error={!!error}
-                      helperText={error?.message}
-                      disabled={isLoading}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              onClick={() => setShowPassword(!showPassword)}
-                              edge="end"
-                              disabled={isLoading}
-                            >
-                              {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-
-                {/* Remember Me */}
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      color="primary"
-                      size="small"
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" color="text.secondary">
-                      Remember me
-                    </Typography>
-                  }
-                  sx={{ mb: 2 }}
-                />
-              </>
-            ) : (
-              /* --- Register Fields --- */
-              <>
-                <Controller
-                  name="username"
-                  control={registerForm.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Username"
-                      variant="outlined"
-                      margin="normal"
-                      error={!!error}
-                      helperText={error?.message}
-                      disabled={isLoading}
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-
-                <Controller
-                  name="email"
-                  control={registerForm.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Email"
-                      type="email"
-                      variant="outlined"
-                      margin="normal"
-                      error={!!error}
-                      helperText={error?.message}
-                      disabled={isLoading}
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-
-                <Controller
-                  name="fullname"
-                  control={registerForm.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Full Name"
-                      variant="outlined"
-                      margin="normal"
-                      error={!!error}
-                      helperText={error?.message}
-                      disabled={isLoading}
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-
-                <Controller
-                  name="password"
-                  control={registerForm.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Password"
-                      type={showPassword ? 'text' : 'password'}
-                      variant="outlined"
-                      margin="normal"
-                      error={!!error}
-                      helperText={error?.message}
-                      disabled={isLoading}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              onClick={() => setShowPassword(!showPassword)}
-                              edge="end"
-                              disabled={isLoading}
-                            >
-                              {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{ mb: 2 }}
-                    />
-                  )}
-                />
-              </>
-            )}
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              disabled={isLoading}
+            <Typography
+              variant="body2"
               sx={{
-                py: 1.5,
-                fontSize: '1rem',
-                fontWeight: 'bold',
-                backgroundColor: '#1976d2',
-                color: 'white',
-                borderRadius: 1,
-                textTransform: 'none',
-                '&:hover': { backgroundColor: '#1565c0' },
-                '&:disabled': { backgroundColor: '#ccc' },
-                mb: 2,
+                color: "#64748b",
+                textAlign: "center",
               }}
             >
-              {isLoading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : isLogin ? (
-                'Sign In'
+              Contributor Portal
+            </Typography>
+          </Box>
+
+          {/* Welcome Message */}
+          <Box mb={4} textAlign="center">
+            <Typography
+              variant="h6"
+              sx={{
+                color: "#334155",
+                fontWeight: 600,
+                mb: 1,
+              }}
+            >
+              Welcome back!
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#64748b",
+              }}
+            >
+              Sign in to continue managing your TOEIC content
+            </Typography>
+          </Box>
+
+          {/* Social Login Buttons */}
+          <Box sx={{ mb: 3 }}>
+            {/* Google Login */}
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={
+                googleLoading ? null : (
+                  <GoogleIcon sx={{ fontSize: 24, color: "white" }} />
+                )
+              }
+              onClick={handleGoogleLogin}
+              disabled={googleLoading || facebookLoading}
+              sx={{
+                py: 1.5,
+                mb: 2,
+                fontSize: "1rem",
+                fontWeight: 600,
+                textTransform: "none",
+                borderRadius: 2,
+                backgroundColor: "#EA4335",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "#C62828",
+                },
+                "&:disabled": {
+                  backgroundColor: "#fca5a5",
+                  color: "#f3f4f6",
+                },
+              }}
+            >
+              {googleLoading ? (
+                <CircularProgress size={20} sx={{ color: "white" }} />
               ) : (
-                'Sign Up'
+                "Continue with Google"
               )}
             </Button>
 
-            {/* Forgot Password */}
-            {isLogin && (
-              <Box textAlign="center" mb={2}>
-                <Link
-                  href="#"
-                  variant="body2"
-                  color="primary"
-                  sx={{ textDecoration: 'none' }}
-                >
-                  Forgot your password?
-                </Link>
-              </Box>
-            )}
+            {/* Facebook Login */}
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={facebookLoading ? null : <FacebookIcon />}
+              onClick={handleFacebookLogin}
+              disabled={googleLoading || facebookLoading}
+              sx={{
+                py: 1.5,
+                fontSize: "1rem",
+                fontWeight: 600,
+                backgroundColor: "#1877F2",
+                color: "white",
+                textTransform: "none",
+                borderRadius: 2,
+                boxShadow: "0 1px 3px rgba(24, 119, 242, 0.3)",
+                "&:hover": {
+                  backgroundColor: "#166fe5",
+                  boxShadow: "0 2px 6px rgba(24, 119, 242, 0.4)",
+                },
+                "&:disabled": {
+                  backgroundColor: "#94a3b8",
+                  color: "white",
+                },
+              }}
+            >
+              {facebookLoading ? <CircularProgress size={20} sx={{ color: "white" }} /> : "Continue with Facebook"}
+            </Button>
+          </Box>
 
-            {/* Divider */}
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                or
-              </Typography>
-            </Divider>
-
-            {/* Social Login */}
-            <Box sx={{ mb: 3 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<GoogleIcon />}
-                onClick={handleGoogleLogin}
-                disabled={socialLoading}
-                sx={{ py: 1.2, mb: 1 }}
-              >
-                {socialLoading ? <CircularProgress size={20} /> : 'Sign in with Google'}
-              </Button>
-
-              <Button fullWidth variant="outlined" startIcon={<FacebookIcon />}
-                sx={{ py: 1.2 }}>
-                Sign in with Facebook
-              </Button>
-            </Box>
-
-            {/* Toggle Auth Mode */}
-            <Box textAlign="center">
-              <Typography variant="body2" color="text.secondary">
-                {isLogin ? "Don't have an account? " : 'Already have an account? '}
-                <Link component="button" type="button" variant="body2" color="primary"
-                  onClick={toggleAuthMode} sx={{ fontWeight: 'bold' }}>
-                  {isLogin ? 'Sign up' : 'Sign in'}
-                </Link>
-              </Typography>
-            </Box>
+          {/* Footer Note */}
+          <Box textAlign="center" mt={4}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "#94a3b8",
+                display: "block",
+                lineHeight: 1.6,
+              }}
+            >
+              By continuing, you agree to our Terms of Service and Privacy Policy
+            </Typography>
           </Box>
         </Paper>
       </Container>
     </Box>
-  );
-};
+  )
+}
 
-export default AuthPage;
+export default AuthPage

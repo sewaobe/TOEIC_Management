@@ -30,7 +30,7 @@ const CollaboratorLayout = () => {
         <Sidebar /> {/* Sidebar cố định */}
         <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
           <Header toggleTheme={toggleTheme} isDarkMode={mode === "dark"} />
-          <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+          <Box sx={{ flex: 1, overflow: "auto", p: 2 }} id="layout_container">
             <Outlet /> {/* React Router render nội dung con */}
           </Box>
         </Box>
