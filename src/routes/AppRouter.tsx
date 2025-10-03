@@ -25,7 +25,7 @@ import DashboardPage from "../features/Collaborator/pages/DashboardPage";
 import StudentsPage from "../features/Collaborator/pages/StudentsPage";
 import MinitestPage from "../features/Collaborator/pages/MinitestPage";
 import GrammarPage from "../features/Collaborator/pages/GrammarPage";
-import VocabularyPage from "../features/Collaborator/pages/VocabularyPage";
+import VocabularyPage from "../features/Vocabulary/VocabularyPage";
 import PracticePage from "../features/Collaborator/pages/PracticePage";
 import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage";
 import ReportsPage from "../features/Collaborator/pages/ReportsPage";
@@ -35,6 +35,7 @@ import NotFound from "../components/NotFound";
 import Unauthorized from "../components/Unauthorized";
 import ServerError from "../components/ServerError";
 import Maintenance from "../components/Maintenance";
+import TopicPage from "../features/Collaborator/pages/TopicPage/TopicPage";
 
 
 export const AppRouter = () => {
@@ -97,8 +98,11 @@ export const AppRouter = () => {
             {/* ===== Grammar ===== */}
             <Route path="grammar" element={<GrammarPage />} />
 
+            {/* ===== Topic ===== */}
+            <Route path="topic" element={<TopicPage />} />
+
             {/* ===== Vocabulary ===== */}
-            <Route path="vocabulary" element={<VocabularyPage />} />
+            <Route path="topic/:id/" element={<VocabularyPage />} />
 
             {/* ===== Practice ===== */}
             <Route path="practice" element={<PracticePage />} />

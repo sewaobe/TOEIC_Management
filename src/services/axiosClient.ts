@@ -1,6 +1,4 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { store } from '../stores/store';
-import { logout } from '../stores/userSlice';
 import type { NavigateFunction } from 'react-router-dom';
 
 let navigateRef: NavigateFunction | null = null;
@@ -31,7 +29,10 @@ const axiosRefresh = axios.create({
 });
 
 axiosClient.interceptors.response.use(
-  (response: AxiosResponse) => response.data,
+  (response: AxiosResponse) => {
+    console.log(">>>>>>>>>>>>AxiosClient: ", response.data)
+    return response.data
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 

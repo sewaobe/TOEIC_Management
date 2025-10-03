@@ -25,6 +25,7 @@ const CollaboratorLayout = () => {
           height: "100vh",
           bgcolor: theme.palette.background.default,
           color: theme.palette.text.primary,
+          overflow: "hidden"
         }}
       >
         <Sidebar /> {/* Sidebar cố định */}
