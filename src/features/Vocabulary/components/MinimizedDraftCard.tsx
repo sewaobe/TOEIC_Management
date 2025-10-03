@@ -3,7 +3,7 @@ import { IconButton, Tooltip } from "@mui/material"
 import { Edit, KeyboardArrowUp, Close } from "@mui/icons-material"
 
 interface Props {
-  editingId: number | null
+  editingId: string | null
   word: string
   onRestore: () => void
   onClose: () => void

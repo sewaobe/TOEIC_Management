@@ -11,7 +11,7 @@ interface Props {
   vocab: Vocabulary
   index: number
   onEdit: (vocab: Vocabulary) => void
-  onDelete: (id: number) => void
+  onDelete: (id: string) => void
 }
 
 const getLevelFromWeight = (weight: number) => {
@@ -50,20 +50,18 @@ const VocabularyCard = ({ vocab, index, onEdit, onDelete }: Props) => {
           style={{ background: getLevelGradient(vocab.weight) }}
         />
 
-        {vocab.image && (
-          <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-            <motion.img
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.3 }}
-              src={vocab.image || "/placeholder.svg"}
-              alt={vocab.word}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
-              <span className="text-xs font-bold text-gray-700">{vocab.word}</span>
-            </div>
+        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+          <motion.img
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+            src={(vocab.image && vocab.image !== "") ? vocab.image : vocab.word}
+            alt={vocab.word}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
+            <span className="text-xs font-bold text-gray-700">{vocab.word}</span>
           </div>
-        )}
+        </div>
 
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
@@ -106,7 +104,9 @@ const VocabularyCard = ({ vocab, index, onEdit, onDelete }: Props) => {
                 </IconButton>
               </Tooltip>
               <Tooltip title="Xóa">
-                <IconButton size="small" onClick={() => onDelete(vocab.id)}>
+                <IconButton size="small" onClick={() =>{
+                  console.log(vocab.id)
+                   onDelete(vocab.id)}}>
                   <Delete fontSize="small" />
                 </IconButton>
               </Tooltip>

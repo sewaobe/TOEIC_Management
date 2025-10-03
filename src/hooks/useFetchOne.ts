@@ -1,34 +1,29 @@
-import { toast } from "sonner"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
-interface UseFetchListOptions<T, P = { page?: number; limit?: number }> {
-  fetchFn: (params?: P) => Promise<{
-    items: T[];
-    pageCount: number;
-    total: number;
-  }>;
+interface UseFetchOneOptions<T, P = void> {
+  fetchFn: (params?: P) => Promise<T>
   createFn?: (item: Partial<T>) => Promise<T>
   updateFn?: (id: string, item: Partial<T>) => Promise<T>
   deleteFn?: (id: string) => Promise<void>
 }
 
-export function useFetchList<T extends { id: string }, P = { page?: number; limit?: number }>(
-  { fetchFn, createFn, updateFn, deleteFn }: UseFetchListOptions<T, P>
-) {
-  const [items, setItems] = useState<T[]>([])
-  const [pageCount, setPageCount] = useState(1)
-  const [total, setTotal] = useState(0)
+export function useFetchOne<T extends { id?: string }, P = void>({
+  fetchFn,
+  createFn,
+  updateFn,
+  deleteFn,
+}: UseFetchOneOptions<T, P>) {
+  const [data, setData] = useState<T | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState<string | null>(null)
 
-  // fetch list
+  // fetch detail
   const refresh = async (params?: P) => {
     try {
       setIsLoading(true)
-      const data = await fetchFn(params)
-      setItems(data.items)
-      setPageCount(data.pageCount)
-      setTotal(data.total)
+      const result = await fetchFn(params)
+      setData(result)
       setIsError(null)
     } catch (err: any) {
       setIsError(err.message || "Có lỗi xảy ra")
@@ -42,17 +37,18 @@ export function useFetchList<T extends { id: string }, P = { page?: number; limi
   }, [])
 
   // create
-  const addItem = async (item: Partial<T>, params?: P) => {
+  const createItem = async (item: Partial<T>, params?: P) => {
     if (!createFn) throw new Error("createFn chưa được định nghĩa")
     return toast.promise(
       createFn(item).then(async (newItem) => {
-        await refresh(params)   // lấy lại list mới nhất
+        setData(newItem) // cập nhật detail
+        await refresh(params)
         return newItem
       }),
       {
-        loading: "Đang thêm...",
-        success: "Thêm thành công 🎉",
-        error: "Thêm thất bại ❌",
+        loading: "Đang tạo...",
+        success: "Tạo thành công 🎉",
+        error: "Tạo thất bại ❌",
       }
     )
   }
@@ -62,7 +58,8 @@ export function useFetchList<T extends { id: string }, P = { page?: number; limi
     if (!updateFn) throw new Error("updateFn chưa được định nghĩa")
     return toast.promise(
       updateFn(id, item).then(async (updated) => {
-        await refresh(params)   // sync lại list
+        setData(updated) // cập nhật detail
+        await refresh(params)
         return updated
       }),
       {
@@ -78,6 +75,7 @@ export function useFetchList<T extends { id: string }, P = { page?: number; limi
     if (!deleteFn) throw new Error("deleteFn chưa được định nghĩa")
     return toast.promise(
       deleteFn(id).then(async () => {
+        setData(null)
         await refresh(params)
       }),
       {
@@ -88,5 +86,5 @@ export function useFetchList<T extends { id: string }, P = { page?: number; limi
     )
   }
 
-  return { items, pageCount, total, isLoading, isError, addItem, updateItem, deleteItem, refresh }
+  return { data, isLoading, isError, refresh, createItem, updateItem, deleteItem }
 }

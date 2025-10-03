@@ -12,56 +12,54 @@ import MinimizedDraftCard from "./components/MinimizedDraftCard"
 import DraftWarningDialog from "./components/DraftWarningDialog"
 import { Vocabulary } from "../../types/Vocabulary"
 import { useVocabularyForm } from "../../hooks/useVocabularyForm"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
+import { useFetchList } from "../../hooks/useFetchList"
+import { vocabularyService } from "../../services/vocabulary.service"
+import { EmptyState } from "../../components/EmptyState"
+import { TopicInfo } from "../../types/Topic"
+import { useFetchOne } from "../../hooks/useFetchOne"
 
-// Mock data
-const initialVocabulary: Vocabulary[] = [
-    {
-        id: 1,
-        word: "Meeting",
-        phonetic: "/ˈmiːtɪŋ/",
-        type: "noun",
-        weight: 0.3,
-        definition: "Cuộc họp, buổi gặp mặt",
-        examples: [
-            { en: "We have a team meeting at 3 PM today.", vi: "Chúng ta có cuộc họp nhóm lúc 3 giờ chiều hôm nay." },
-        ],
-        image: "/business-meeting-office.png",
-        audio: "",
-        part_type: "listening",
-        tags: ["Business", "TOEIC"],
-    },
-    {
-        id: 2,
-        word: "Deadline",
-        phonetic: "/ˈdedlaɪn/",
-        type: "noun",
-        weight: 0.5,
-        definition: "Hạn chót, thời hạn",
-        examples: [
-            { en: "The deadline for this project is next Friday.", vi: "Hạn chót cho dự án này là thứ Sáu tuần sau." },
-        ],
-        image: "/calendar-deadline-clock-time.jpg",
-        audio: "",
-        part_type: "reading",
-        tags: ["Business", "Work"],
-    },
-]
 
-const topicInfo = {
-    name: "Office Life",
-    description: "Từ vựng công sở thông dụng",
-    totalWords: 50,
-}
 
 const wordTypes = ["noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "interjection"]
 const commonTags = ["TOEIC", "Business", "Travel", "Daily Life", "Academic", "Technology", "Health", "Food"]
 
 const VocabularyPage = () => {
-    const [vocabulary, setVocabulary] = useState<Vocabulary[]>(initialVocabulary)
+    const location = useLocation();
+    const url = location.pathname.split("/");
+    const topicId = url[url.length - 1];
+
+    const {
+        items: vocabulary,
+        isLoading,
+        isError,
+        pageCount,
+        refresh,
+        addItem,
+        updateItem,
+        deleteItem,
+    } = useFetchList<Vocabulary, { topicId: string; page?: number; limit?: number }>({
+        fetchFn: (params) => vocabularyService.getByTopic(params!.topicId, params?.page, params?.limit),
+        createFn: (item) => vocabularyService.create(item),
+        updateFn: (id, item) => vocabularyService.update(id, { ...item, topicId }),
+        deleteFn: (id) => vocabularyService.delete(id, topicId),
+    })
+
+    const {
+        data: topicInfo
+    } = useFetchOne<TopicInfo>({
+        fetchFn: () => vocabularyService.getTopicInfo(topicId)
+    })
+
+    const [page, setPage] = useState(1)
+
+    useEffect(() => {
+        refresh({ topicId, page, limit: 9 })
+    }, [topicId, page])
+
     const [openModal, setOpenModal] = useState(false)
     const [modalState, setModalState] = useState<"normal" | "fullscreen">("normal")
-    const [editingId, setEditingId] = useState<number | null>(null)
+    const [editingId, setEditingId] = useState<string | null>(null)
 
     const [searchQuery, setSearchQuery] = useState("")
     const [filterLevel, setFilterLevel] = useState("All")
@@ -89,31 +87,30 @@ const VocabularyPage = () => {
     }
 
     // xóa từ
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: string) => {
         if (window.confirm("Bạn có chắc chắn muốn xóa từ vựng này?")) {
-            setVocabulary((prev) => prev.filter((v) => v.id !== id))
+            await deleteItem(id, { topicId, page, limit: 9 });
+            resetForm();
+            setEditingId(null);
         }
     }
 
     // lưu từ
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.word || !formData.definition) {
             alert("Vui lòng điền đầy đủ thông tin từ vựng và định nghĩa")
             return
         }
 
         if (editingId) {
-            setVocabulary((prev) => prev.map((v) => (v.id === editingId ? { ...v, ...formData } : v)))
+            await updateItem(editingId, formData, { topicId, page, limit: 9 });
         } else {
-            const newVocab: Vocabulary = {
-                id: Math.max(...vocabulary.map((v) => v.id), 0) + 1,
-                ...formData,
-            }
-            setVocabulary((prev) => [...prev, newVocab])
+            await addItem({ ...formData, topicId }, { topicId, page, limit: 9 });
         }
 
         setOpenModal(false)
         resetForm()
+        setEditingId(null);
     }
 
     // FAB logic
@@ -141,18 +138,27 @@ const VocabularyPage = () => {
         }
     }, [])
 
+    if (isLoading) return <EmptyState mode="loading" />
+
+    if (isError) return (
+        <EmptyState
+            mode="error"
+            title="Không thể tải chủ đề"
+            description="Vui lòng thử lại sau hoặc liên hệ quản trị viên."
+        />
+    )
     return (
         <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-50">
             {/* Header */}
             <div className="bg-white shadow-lg border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <TopicHeader
+                    {topicInfo && <TopicHeader
                         name={topicInfo.name}
                         description={topicInfo.description}
-                        learnersCount={0}
+                        learnersCount={topicInfo.totalLearner}
                         onBack={handleBack}
                         onOpenMenu={(e) => setAnchorEl(e.currentTarget)}
-                    />
+                    />}
                     <StatsCards vocabulary={vocabulary} />
                     <SearchFilterBar
                         searchQuery={searchQuery}
@@ -173,6 +179,9 @@ const VocabularyPage = () => {
                 viewMode={viewMode}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                page={page}
+                pageCount={pageCount}
+                onPageChange={setPage}
             />
 
             {/* FAB thêm từ mới */}

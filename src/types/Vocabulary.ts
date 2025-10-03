@@ -6,7 +6,8 @@ export interface VocabularyExample {
 export type PartType = "listening" | "reading"
 
 export interface Vocabulary {
-  id: number
+  id: string
+  topicId ?: string
   word: string
   phonetic: string
   type: string // noun, verb, adj, adv, etc.

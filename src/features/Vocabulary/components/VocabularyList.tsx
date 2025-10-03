@@ -1,14 +1,18 @@
 import { motion, AnimatePresence } from "framer-motion"
 import VocabularyCard from "./VocabularyCard"
 import { Vocabulary } from "../../../types/Vocabulary"
+import PaginationContainer from "../../../components/PaginationContainer"
 
 interface Props {
   vocabulary: Vocabulary[]
   searchQuery: string
   filterLevel: string
   viewMode: "list" | "grid"
+  page: number
+  pageCount: number
+  onPageChange: (page: number) => void
   onEdit: (vocab: Vocabulary) => void
-  onDelete: (id: number) => void
+  onDelete: (id: string) => void
 }
 
 const getLevelFromWeight = (weight: number) => {
@@ -24,6 +28,9 @@ const VocabularyList = ({
   viewMode,
   onEdit,
   onDelete,
+  page,
+  pageCount,
+  onPageChange,
 }: Props) => {
   // lọc dữ liệu theo search + filter
   const filteredVocabulary = vocabulary.filter((vocab) => {
@@ -49,23 +56,23 @@ const VocabularyList = ({
             <p className="text-gray-500">Thử thay đổi bộ lọc hoặc thêm từ vựng mới</p>
           </motion.div>
         ) : (
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                : "grid grid-cols-1 gap-4"
-            }
-          >
-            {filteredVocabulary.map((vocab, index) => (
+          <PaginationContainer
+            items={filteredVocabulary}
+            page={page}
+            pageCount={pageCount}
+            onPageChange={onPageChange}
+            showTop
+            viewMode={viewMode}  
+            renderItem={(vocab, index) => (
               <VocabularyCard
-                key={vocab.id}
+                key={vocab.word}
                 vocab={vocab}
                 index={index}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
-            ))}
-          </div>
+            )}
+          />
         )}
       </AnimatePresence>
     </div>

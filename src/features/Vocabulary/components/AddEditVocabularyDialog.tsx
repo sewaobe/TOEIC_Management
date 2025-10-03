@@ -162,7 +162,7 @@ const AddEditVocabularyDialog = ({
           </div>
 
           {/* Slider độ khó */}
-          <div className="mt-4">
+          <div className="mt-4 mx-2">
             <label className="text-sm font-semibold text-gray-700 mb-2 block">
               Độ khó: {getLevelFromWeight(formData.weight)}
             </label>
@@ -173,11 +173,13 @@ const AddEditVocabularyDialog = ({
               max={1}
               step={0.01}
               marks={[
-                { value: 0, label: "Dễ" },
+                { value: 0, label: "Easy" },
                 { value: 0.33, label: "Basic" },
                 { value: 0.66, label: "Intermediate" },
-                { value: 1, label: "Khó" },
+                { value: 1, label: "Advanced" },
               ]}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(v) => v.toFixed(2)}
             />
           </div>
 
@@ -192,46 +194,8 @@ const AddEditVocabularyDialog = ({
           />
 
           {/* Ví dụ */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-gray-900">Ví dụ minh họa</h3>
-              <Button size="small" startIcon={<AddCircleOutline />} onClick={addExample}>
-                Thêm ví dụ
-              </Button>
-            </div>
-            {formData.examples.map((example, index) => (
-              <div key={index} className="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold">Ví dụ {index + 1}</span>
-                  {formData.examples.length > 1 && (
-                    <IconButton size="small" onClick={() => removeExample(index)}>
-                      <RemoveCircleOutline fontSize="small" />
-                    </IconButton>
-                  )}
-                </div>
-                <TextField
-                  fullWidth
-                  label="Câu tiếng Anh"
-                  value={example.en}
-                  onChange={(e) => updateExample(index, "en", e.target.value)}
-                  multiline
-                  rows={2}
-                  sx={{ mb: 2 }}
-                />
-                <TextField
-                  fullWidth
-                  label="Dịch tiếng Việt"
-                  value={example.vi}
-                  onChange={(e) => updateExample(index, "vi", e.target.value)}
-                  multiline
-                  rows={2}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Media */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* URL Hình ảnh hoặc upload file */}
             <TextField
               fullWidth
               label="URL Hình ảnh"
@@ -246,6 +210,27 @@ const AddEditVocabularyDialog = ({
                 ),
               }}
             />
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<ImageIcon />}
+            >
+              Tải ảnh từ máy
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const localUrl = URL.createObjectURL(file);
+                    onChange({ ...formData, image: localUrl }); // preview ngay
+                  }
+                }}
+              />
+            </Button>
+
+            {/* URL Âm thanh hoặc upload file */}
             <TextField
               fullWidth
               label="URL Âm thanh"
@@ -260,13 +245,42 @@ const AddEditVocabularyDialog = ({
                 ),
               }}
             />
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<AudioFile />}
+            >
+              Tải âm thanh từ máy
+              <input
+                type="file"
+                accept="audio/*"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const localUrl = URL.createObjectURL(file);
+                    onChange({ ...formData, audio: localUrl }); // preview ngay
+                  }
+                }}
+              />
+            </Button>
           </div>
+
+          {/* Preview hình ảnh */}
           {formData.image && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
               <p className="text-sm font-semibold text-gray-700 mb-2">Xem trước hình ảnh:</p>
               <div className="relative h-48 rounded-xl overflow-hidden border-2 border-gray-300">
                 <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
               </div>
+            </motion.div>
+          )}
+
+          {/* Preview âm thanh */}
+          {formData.audio && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Nghe thử âm thanh:</p>
+              <audio controls src={formData.audio} className="w-full" />
             </motion.div>
           )}
 
@@ -278,9 +292,10 @@ const AddEditVocabularyDialog = ({
             onChange={(e, newValue) => onChange({ ...formData, tags: newValue })}
             freeSolo
             renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip label={option} {...getTagProps({ index })} color="primary" />
-              ))
+              value.map((option, index) => {
+                const { key, ...chipProps } = getTagProps({ index }) // tách key
+                return <Chip key={key} label={option} color="primary" {...chipProps} />
+              })
             }
             renderInput={(params) => <TextField {...params} placeholder="Chọn hoặc nhập tags..." />}
           />

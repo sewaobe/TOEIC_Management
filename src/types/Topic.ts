@@ -21,3 +21,14 @@ export const levelOptions = [
   { value: "C1", label: "C1 (800 - 899 điểm)" },
   { value: "C2", label: "C2 (900 - 990 điểm)" },
 ]
+
+export interface TopicInfo {
+  id: string
+  name: string
+  description: string
+  totalLearner: number
+  totalWords: number
+  totalBasic: number
+  totalIntermediate: number
+  totalAdvance: number
+}

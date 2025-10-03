@@ -61,7 +61,7 @@ export const sidebarStructure = [
     subItems: [
       { text: "Video bài giảng", to: "/ctv/video-lectures", badge: 3 },
       { text: "Lý thuyết & Ngữ pháp", to: "/ctv/grammar", badge: 2 },
-      { text: "Từ vựng", to: "/ctv/topic", badge: 2 },
+      { text: "Chủ đề từ vựng", to: "/ctv/topics", badge: 2 },
       { text: "Bài tập vận dụng", to: "/ctv/practice", badge: 1 },
     ],
   },

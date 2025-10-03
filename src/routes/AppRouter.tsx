@@ -99,10 +99,10 @@ export const AppRouter = () => {
             <Route path="grammar" element={<GrammarPage />} />
 
             {/* ===== Topic ===== */}
-            <Route path="topic" element={<TopicPage />} />
+            <Route path="topics" element={<TopicPage />} />
 
             {/* ===== Vocabulary ===== */}
-            <Route path="topic/:id/" element={<VocabularyPage />} />
+            <Route path="topics/:id/" element={<VocabularyPage />} />
 
             {/* ===== Practice ===== */}
             <Route path="practice" element={<PracticePage />} />
