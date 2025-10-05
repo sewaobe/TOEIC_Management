@@ -12,6 +12,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { examParts } from "../../../../constants/examParts";
 import GroupForm from "../../components/GroupForm";
+import groupService from "../../../../services/group.service";
+import { useFetchList } from "../../../../hooks/useFetchList";
+import { Group } from "../../../../types/group";
 
 const CreateQuestionPage = () => {
   const navigate = useNavigate();
@@ -19,6 +22,15 @@ const CreateQuestionPage = () => {
   const [groups, setGroups] = useState<any[]>([]);
   const [testType, setTestType] = useState<"TEST" | "LESSON" | "QUIZ">("TEST");
   const [partIndex, setPartIndex] = useState<number | null>(null);
+
+  // hook CRUD: chỉ dùng create
+  const { addItem } = useFetchList<Group>({
+    fetchFn: async () => ({ items: [], pageCount: 1, total: 0 }),
+    createFn: async (item) => {
+      const res = await groupService.create("", item); // "" nếu BE ko yêu cầu testId
+      return res.data;
+    },
+  });
 
   const getGroupSize = (part: number | null) => {
     if (part === null) return 1;
@@ -36,7 +48,7 @@ const CreateQuestionPage = () => {
 
   const makeEmptyQuestion = (part: number | null) => ({
     textQuestion: "",
-    choices: { A: "", B: "", C: "", D: "" },
+    choices: part === 2 ? { A: "", B: "", C: ""}:{ A: "", B: "", C: "", D: "" },
     correctAnswer: "A",
     planned_time: 0,
     explanation: "",
@@ -48,18 +60,18 @@ const CreateQuestionPage = () => {
     const groupSize = getGroupSize(part);
     return {
       type,
-      partIndex: part,
+      part,
       transcriptEnglish: "",
       transcriptTranslation: "",
-      audioFile: null,
-      imageFiles: [],
+      audioUrl: null,
+      imagesUrl: [],
       questions: Array.from({ length: groupSize }, () =>
         makeEmptyQuestion(part)
       ),
     };
   };
 
-  // 🔹 Reset group khi đổi type hoặc part
+  // reset group khi đổi type hoặc part
   useEffect(() => {
     setGroups([makeEmptyGroup(testType, partIndex)]);
   }, [testType, partIndex]);
@@ -117,8 +129,10 @@ const CreateQuestionPage = () => {
     );
   };
 
-  const handleSave = () => {
-    console.log("📌 Payload gửi BE:", groups);
+  // save group: dùng hook, không chế gì thêm
+  const handleSave = async () => {
+    await addItem(groups[0]);
+    navigate("/ctv/questions");
   };
 
   return (
@@ -186,7 +200,7 @@ const CreateQuestionPage = () => {
             key={idx}
             groupIndex={idx}
             group={g}
-            tagOptions={getTagOptions(g.partIndex)}
+            tagOptions={getTagOptions(g.part)}
             onChange={handleChangeGroup}
             onChangeQuestion={handleChangeQuestion}
             onRemoveQuestion={handleRemoveQuestion}

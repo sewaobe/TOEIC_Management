@@ -1,136 +1,195 @@
 import {
   Box,
   Typography,
-  Button,
   Paper,
   TextField,
   MenuItem,
   Breadcrumbs,
-  Autocomplete,
-  Chip,
   Grid,
+  Button,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { examParts } from "../../../../constants/examParts";
+import GroupForm from "../../components/GroupForm";
+import groupService from "../../../../services/group.service";
+import { useFetchList } from "../../../../hooks/useFetchList";
+import { Group } from "../../../../types/group";
 
 const EditQuestionPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { groupId } = useParams<{ groupId: string }>();
 
-  const [form, setForm] = useState({
-    name: "",
-    textQuestion: "",
-    choices: { A: "", B: "", C: "", D: "" },
-    correctAnswer: "A",
-    explanation: "",
-    audioUrl: "",
-    audioFile: null as File | null, // 👈 thêm field file
-    partIndex: 0,
-    tags: [] as string[],
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ✅ Hook CRUD - chỉ dùng update
+  const { updateItem } = useFetchList<Group>({
+    fetchFn: async () => ({ items: [], pageCount: 1, total: 0 }),
+    updateFn: async (id, data) => {
+      const res = await groupService.update(id, data);
+      return res.data;
+    },
   });
 
-  // Lấy dữ liệu câu hỏi theo id
+  // ✅ Lấy group theo id từ BE
   useEffect(() => {
-    // TODO: call API lấy dữ liệu thật
-    const mockData = {
-      id,
-      name: "Question 1",
-      textQuestion: "What does TOEIC stand for?",
-      choices: {
-        A: "Test of Engineering in Communication",
-        B: "Teaching of English for International Companies",
-        C: "Test of English for International Communication",
-        D: "Training of English in College",
-      },
-      correctAnswer: "C",
-      explanation: "TOEIC = Test of English for International Communication.",
-      audioUrl: "",
-      partIndex: 2,
-      tags: ["[Part 2] Câu hỏi WHAT"],
+    const fetchData = async () => {
+      try {
+        if (!groupId) return;
+        const res = await groupService.getById(groupId);
+        if (res.data) {
+          setGroups([res.data]); // giữ nguyên 1 group
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi tải group:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setForm((prev) => ({ ...prev, ...mockData }));
-  }, [id]);
+    fetchData();
+  }, [groupId]);
 
-  const currentTags =
-    form.partIndex > 0 ? examParts[form.partIndex].tags.map((t) => t.name) : [];
+  // ✅ Helpers
+  const getTagOptions = (part: number | null) =>
+    part && part > 0 && examParts[part]?.tags
+      ? examParts[part].tags.map((t: any) => t.name)
+      : [];
 
-  const choiceLabels =
-    form.partIndex === 2 ? ["A", "B", "C"] : ["A", "B", "C", "D"];
-
-  const handleChange = (field: string, value: any) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const handleChangeGroup = (groupIndex: number, field: string, value: any) => {
+    setGroups((prev) =>
+      prev.map((g, idx) => (idx === groupIndex ? { ...g, [field]: value } : g))
+    );
   };
 
-  const handleChoiceChange = (key: string, value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      choices: { ...prev.choices, [key]: value },
-    }));
+  const handleChangeQuestion = (
+    groupIndex: number,
+    questionIndex: number,
+    field: string,
+    value: any
+  ) => {
+    setGroups((prev) =>
+      prev.map((g, idx) =>
+        idx === groupIndex
+          ? {
+              ...g,
+              questions: g.questions.map((q: any, qIdx: number) =>
+                qIdx === questionIndex ? { ...q, [field]: value } : q
+              ),
+            }
+          : g
+      )
+    );
   };
 
-  // chọn file audio
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setForm((prev) => ({
-        ...prev,
-        audioFile: file,
-        audioUrl: URL.createObjectURL(file), // preview tạm
-      }));
-    }
+  const handleAddQuestion = (groupIndex: number) => {
+    setGroups((prev) =>
+      prev.map((g, idx) =>
+        idx === groupIndex
+          ? {
+              ...g,
+              questions: [
+                ...g.questions,
+                {
+                  id: `temp-${Date.now()}`, // 🔹 fake id tạm cho React key
+                  name: `Question ${g.questions.length + 1}`,
+                  textQuestion: "",
+                  choices: { A: "", B: "", C: "", D: "" },
+                  correctAnswer: "A",
+                  planned_time: 0,
+                  explanation: "",
+                  tags: [],
+                  created_at: new Date().toISOString(),
+                },
+              ],
+            }
+          : g
+      )
+    );
   };
 
-  const handleUpdate = () => {
-    const finalChoices =
-      form.partIndex === 2
-        ? { A: form.choices.A, B: form.choices.B, C: form.choices.C }
-        : form.choices;
+  const handleRemoveQuestion = (groupIndex: number, questionIndex: number) => {
+    setGroups((prev) =>
+      prev.map((g, idx) =>
+        idx === groupIndex
+          ? {
+              ...g,
+              questions: g.questions.filter(
+                (_: any, qIdx: number) => qIdx !== questionIndex
+              ),
+            }
+          : g
+      )
+    );
+  };
 
-    const payload = {
-      id,
-      ...form,
-      choices: finalChoices,
-    };
-
-    console.log("📌 Payload update:", payload);
-    // TODO: call API update câu hỏi + upload audio lên Cloudinary
+  // ✅ Cập nhật group
+  const handleSave = async () => {
+    if (!groups[0]) return;
+    await updateItem(groupId!, groups[0]);
     navigate("/ctv/questions");
   };
 
+  // ✅ Loading / Error
+  if (isLoading)
+    return (
+      <Box className="flex justify-center py-20">
+        <CircularProgress />
+      </Box>
+    );
+
+  if (!groups.length)
+    return (
+      <Box className="p-6 text-center">
+        <Typography color="error">Không tìm thấy nhóm câu hỏi này.</Typography>
+      </Box>
+    );
+
+  // ✅ group hiện tại
+  const currentGroup = groups[0];
+  const partIndex = currentGroup.part ?? null;
+
   return (
-    <Box sx={{ p: 3, height: "100%" }}>
-      {/* Breadcrumbs */}
+    <Box sx={{ p: 3 }}>
       <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
         <Link
           to="/ctv/questions"
-          style={{
-            textDecoration: "none",
-            color: "#1976d2",
-            fontWeight: 500,
-          }}
+          style={{ textDecoration: "none", color: "#1976d2", fontWeight: 500 }}
         >
           Ngân hàng câu hỏi
         </Link>
         <Typography color="text.primary">Chỉnh sửa</Typography>
       </Breadcrumbs>
 
-      {/* Header */}
-      <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
+      <Typography variant="h5" fontWeight="bold" mb={3}>
         Sửa câu hỏi
       </Typography>
 
       <Paper sx={{ p: 3, borderRadius: 2, maxWidth: 1000, mx: "auto" }}>
-        <Grid container spacing={2}>
-          {/* Part */}
-          <Grid size={{ xs: 12, md: 4 }}>
+        <Grid container spacing={2} mb={3}>
+          {/* Type (ẩn hoặc disable) */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Loại"
+              fullWidth
+              value={currentGroup.type}
+              disabled
+            />
+          </Grid>
+
+          {/* Chọn Part */}
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               select
               label="Part"
               fullWidth
-              value={form.partIndex}
-              onChange={(e) => handleChange("partIndex", Number(e.target.value))}
+              value={partIndex ?? ""}
+              onChange={(e) =>
+                handleChangeGroup(0, "part", Number(e.target.value))
+              }
             >
+              <MenuItem value="">Không chọn</MenuItem>
               {examParts.map((part, idx) =>
                 idx > 0 ? (
                   <MenuItem key={idx} value={idx}>
@@ -140,156 +199,21 @@ const EditQuestionPage = () => {
               )}
             </TextField>
           </Grid>
-
-          {/* Tags */}
-          <Grid size={{ xs: 12, md: 8 }}>
-            {form.partIndex > 0 && (
-              <Autocomplete
-                multiple
-                options={currentTags}
-                value={form.tags}
-                onChange={(_, newValue) => handleChange("tags", newValue)}
-                renderTags={(value: readonly string[], getTagProps) =>
-                  value.map((option: string, index: number) => (
-                    <Chip
-                      variant="outlined"
-                      label={option}
-                      {...getTagProps({ index })}
-                      key={option}
-                    />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField {...params} label="Tags" />
-                )}
-              />
-            )}
-          </Grid>
-
-          {/* Tên câu hỏi */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Tên câu hỏi"
-              fullWidth
-              value={form.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-            />
-          </Grid>
-
-          {/* Nội dung */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Nội dung"
-              fullWidth
-              multiline
-              rows={3}
-              value={form.textQuestion}
-              onChange={(e) => handleChange("textQuestion", e.target.value)}
-            />
-          </Grid>
-
-          {/* Đáp án A & B */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Đáp án A"
-              fullWidth
-              value={form.choices.A}
-              onChange={(e) => handleChoiceChange("A", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Đáp án B"
-              fullWidth
-              value={form.choices.B}
-              onChange={(e) => handleChoiceChange("B", e.target.value)}
-            />
-          </Grid>
-
-          {/* Đáp án C & D */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              label="Đáp án C"
-              fullWidth
-              value={form.choices.C}
-              onChange={(e) => handleChoiceChange("C", e.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            {form.partIndex === 2 ? (
-              <Box sx={{ height: "100%" }} />
-            ) : (
-              <TextField
-                label="Đáp án D"
-                fullWidth
-                value={form.choices.D}
-                onChange={(e) => handleChoiceChange("D", e.target.value)}
-              />
-            )}
-          </Grid>
-
-          {/* Đáp án đúng */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              select
-              label="Đáp án đúng"
-              fullWidth
-              value={form.correctAnswer}
-              onChange={(e) => handleChange("correctAnswer", e.target.value)}
-            >
-              {choiceLabels.map((label) => (
-                <MenuItem key={label} value={label}>
-                  {label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-
-          {/* Upload Audio */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Button
-              variant="outlined"
-              component="label"
-              fullWidth
-              sx={{
-                height: "56px",
-                justifyContent: "flex-start",
-                textTransform: "none",
-              }}
-            >
-              {form.audioFile
-                ? form.audioFile.name
-                : form.audioUrl
-                ? "Đã có audio"
-                : "Chọn file audio"}
-              <input
-                type="file"
-                hidden
-                accept="audio/*"
-                onChange={handleFileChange}
-              />
-            </Button>
-          </Grid>
-
-          {/* Giải thích */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Giải thích"
-              fullWidth
-              multiline
-              rows={4}
-              value={form.explanation}
-              onChange={(e) => handleChange("explanation", e.target.value)}
-            />
-          </Grid>
         </Grid>
 
-        {/* Nút hành động */}
-        <Box mt={3} display="flex" gap={2} justifyContent="flex-end">
-          <Button variant="outlined" onClick={() => navigate("/ctv/questions")}>
-            Trở lại
-          </Button>
-          <Button variant="contained" color="primary" onClick={handleUpdate}>
+        {/* Form Group (giống Create) */}
+        <GroupForm
+          groupIndex={0}
+          group={currentGroup}
+          tagOptions={getTagOptions(currentGroup.part ?? null)}
+          onChange={handleChangeGroup}
+          onChangeQuestion={handleChangeQuestion}
+          onRemoveQuestion={handleRemoveQuestion}
+          onAddQuestion={handleAddQuestion}
+        />
+
+        <Box textAlign="center" mt={2}>
+          <Button variant="contained" onClick={handleSave}>
             Cập nhật
           </Button>
         </Box>

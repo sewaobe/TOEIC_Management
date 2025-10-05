@@ -27,7 +27,7 @@ import MinitestPage from "../features/Collaborator/pages/MinitestPage";
 import GrammarPage from "../features/Collaborator/pages/GrammarPage";
 import VocabularyPage from "../features/Vocabulary/VocabularyPage";
 import PracticePage from "../features/Collaborator/pages/PracticePage";
-import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage";
+import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/VideoLecturePage";
 import ReportsPage from "../features/Collaborator/pages/ReportsPage";
 
 // Error pages
@@ -93,7 +93,7 @@ export const AppRouter = () => {
             {/* ===== Question Bank ===== */}
             <Route path="questions" element={<QuestionPage />} />
             <Route path="questions/create" element={<CreateQuestionPage />} />
-            <Route path="questions/:id/edit" element={<EditQuestionPage />} />
+            <Route path="questions/:groupId/edit" element={<EditQuestionPage />} />
 
             {/* ===== Grammar ===== */}
             <Route path="grammar" element={<GrammarPage />} />

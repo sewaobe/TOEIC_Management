@@ -25,7 +25,7 @@ const parts = [
 const makeEmptyQuestion = (part: number, idx?: number) => ({
   name: `Question ${idx ? idx + 1 : 1}`, // thêm name mặc định
   textQuestion: "",
-  choices: { A: "", B: "", C: "", D: "" },
+  choices: part === 2 ? { A: "", B: "", C: ""}:{ A: "", B: "", C: "", D: "" },
   correctAnswer: "A",
   planned_time: 0,
   explanation: "",

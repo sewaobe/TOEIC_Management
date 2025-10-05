@@ -3,6 +3,7 @@ import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GroupForm from "../GroupForm";
+import Collapse from "@mui/material/Collapse"; // 👈 thêm import
 
 interface Props {
   partIndex: number;
@@ -48,67 +49,95 @@ const PartRenderer: React.FC<Props> = ({
       : 0;
 
   return (
-    <div className="space-y-3">
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {groups.map((g, idx) => {
         const isOpen = openIndex === idx;
         return (
           <div
             key={idx}
-            className="rounded-md overflow-hidden"
             style={{
               border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 6,
+              overflow: "hidden",
               backgroundColor: theme.palette.background.paper,
               color: theme.palette.text.primary,
             }}
           >
             {/* Header */}
             <div
-              className="flex items-center justify-between px-4 py-2 cursor-pointer select-none"
+              onClick={() => toggleAccordion(idx)}
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 16px",
+                cursor: "pointer",
+                userSelect: "none",
                 backgroundColor: isOpen
                   ? theme.palette.action.hover
                   : theme.palette.background.paper,
               }}
-              onClick={() => toggleAccordion(idx)}
             >
+              {/* Title */}
               <span
-                className="font-semibold"
-                style={{ fontFamily: theme.typography.fontFamily }}
+                style={{
+                  flex: 1,
+                  fontWeight: 600,
+                  fontFamily: theme.typography.fontFamily,
+                }}
               >
                 Group {idx + 1}
               </span>
 
-              <div className="flex items-center gap-2">
+              {/* Action buttons */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* Mũi tên xuống (xoay lên khi mở) */}
                 <ExpandMoreIcon
-                  className={`transition-transform ${
-                    isOpen ? "rotate-180" : "rotate-0"
-                  }`}
                   htmlColor={theme.palette.text.secondary}
+                  sx={{
+                    display: "inline-flex",
+                    verticalAlign: "middle",
+                    alignSelf: "center",
+                    transition: "transform 0.25s ease",
+                    transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  }}
                 />
 
+                {/* Nút xóa chỉ cho Part 7 */}
                 {partIndex === 7 && onRemoveGroup && (
                   <button
-                    className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveGroup(idx);
+                    }}
+                    style={{
+                      padding: 4,
+                      borderRadius: 4,
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
                     }}
                   >
                     <DeleteIcon
                       fontSize="small"
                       htmlColor={theme.palette.error.main}
+                      sx={{
+                        display: "inline-flex",
+                        verticalAlign: "middle",
+                        alignSelf: "center",
+                      }}
                     />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Content */}
-            {isOpen && (
+            {/* Content với hiệu ứng Collapse */}
+            <Collapse in={isOpen} timeout="auto" unmountOnExit>
               <div
-                className="p-4"
                 style={{
                   borderTop: `1px solid ${theme.palette.divider}`,
+                  padding: 16,
                 }}
               >
                 <GroupForm
@@ -122,33 +151,43 @@ const PartRenderer: React.FC<Props> = ({
                   totalQuestionsPart7={totalQuestionsPart7}
                 />
               </div>
-            )}
+            </Collapse>
           </div>
         );
       })}
 
       {/* Part 7 cho phép thêm group nếu chưa đủ 54 câu */}
-      {partIndex === 7 && onAddGroup && totalQuestionsPart7 < MAX_PART7_QUESTIONS - 1 && (
-        <div className="text-center mt-2">
-          <button
-            className="px-3 py-1.5 rounded text-sm font-medium"
-            style={{
-              border: `1px solid ${theme.palette.divider}`,
-              color: theme.palette.primary.main,
-              fontFamily: theme.typography.button?.fontFamily,
-            }}
-            onClick={onAddGroup}
-          >
-            + Thêm Group mới
-          </button>
-          <p
-            className="text-xs mt-1"
-            style={{ color: theme.palette.text.secondary }}
-          >
-            ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu)
-          </p>
-        </div>
-      )}
+      {partIndex === 7 &&
+        onAddGroup &&
+        totalQuestionsPart7 < MAX_PART7_QUESTIONS - 1 && (
+          <div style={{ textAlign: "center", marginTop: 8 }}>
+            <button
+              style={{
+                padding: "6px 12px",
+                borderRadius: 6,
+                fontSize: 14,
+                fontWeight: 500,
+                border: `1px solid ${theme.palette.divider}`,
+                color: theme.palette.primary.main,
+                fontFamily: theme.typography.button?.fontFamily,
+                cursor: "pointer",
+                background: "transparent",
+              }}
+              onClick={onAddGroup}
+            >
+              + Thêm Group mới
+            </button>
+            <p
+              style={{
+                fontSize: 12,
+                marginTop: 4,
+                color: theme.palette.text.secondary,
+              }}
+            >
+              ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu)
+            </p>
+          </div>
+        )}
     </div>
   );
 };

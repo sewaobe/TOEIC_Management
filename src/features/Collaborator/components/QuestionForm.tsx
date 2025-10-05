@@ -3,7 +3,7 @@ import { Grid, TextField, MenuItem, Autocomplete, Chip } from "@mui/material";
 interface Props {
   form: any;
   partIndex: number;
-  choiceLabels: string[];
+  choices: string[];
   tagOptions: string[];
   onChange: (field: string, value: any) => void;
   onChoiceChange: (key: string, value: string) => void;
@@ -12,7 +12,7 @@ interface Props {
 const QuestionForm: React.FC<Props> = ({
   form,
   partIndex,
-  choiceLabels,
+  choices,
   tagOptions,
   onChange,
   onChoiceChange,
@@ -32,7 +32,7 @@ const QuestionForm: React.FC<Props> = ({
       </Grid>
 
       {/* Lựa chọn */}
-      {choiceLabels.map((label) => (
+      {choices.map((label) => (
         <Grid key={label} size={{ xs: 12, md: 6 }}>
           <TextField
             label={`Đáp án ${label}`}
@@ -54,7 +54,7 @@ const QuestionForm: React.FC<Props> = ({
               value={form.correctAnswer}
               onChange={(e) => onChange("correctAnswer", e.target.value)}
             >
-              {choiceLabels.map((label) => (
+              {choices.map((label) => (
                 <MenuItem key={label} value={label}>
                   {label}
                 </MenuItem>

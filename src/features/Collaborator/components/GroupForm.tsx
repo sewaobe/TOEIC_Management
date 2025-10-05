@@ -235,7 +235,7 @@ const GroupForm: React.FC<Props> = ({
                 sx={{ flexGrow: 1, mr: 1 }}
               />
 
-              {group.partIndex === 7 &&
+              {group.part === 7 &&
                 onRemoveQuestion &&
                 group.questions.length > 2 && (
                   <IconButton
@@ -255,8 +255,8 @@ const GroupForm: React.FC<Props> = ({
           <AccordionDetails>
             <QuestionForm
               form={q}
-              partIndex={group.partIndex}
-              choiceLabels={Object.keys(q.choices || {})}
+              partIndex={group.part}
+              choices={Object.keys(q.choices || {})}
               tagOptions={tagOptions}
               onChange={(field, value) =>
                 onChangeQuestion(groupIndex, qIdx, field, value)
