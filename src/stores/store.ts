@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from './userSlice';
 import snackbarReducer from './snackbarSlice';
+import reportFilterReducer from './reportFilterSlice';
 
 export const store = configureStore({
   reducer: {
     user: userReducer,
-    snackbar: snackbarReducer
+    snackbar: snackbarReducer,
+    reportFilter: reportFilterReducer,
   },
 });
 
