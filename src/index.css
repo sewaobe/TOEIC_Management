@@ -20,7 +20,7 @@ body {
   font-family: 'Inter', sans-serif;
   background-color: #f5f7fd;
   scroll-behavior: smooth;
-  overflow-x: hidden; /* Không ảnh hưởng scroll-y */
+  overflow: hidden;
 }
 
 input[type='password']::-ms-reveal,

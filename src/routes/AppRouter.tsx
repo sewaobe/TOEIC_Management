@@ -5,8 +5,6 @@ import { RouteWrapper } from "./RouteWrapper";
 
 // Public pages
 import AuthPage from "../features/Auth/AuthPage";
-import HomePage from "../features/Home/HomePage";
-
 // Layout
 import CollaboratorLayout from "../features/Collaborator/CollaboratorLayout";
 
@@ -36,6 +34,7 @@ import Unauthorized from "../components/Unauthorized";
 import ServerError from "../components/ServerError";
 import Maintenance from "../components/Maintenance";
 import TopicPage from "../features/Collaborator/pages/TopicPage/TopicPage";
+import LandingPage from "../features/LandingPage/LandingPage";
 
 
 export const AppRouter = () => {
@@ -46,25 +45,16 @@ export const AppRouter = () => {
         <Routes>
           {/* Public routes */}
           <Route
-            path="/auth"
-            element={<RouteWrapper element={<AuthPage />} />}
+            path="/"
+            element={<RouteWrapper element={<LandingPage />} />}
           />
+
           <Route
-            path="/login"
+            path="/auth"
             element={<RouteWrapper element={<AuthPage />} />}
           />
 
           {/* Private route - cộng tác viên */}
-          <Route
-            path="/home"
-            element={
-              <RouteWrapper
-                element={<HomePage />}
-                requireAuth={true}
-                guard={{ role: "collaborator" }}
-              />
-            }
-          />
           <Route
             path="/ctv"
             element={
