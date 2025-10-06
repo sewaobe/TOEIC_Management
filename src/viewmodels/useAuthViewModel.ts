@@ -17,10 +17,9 @@ export const useAuthViewModel = () => {
         try {
           const res = await authService.loginWithGoogle(tokenId);
           // Kiểm tra quyền truy cập
-          if (!res?.success || res?.meta?.role_name === "student" || !res?.meta?.user_id) {
+          if (!res?.success || res?.meta?.role_name === "student") {
             throw new Error("Unauthorized");
           }
-          localStorage.setItem("activeUserId", res.meta.user_id);
           // Cập nhật redux & load user
           dispatch(setAuth(true));
           await dispatch(getUserThunk());

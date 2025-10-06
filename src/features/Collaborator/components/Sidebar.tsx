@@ -111,6 +111,7 @@ const Sidebar: React.FC = () => {
     console.log("[v0] isMainItemDirectlyActive for", item.main.text, ":", result)
     return result
   }
+  
 
   return (
     <Box
