@@ -5,6 +5,8 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import { lightTheme, darkTheme } from "../../theme";
 import { initSocket } from "../../services/socket.service";
+import FloatingWindowManager from "../../components/global/FloatingWindowManager"; // ✅ import Manager
+
 
 const CollaboratorLayout = () => {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -20,13 +22,13 @@ const CollaboratorLayout = () => {
   useEffect(() => {
     const socket = initSocket()
 
-    // 🔔 Lắng nghe sự kiện receiveNotification từ server
+    // ?? L?ng nghe s? ki?n receiveNotification t? server
     socket?.on("receiveNotification", (data) => {
-      console.log("📩 Notification received:", data)
-      // Bạn có thể show toast, snackbar, hoặc update redux store ở đây
+      console.log("?? Notification received:", data)
+      // B?n c� th? show toast, snackbar, ho?c update redux store ? d�y
     })
 
-    // Dọn dẹp event khi unmount
+    // D?n d?p event khi unmount
     return () => {
       socket?.off("receiveNotification")
     }
@@ -44,13 +46,15 @@ const CollaboratorLayout = () => {
           overflow: "hidden"
         }}
       >
-        <Sidebar /> {/* Sidebar cố định */}
+        <Sidebar /> {/* Sidebar c? d?nh */}
         <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
           <Header toggleTheme={toggleTheme} isDarkMode={mode === "dark"} />
           <Box sx={{ flex: 1, overflow: "auto", p: 2 }} id="layout_container">
-            <Outlet /> {/* React Router render nội dung con */}
+            <Outlet /> {/* React Router render n?i dung con */}
           </Box>
         </Box>
+        <FloatingWindowManager />
+
       </Box>
     </ThemeProvider>
   );

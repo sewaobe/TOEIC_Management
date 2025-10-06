@@ -34,9 +34,17 @@ const mediaFolderService = {
       data
     ),
 
-  // 🧾 Lấy danh sách media trong folder
-  getMedias: (folderId: string) =>
-    axiosClient.get<ApiResponse<Media[]>>(`/ctv/folders/${folderId}/medias`),
+  // 🧾 Lấy danh sách media trong folder (có phân trang)
+  getMedias: (folderId: string, page = 1, limit = 12) =>
+    axiosClient.get<ApiResponse<{ items: Media[]; total: number }>>(
+      `/ctv/folders/${folderId}/medias?page=${page}&limit=${limit}`
+    ),
+
+  // 🕵️‍♀️ Tìm kiếm media toàn hệ thống (có phân trang)
+  searchMedias: (query: string, page = 1, limit = 12) =>
+    axiosClient.get<ApiResponse<{ items: Media[]; total: number }>>(
+      `/ctv/folders/medias/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
+    ),
 
   // ✏️ Cập nhật thông tin media
   updateMedia: (mediaId: string, data: Partial<Media>) =>

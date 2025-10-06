@@ -1,19 +1,30 @@
-import { Box, Paper, TextField, IconButton, Button } from "@mui/material";
-import { Search, GridView, List, Add, OpenInNew } from "@mui/icons-material";
+import {
+  Box,
+  Paper,
+  TextField,
+  IconButton,
+  Button,
+  Tooltip,
+} from "@mui/material";
+import { Search, GridView, List, Add, Refresh } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 
 interface Props {
   viewMode: "grid" | "list";
   setViewMode: (v: "grid" | "list") => void;
   onAddClick: () => void;
-  onToggleFloating?: () => void;
+  onRefresh: () => void;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
 }
 
 export default function ToolbarSection({
   viewMode,
   setViewMode,
   onAddClick,
-  onToggleFloating,
+  onRefresh,
+  searchValue,
+  onSearchChange,
 }: Props) {
   const theme = useTheme();
 
@@ -28,7 +39,9 @@ export default function ToolbarSection({
       {/* Ô tìm kiếm */}
       <TextField
         size="small"
-        placeholder="Tìm kiếm..."
+        placeholder="Tìm kiếm video toàn hệ thống..."
+        value={searchValue}
+        onChange={(e) => onSearchChange(e.target.value)}
         sx={{
           width: 300,
           "& .MuiOutlinedInput-root fieldset": {
@@ -45,6 +58,12 @@ export default function ToolbarSection({
 
       {/* Các nút chức năng */}
       <Box className="flex gap-2 items-center">
+        <Tooltip title="Tải lại dữ liệu">
+          <IconButton color="default" onClick={onRefresh}>
+            <Refresh />
+          </IconButton>
+        </Tooltip>
+
         <IconButton
           color={viewMode === "grid" ? "primary" : "default"}
           onClick={() => setViewMode("grid")}
@@ -62,17 +81,6 @@ export default function ToolbarSection({
         <Button variant="contained" startIcon={<Add />} onClick={onAddClick}>
           Thêm File
         </Button>
-
-        {/* ✅ Nút cuối – đen trắng, không đổi màu, chỉ nhận click */}
-        {onToggleFloating && (
-          <Button
-            id="floating-btn"
-            onClick={onToggleFloating}
-            className="ml-2 flex items-center justify-center w-10 h-10 rounded-full bg-black text-white hover:opacity-80 transition"
-          >
-            <OpenInNew className="text-white" />
-          </Button>
-        )}
       </Box>
     </Paper>
   );
