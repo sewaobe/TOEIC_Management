@@ -38,7 +38,7 @@ export interface CommentItem {
   content: string
   time: string
   avatar: string
-  type: "question" | "feedback" | "bug" | "other"
+  type: "test" | "lesson"
   flagged?: boolean
 }
 
@@ -50,7 +50,7 @@ interface Props {
 export default function RecentCommentDashboard({ isDemo = false }: Props) {
   const [comments, setComments] = useState<CommentItem[]>([])
   const [total, setTotal] = useState(0)
-  const [filter, setFilter] = useState<"all" | "question" | "feedback" | "bug" | "other">("all")
+  const [filter, setFilter] = useState<"all" | "test" | "lesson">("all")
   const { page, rowsPerPage, handleChangePage, handleChangeRowsPerPage } = useTablePagination({
     initialRowsPerPage: 5,
   })
@@ -82,14 +82,15 @@ export default function RecentCommentDashboard({ isDemo = false }: Props) {
   // ===================== HANDLERS =====================
   const handleFlagComment = (comment: CommentItem) => {
     setComments((prev) => {
-      const newComments = [...prev]
-      const idx = newComments.findIndex((c) => c.id === comment.id)
-      if (idx !== -1) {
-        newComments[idx].flagged = true
-      }
-      return [...newComments]
-    })
-  }
+      const updated = prev.map((c) =>
+        c.id === comment.id ? { ...c, flagged: !c.flagged } : c
+      );
+      // Sort: đưa comment được gắn cờ lên đầu
+      updated.sort((a, b) => (b.flagged ? 1 : 0) - (a.flagged ? 1 : 0));
+      return updated;
+    });
+  };
+
 
   const handleDeleteConfirm = (comment: CommentItem) => {
     setComments((prev) => prev.filter((c) => c.id !== comment.id))
@@ -119,10 +120,8 @@ export default function RecentCommentDashboard({ isDemo = false }: Props) {
             onChange={(_, newValue) => newValue && setFilter(newValue)}
           >
             <ToggleButton value="all">Tất cả</ToggleButton>
-            <ToggleButton value="question">Câu hỏi</ToggleButton>
-            <ToggleButton value="feedback">Phản hồi</ToggleButton>
-            <ToggleButton value="bug">Báo lỗi</ToggleButton>
-            <ToggleButton value="other">Khác</ToggleButton>
+            <ToggleButton value="test">Đề thi</ToggleButton>
+            <ToggleButton value="lesson">Bài học</ToggleButton>
           </ToggleButtonGroup>
         )}
       </Box>
@@ -168,7 +167,7 @@ export default function RecentCommentDashboard({ isDemo = false }: Props) {
               "&:hover": { backgroundColor: "#EEF2FF" },
               textTransform: "none",
             }}
-            onClick={() => window.open("/dashboard/comments", "_self")}
+            onClick={() => window.open("/ctv/report/comment", "_self")}
           >
             Xem thêm bình luận
           </Button>
@@ -182,6 +181,82 @@ export default function RecentCommentDashboard({ isDemo = false }: Props) {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       )}
+
+      {/* Reply Modal */}
+      <Modal
+        open={replyModal.open}
+        onClose={() => setReplyModal({ open: false })}
+      >
+        <Box
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md bg-white rounded-2xl p-6 shadow-xl space-y-4"
+        >
+          <Typography variant="h6" fontWeight="bold">
+            Phản hồi nhanh
+          </Typography>
+          <Typography color="text.secondary">
+            Bình luận từ <strong>{replyModal.comment?.user}</strong>:
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              backgroundColor: "#F9FAFB",
+              p: 2,
+              borderRadius: 1.5,
+              color: "#374151",
+            }}
+          >
+            {replyModal.comment?.content}
+          </Typography>
+          <TextField
+            multiline
+            rows={4}
+            fullWidth
+            placeholder="Nhập phản hồi của bạn..."
+          />
+          <Box className="flex justify-end gap-2">
+            <Button onClick={() => setReplyModal({ open: false })}>Hủy</Button>
+            <Button
+              variant="contained"
+              sx={{ textTransform: "none" }}
+              onClick={() => {
+                setReplyModal({ open: false });
+                console.log("📩 Gửi phản hồi cho:", replyModal.comment?.id);
+              }}
+            >
+              Gửi phản hồi
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false })}
+      >
+        <Box
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-sm bg-white rounded-2xl p-6 shadow-xl space-y-4"
+        >
+          <Typography variant="h6" fontWeight="bold" color="error">
+            Xác nhận xóa
+          </Typography>
+          <Typography color="text.secondary">
+            Bạn có chắc muốn xóa bình luận của{" "}
+            <strong>{confirmModal.comment?.user}</strong> không?
+          </Typography>
+          <Box className="flex justify-end gap-2 mt-4">
+            <Button onClick={() => setConfirmModal({ open: false })}>Hủy</Button>
+            <Button
+              variant="contained"
+              color="error"
+              sx={{ textTransform: "none" }}
+              onClick={() => handleDeleteConfirm(confirmModal.comment!)}
+            >
+              Xóa
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </Paper>
   )
 }
@@ -206,33 +281,19 @@ function RecentCommentItem({
   const handleMenuClose = () => setAnchorEl(null)
 
   const styleByType = {
-    question: {
+    test: {
       gradient: "linear-gradient(90deg, #EFF6FF, #DBEAFE)",
       border: "#60A5FA",
       chipBg: "#3B82F6",
       chipText: "#DBEAFE",
       text: "#1E3A8A",
     },
-    feedback: {
+    lesson: {
       gradient: "linear-gradient(90deg, #ECFDF5, #D1FAE5)",
       border: "#34D399",
       chipBg: "#10B981",
       chipText: "#D1FAE5",
       text: "#065F46",
-    },
-    bug: {
-      gradient: "linear-gradient(90deg, #FEF2F2, #FECACA)",
-      border: "#F87171",
-      chipBg: "#EF4444",
-      chipText: "#FEE2E2",
-      text: "#7F1D1D",
-    },
-    other: {
-      gradient: "linear-gradient(90deg, #F9FAFB, #F3F4F6)",
-      border: "#D1D5DB",
-      chipBg: "#9CA3AF",
-      chipText: "#F3F4F6",
-      text: "#374151",
     },
   }[comment.type]
 
@@ -272,24 +333,16 @@ function RecentCommentItem({
 
             <Chip
               icon={
-                comment.type === "question" ? (
-                  <HelpOutline sx={{ fontSize: 14 }} />
-                ) : comment.type === "feedback" ? (
+                comment.type === "test" ? (
                   <FeedbackOutlined sx={{ fontSize: 14 }} />
-                ) : comment.type === "bug" ? (
-                  <BugReportOutlined sx={{ fontSize: 14 }} />
                 ) : (
                   <CommentOutlined sx={{ fontSize: 14 }} />
                 )
               }
               label={
-                comment.type === "question"
-                  ? "Câu hỏi"
-                  : comment.type === "feedback"
-                  ? "Phản hồi"
-                  : comment.type === "bug"
-                  ? "Báo lỗi"
-                  : "Khác"
+                comment.type === "test"
+                  ? "Đề thi"
+                  : "Bài học"
               }
               size="small"
               sx={{
@@ -355,12 +408,22 @@ function RecentCommentItem({
         </MenuItem>
         <MenuItem
           onClick={() => {
-            handleMenuClose()
-            onFlag()
+            handleMenuClose();
+            onFlag();
+          }}
+          sx={{
+            fontWeight: comment.flagged ? 600 : 400,
+            backgroundColor: comment.flagged ? "#FFF7ED" : "transparent",
           }}
         >
-          <FlagOutlined sx={{ fontSize: 18, mr: 1, color: "#F59E0B" }} />
-          Gắn cờ
+          <FlagOutlined
+            sx={{
+              fontSize: 18,
+              mr: 1,
+              color: comment.flagged ? "#D97706" : "#F59E0B",
+            }}
+          />
+          {comment.flagged ? "Bỏ gắn cờ" : "Gắn cờ"}
         </MenuItem>
         <MenuItem
           onClick={() => {

@@ -35,6 +35,7 @@ import TopicPage from "../features/Collaborator/pages/TopicPage/TopicPage";
 import LandingPage from "../features/LandingPage/LandingPage";
 import DashboardPage from "../features/Dashboard/DashboardPage";
 import ReportsPage from "../features/Reports/ReportsPage";
+import CommentPage from "../features/Comment/CommentPage";
 
 
 export const AppRouter = () => {
@@ -102,6 +103,8 @@ export const AppRouter = () => {
 
             {/* ===== Reports ===== */}
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="report/error" element={<div> Report error </div>} />
+            <Route path="report/comment" element={<CommentPage/>} />
           </Route>
 
           {/* Private route - admin */}

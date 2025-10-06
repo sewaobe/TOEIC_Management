@@ -8,7 +8,7 @@ export const commentService = {
         pageCount: number
     }> => {
         const mockComments: CommentItem[] = Array.from({ length: 50 }, (_, i) => {
-            const types = ["feedback", "bug", "question", "other"] as const
+            const types = ["test", "lesson"] as const
             const randomType = types[Math.floor(Math.random() * types.length)]
             const names = [
                 "Nguyễn Văn",
@@ -28,29 +28,17 @@ export const commentService = {
                 .join("")
                 .slice(0, 2)
             const contents = {
-                feedback: [
+                lesson: [
                     "Phần học rất dễ hiểu, cảm ơn đội ngũ phát triển!",
                     "App thân thiện và giao diện đẹp mắt.",
                     "Cần thêm phần học theo chủ đề chuyên sâu hơn.",
                     "Phần phát âm rất hay, mong có thêm giọng Anh-Mỹ.",
                 ],
-                bug: [
-                    "Không phát được video trong bài 3.",
-                    "Có lỗi khi nộp bài phần Part 7.",
-                    "Ứng dụng bị đứng khi đổi chủ đề.",
-                    "Phần nghe bị mất tiếng ở một số bài.",
-                ],
-                question: [
+                test: [
                     "Khi nào sẽ có phần học theo level TOEIC?",
                     "Cần đăng ký tài khoản cộng tác viên ở đâu?",
                     "Có thể xuất chứng chỉ học tập không?",
                     "Phần ôn tập có tự động cập nhật không?",
-                ],
-                other: [
-                    "Ứng dụng rất hữu ích, tôi giới thiệu cho bạn bè.",
-                    "Nên thêm chế độ ban đêm cho dễ nhìn.",
-                    "Cần thêm nhiều ví dụ thực tế hơn.",
-                    "Thời lượng video nên ngắn lại một chút.",
                 ],
             }
             const messages = contents[randomType]
