@@ -19,14 +19,12 @@ import CreateQuestionPage from "../features/Collaborator/pages/QuestionPage/Crea
 import EditQuestionPage from "../features/Collaborator/pages/QuestionPage/EditQuestionPage";
 
 // ===== Other pages =====
-import DashboardPage from "../features/Collaborator/pages/DashboardPage";
 import StudentsPage from "../features/Collaborator/pages/StudentsPage";
 import MinitestPage from "../features/Collaborator/pages/MinitestPage";
 import GrammarPage from "../features/Collaborator/pages/GrammarPage";
 import VocabularyPage from "../features/Vocabulary/VocabularyPage";
 import PracticePage from "../features/Collaborator/pages/PracticePage";
 import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/VideoLecturePage";
-import ReportsPage from "../features/Collaborator/pages/ReportsPage";
 
 // Error pages
 import NotFound from "../components/NotFound";
@@ -35,6 +33,8 @@ import ServerError from "../components/ServerError";
 import Maintenance from "../components/Maintenance";
 import TopicPage from "../features/Collaborator/pages/TopicPage/TopicPage";
 import LandingPage from "../features/LandingPage/LandingPage";
+import DashboardPage from "../features/Dashboard/DashboardPage";
+import ReportsPage from "../features/Reports/ReportsPage";
 
 
 export const AppRouter = () => {
