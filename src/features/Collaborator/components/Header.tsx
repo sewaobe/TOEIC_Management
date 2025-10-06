@@ -24,6 +24,12 @@ import {
   LogoutOutlined,
   NotificationsOutlined,
 } from "@mui/icons-material"
+import authService from "../../../services/auth.service"
+import { useDispatch } from "react-redux"
+import { AppDispatch } from "../../../stores/store"
+import { logout } from "../../../stores/userSlice"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner";
 
 interface HeaderProps {
   toggleTheme: () => void
@@ -31,6 +37,8 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ toggleTheme, isDarkMode }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
 
@@ -42,11 +50,26 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, isDarkMode }) => {
     setAnchorEl(null)
   }
 
-  const handleLogout = () => {
-    handleClose()
-    // Add logout logic here
-    console.log("Logout clicked")
-  }
+  const handleLogout = async () => {
+    await toast.promise(
+      (async () => {
+        try {
+          await authService.logout();
+        } catch (error) {
+          console.error("Logout API error:", error);
+        } finally {
+          dispatch(logout());
+          navigate("/");
+        }
+      })(),
+      {
+        loading: "Đang đăng xuất...",
+        success: "Đăng xuất thành công 👋",
+        error: "Đăng xuất thất bại, vui lòng thử lại!",
+      }
+    );
+  };
+
 
   const handleProfile = () => {
     handleClose()

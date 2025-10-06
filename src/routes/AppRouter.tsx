@@ -5,8 +5,6 @@ import { RouteWrapper } from "./RouteWrapper";
 
 // Public pages
 import AuthPage from "../features/Auth/AuthPage";
-import HomePage from "../features/Home/HomePage";
-
 // Layout
 import CollaboratorLayout from "../features/Collaborator/CollaboratorLayout";
 
@@ -21,14 +19,12 @@ import CreateQuestionPage from "../features/Collaborator/pages/QuestionPage/Crea
 import EditQuestionPage from "../features/Collaborator/pages/QuestionPage/EditQuestionPage";
 
 // ===== Other pages =====
-import DashboardPage from "../features/Collaborator/pages/DashboardPage";
 import StudentsPage from "../features/Collaborator/pages/StudentsPage";
 import MinitestPage from "../features/Collaborator/pages/MinitestPage";
 import GrammarPage from "../features/Collaborator/pages/GrammarPage";
 import VocabularyPage from "../features/Vocabulary/VocabularyPage";
 import PracticePage from "../features/Collaborator/pages/PracticePage";
 import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/VideoLecturePage";
-import ReportsPage from "../features/Collaborator/pages/ReportsPage";
 
 // Error pages
 import NotFound from "../components/NotFound";
@@ -36,6 +32,10 @@ import Unauthorized from "../components/Unauthorized";
 import ServerError from "../components/ServerError";
 import Maintenance from "../components/Maintenance";
 import TopicPage from "../features/Collaborator/pages/TopicPage/TopicPage";
+import LandingPage from "../features/LandingPage/LandingPage";
+import DashboardPage from "../features/Dashboard/DashboardPage";
+import ReportsPage from "../features/Reports/ReportsPage";
+import CommentPage from "../features/Comment/CommentPage";
 
 
 export const AppRouter = () => {
@@ -46,25 +46,16 @@ export const AppRouter = () => {
         <Routes>
           {/* Public routes */}
           <Route
-            path="/auth"
-            element={<RouteWrapper element={<AuthPage />} />}
+            path="/"
+            element={<RouteWrapper element={<LandingPage />} />}
           />
+
           <Route
-            path="/login"
+            path="/auth"
             element={<RouteWrapper element={<AuthPage />} />}
           />
 
           {/* Private route - cộng tác viên */}
-          <Route
-            path="/home"
-            element={
-              <RouteWrapper
-                element={<HomePage />}
-                requireAuth={true}
-                guard={{ role: "collaborator" }}
-              />
-            }
-          />
           <Route
             path="/ctv"
             element={
@@ -112,6 +103,8 @@ export const AppRouter = () => {
 
             {/* ===== Reports ===== */}
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="report/error" element={<div> Report error </div>} />
+            <Route path="report/comment" element={<CommentPage/>} />
           </Route>
 
           {/* Private route - admin */}

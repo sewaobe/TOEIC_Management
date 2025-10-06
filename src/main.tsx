@@ -16,7 +16,6 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
     console.log("FETCH USER APP PROVIDER ==========")
     const fetchUserThunk = async() => {
       await dispatch(getUserThunk());
-
     }
     fetchUserThunk();
   }, [dispatch]);

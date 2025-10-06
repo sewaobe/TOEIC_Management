@@ -66,7 +66,12 @@ export const sidebarStructure = [
     ],
   },
   {
-    main: { text: "Báo cáo", icon: <BarChartOutlined />, to: "/ctv/reports" },
+    main: { text: "Báo cáo", icon: <BarChartOutlined /> },
+    subItems: [
+      { text: "Tổng quan", to: "/ctv/reports"},
+      { text: "Báo lỗi", to: "/ctv/report/error", badge: 2 },
+      { text: "Bình luận", to: "/ctv/report/comment", badge: 2 },
+    ]
   },
 ]
 
