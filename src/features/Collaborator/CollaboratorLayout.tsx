@@ -1,10 +1,9 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import { lightTheme, darkTheme } from "../../theme";
-import { initSocket } from "../../services/socket.service";
 import FloatingWindowManager from "../../components/global/FloatingWindowManager"; // ✅ import Manager
 
 
@@ -18,21 +17,6 @@ const CollaboratorLayout = () => {
   const toggleTheme = () => {
     setMode((prev) => (prev === "light" ? "dark" : "light"));
   };
-
-  useEffect(() => {
-    const socket = initSocket()
-
-    // ?? L?ng nghe s? ki?n receiveNotification t? server
-    socket?.on("receiveNotification", (data) => {
-      console.log("?? Notification received:", data)
-      // B?n c� th? show toast, snackbar, ho?c update redux store ? d�y
-    })
-
-    // D?n d?p event khi unmount
-    return () => {
-      socket?.off("receiveNotification")
-    }
-  }, [])
 
   return (
     <ThemeProvider theme={theme}>

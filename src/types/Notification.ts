@@ -1,6 +1,9 @@
 export interface Notification {
   id: string;
-  senderId: string;
+  senderId?: string;
+  recipientId?: string;
   message: string;
-  createdAt: Date;
+  type: "system" | "comment" | "error" | "chat" | "test";
+  isRead?: boolean;
+  createdAt: string;
 }

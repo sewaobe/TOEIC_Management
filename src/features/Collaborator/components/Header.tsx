@@ -30,6 +30,7 @@ import { AppDispatch } from "../../../stores/store"
 import { logout } from "../../../stores/userSlice"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner";
+import NotificationDropdown from "../../../components/NotificationDropdown"
 
 interface HeaderProps {
   toggleTheme: () => void
@@ -94,13 +95,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, isDarkMode }) => {
 
         {/* Right side - Actions and User Profile */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Tooltip title="Thông báo">
-            <IconButton color="default">
-              <Badge badgeContent={3} color="error">
-                <NotificationsOutlined />
-              </Badge>
-            </IconButton>
-          </Tooltip>
+          <NotificationDropdown />
 
           <Tooltip title="Chế độ Blitz">
             <IconButton color="primary">
