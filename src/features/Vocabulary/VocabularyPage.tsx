@@ -18,6 +18,9 @@ import { vocabularyService } from "../../services/vocabulary.service"
 import { EmptyState } from "../../components/EmptyState"
 import { TopicInfo } from "../../types/Topic"
 import { useFetchOne } from "../../hooks/useFetchOne"
+import { useDispatch } from "react-redux"
+import { AppDispatch } from "../../stores/store"
+import { hideFab, showFab } from "../../stores/fabSlice"
 
 
 
@@ -28,7 +31,7 @@ const VocabularyPage = () => {
     const location = useLocation();
     const url = location.pathname.split("/");
     const topicId = url[url.length - 1];
-
+    const dispatch = useDispatch<AppDispatch>();
     const {
         items: vocabulary,
         isLoading,
@@ -68,7 +71,7 @@ const VocabularyPage = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
     const [showDraftWarning, setShowDraftWarning] = useState(false)
 
-    const { formData, setFormData, resetForm, isDirty } = useVocabularyForm()
+    const { formData, setFormData, resetForm, isDirty, clearCurrentDraft } = useVocabularyForm()
 
     // thêm từ mới
     const handleAddNew = () => {
@@ -111,6 +114,7 @@ const VocabularyPage = () => {
         setOpenModal(false)
         resetForm()
         setEditingId(null);
+        clearCurrentDraft();
     }
 
     // FAB logic
@@ -136,6 +140,8 @@ const VocabularyPage = () => {
         if (el) {
             el.scrollTo({ top: 0, behavior: 'smooth' })
         }
+        dispatch(hideFab())
+        return () => { dispatch(showFab()) }
     }, [])
 
     if (isLoading) return <EmptyState mode="loading" />
@@ -186,7 +192,7 @@ const VocabularyPage = () => {
 
             {/* FAB thêm từ mới */}
             <AnimatePresence>
-                {!openModal && (
+                {!openModal && !isDirty && (
                     <motion.div
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
@@ -208,15 +214,6 @@ const VocabularyPage = () => {
                                 <Add sx={{ fontSize: 32 }} />
                             </Fab>
                         </Tooltip>
-                        {isDirty && (
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center"
-                            >
-                                <span className="text-white text-xs font-bold">!</span>
-                            </motion.div>
-                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

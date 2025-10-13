@@ -5,6 +5,11 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import { lightTheme, darkTheme } from "../../theme";
 import FloatingWindowManager from "../../components/global/FloatingWindowManager"; // ✅ import Manager
+import GlobalFab from "../../components/global/GlobalFab";
+import { useSelector } from "react-redux";
+import { RootState } from "../../stores/store";
+import { AnimatePresence, motion } from "framer-motion";
+import { FadeUp } from "../../components/animations/motionWrappers";
 
 
 const CollaboratorLayout = () => {
@@ -18,6 +23,7 @@ const CollaboratorLayout = () => {
     setMode((prev) => (prev === "light" ? "dark" : "light"));
   };
 
+  const visibleGlobalFab = useSelector((state: RootState) => state.fab.visible)
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -38,7 +44,13 @@ const CollaboratorLayout = () => {
           </Box>
         </Box>
         <FloatingWindowManager />
-
+        <AnimatePresence>
+          {visibleGlobalFab && (
+            <FadeUp>
+              <GlobalFab />
+            </FadeUp>
+          )}
+        </AnimatePresence>
       </Box>
     </ThemeProvider>
   );

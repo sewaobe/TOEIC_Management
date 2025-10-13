@@ -14,17 +14,14 @@ import {
   Tooltip,
 } from "@mui/material"
 import {
-  AddCircleOutline,
-  RemoveCircleOutline,
   Image as ImageIcon,
   AudioFile,
-  Minimize,
   Fullscreen,
   FullscreenExit,
   Close,
 } from "@mui/icons-material"
 import { motion } from "framer-motion"
-import { VocabularyExample, VocabularyForm } from "../../../types/Vocabulary"
+import {  VocabularyForm } from "../../../types/Vocabulary"
 
 interface Props {
   open: boolean
@@ -57,22 +54,6 @@ const AddEditVocabularyDialog = ({
   wordTypes,
   commonTags,
 }: Props) => {
-  const updateExample = (index: number, field: keyof VocabularyExample, value: string) => {
-    const newExamples = [...formData.examples]
-    newExamples[index][field] = value
-    onChange({ ...formData, examples: newExamples })
-  }
-
-  const addExample = () => {
-    onChange({ ...formData, examples: [...formData.examples, { en: "", vi: "" }] })
-  }
-
-  const removeExample = (index: number) => {
-    if (formData.examples.length > 1) {
-      onChange({ ...formData, examples: formData.examples.filter((_, i) => i !== index) })
-    }
-  }
-
   return (
     <Dialog
       open={open}

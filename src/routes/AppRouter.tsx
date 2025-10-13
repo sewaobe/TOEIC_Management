@@ -21,7 +21,7 @@ import EditQuestionPage from "../features/Collaborator/pages/QuestionPage/EditQu
 // ===== Other pages =====
 import StudentsPage from "../features/Collaborator/pages/StudentsPage";
 import MinitestPage from "../features/Collaborator/pages/MinitestPage";
-import GrammarPage from "../features/Collaborator/pages/GrammarPage";
+import GrammarPage from "../features/Grammar/GrammarPage";
 import VocabularyPage from "../features/Vocabulary/VocabularyPage";
 import PracticePage from "../features/Collaborator/pages/PracticePage";
 import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/VideoLecturePage";
@@ -36,6 +36,8 @@ import LandingPage from "../features/LandingPage/LandingPage";
 import DashboardPage from "../features/Dashboard/DashboardPage";
 import ReportsPage from "../features/Reports/ReportsPage";
 import CommentPage from "../features/Comment/CommentPage";
+import LessonManager from "../features/Grammar/LessonManager";
+import DictationPage from "../features/Dictation/DictationPage";
 
 
 export const AppRouter = () => {
@@ -88,6 +90,7 @@ export const AppRouter = () => {
 
             {/* ===== Grammar ===== */}
             <Route path="grammar" element={<GrammarPage />} />
+            <Route path="grammar/:id" element={<LessonManager />} />
 
             {/* ===== Topic ===== */}
             <Route path="topics" element={<TopicPage />} />
@@ -97,6 +100,9 @@ export const AppRouter = () => {
 
             {/* ===== Practice ===== */}
             <Route path="practice" element={<PracticePage />} />
+            <Route path="quiz" element={<PracticePage />} />
+            <Route path="dictation" element={<DictationPage />} />
+            <Route path="shadowing" element={<PracticePage />} />
 
             {/* ===== Video Lecture ===== */}
             <Route path="video-lectures" element={<VideoLecturePage />} />
@@ -104,7 +110,7 @@ export const AppRouter = () => {
             {/* ===== Reports ===== */}
             <Route path="reports" element={<ReportsPage />} />
             <Route path="report/error" element={<div> Report error </div>} />
-            <Route path="report/comment" element={<CommentPage/>} />
+            <Route path="report/comment" element={<CommentPage />} />
           </Route>
 
           {/* Private route - admin */}

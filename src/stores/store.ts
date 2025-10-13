@@ -3,6 +3,7 @@ import userReducer from './userSlice';
 import snackbarReducer from './snackbarSlice';
 import floatingWindowReducer from './floatingWindowSlice'; // ✅ thêm dòng này
 import reportFilterReducer from './reportFilterSlice';
+import fabReducer from './fabSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     snackbar: snackbarReducer,
     floatingWindow: floatingWindowReducer, // ✅ thêm reducer vào đây
     reportFilter: reportFilterReducer,
+    fab: fabReducer
   },
 });
 

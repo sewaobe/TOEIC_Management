@@ -40,7 +40,7 @@ export const RouteWrapper = ({ element, guard, requireAuth = false }: RouteWrapp
 
   // If user is authenticated and trying to access auth page, redirect to home
   if (isAuthenticated && (window.location.pathname === '/auth' || window.location.pathname === '/login')) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/ctv/dashboard" replace />;
   }
   // Nếu route có yêu cầu role mà user không hợp lệ -> redirect
   if (guard?.role && user?.role_name !== guard.role) {

@@ -17,6 +17,7 @@ const AuthPage = () => {
       if (cred) {
         const { user } = cred
         const idToken = await user.getIdToken()
+        console.log(idToken);
         loginWithGoogle(idToken)
       }
     } catch (err: any) {
