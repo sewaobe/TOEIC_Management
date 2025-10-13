@@ -38,6 +38,7 @@ import ReportsPage from "../features/Reports/ReportsPage";
 import CommentPage from "../features/Comment/CommentPage";
 import LessonManager from "../features/Grammar/LessonManager";
 import DictationPage from "../features/Dictation/DictationPage";
+import ShadowingPage from "../features/Shadowing/ShadowingPage";
 
 
 export const AppRouter = () => {
@@ -102,7 +103,7 @@ export const AppRouter = () => {
             <Route path="practice" element={<PracticePage />} />
             <Route path="quiz" element={<PracticePage />} />
             <Route path="dictation" element={<DictationPage />} />
-            <Route path="shadowing" element={<PracticePage />} />
+            <Route path="shadowing" element={<ShadowingPage />} />
 
             {/* ===== Video Lecture ===== */}
             <Route path="video-lectures" element={<VideoLecturePage />} />
