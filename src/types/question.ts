@@ -9,4 +9,5 @@ export interface Question {
   group_id: string;
   group_part: number;
   group_type: string;
+  canDelete: boolean;
 }

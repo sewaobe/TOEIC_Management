@@ -12,6 +12,7 @@ import CollaboratorLayout from "../features/Collaborator/CollaboratorLayout";
 import FullTestPage from "../features/Collaborator/pages/FullTestPage/FullTestPage";
 import CreateFullTestPage from "../features/Collaborator/pages/FullTestPage/FullTestCreatePage";
 import EditFullTestPage from "../features/Collaborator/pages/FullTestPage/EditFullTestPage";
+import DetailFullTestPage from "../features/Collaborator/pages/FullTestPage/FullTestDetailPage/index";
 
 // ===== Question Bank =====
 import QuestionPage from "../features/Collaborator/pages/QuestionPage/QuestionPage";
@@ -19,7 +20,7 @@ import CreateQuestionPage from "../features/Collaborator/pages/QuestionPage/Crea
 import EditQuestionPage from "../features/Collaborator/pages/QuestionPage/EditQuestionPage";
 
 // ===== Other pages =====
-import StudentsPage from "../features/Collaborator/pages/StudentsPage";
+import StudentsPage from "../features/Collaborator/pages/StudentsPage/index";
 import MinitestPage from "../features/Collaborator/pages/MinitestPage";
 import GrammarPage from "../features/Grammar/GrammarPage";
 import VocabularyPage from "../features/Vocabulary/VocabularyPage";
@@ -79,6 +80,7 @@ export const AppRouter = () => {
             <Route path="full-tests" element={<FullTestPage />} />
             <Route path="full-tests/create" element={<CreateFullTestPage />} />
             <Route path="full-tests/:id/edit" element={<EditFullTestPage />} />
+            <Route path="full-tests/:id/detail" element={<DetailFullTestPage />} />
 
             {/* ===== Mini Test ===== */}
             <Route path="minitests" element={<MinitestPage />} />

@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { useTheme } from "@mui/material/styles";
+import { useState, useEffect } from "react";
+import { useTheme, alpha } from "@mui/material/styles";
+import { Box, Typography, Collapse, Alert } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import GroupForm from "../GroupForm";
-import Collapse from "@mui/material/Collapse"; // 👈 thêm import
 
 interface Props {
   partIndex: number;
@@ -18,8 +19,17 @@ interface Props {
   ) => void;
   onRemoveQuestion?: (groupIndex: number, questionIndex: number) => void;
   onAddQuestion?: (groupIndex: number) => void;
-  onAddGroup?: () => void; // cho Part 7
-  onRemoveGroup?: (groupIndex: number) => void; // mới thêm
+  onAddGroup?: () => void;
+  onRemoveGroup?: (groupIndex: number) => void;
+  errorPath?: {
+    part: number;
+    group: number | null;
+    question: number | null;
+  } | null;
+  forceOpenGroup?: number | null;
+  forceErrorPart?: number | null;
+  errorParts?: number[];
+  errorGroups?: { part: number; group: number | null }[];
 }
 
 const MAX_PART7_QUESTIONS = 54;
@@ -34,111 +44,182 @@ const PartRenderer: React.FC<Props> = ({
   onAddQuestion,
   onAddGroup,
   onRemoveGroup,
+  errorPath,
+  forceOpenGroup,
+  forceErrorPart,
+  errorParts,
+  errorGroups,
 }) => {
   const theme = useTheme();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [hasValidated, setHasValidated] = useState(false);
 
-  const toggleAccordion = (idx: number) => {
+  // ✅ Bật validated khi có lỗi ở bất kỳ part nào
+  useEffect(() => {
+    // ✅ Khi validate xong bất kỳ part nào lỗi → bật toàn bộ validate
+    if (errorParts && errorParts.length > 0) {
+      setHasValidated(true);
+    }
+
+    // ✅ Nếu part này nằm trong danh sách lỗi → bật highlight icon
+    if (errorParts?.includes(partIndex)) {
+      setHasValidated(true);
+    }
+
+    // ✅ Mở group lỗi đầu tiên của part hiện tại
+    if (forceErrorPart === partIndex && forceOpenGroup != null) {
+      setOpenIndex(forceOpenGroup);
+    }
+  }, [errorParts, forceOpenGroup, forceErrorPart, partIndex]);
+
+  const toggleAccordion = (idx: number) =>
     setOpenIndex(openIndex === idx ? null : idx);
+
+  // ✅ Kiểm tra group thiếu media bắt buộc
+  const isGroupMissingRequired = (g: any): boolean => {
+    // 🔹 Part 1 cần cả audio & ảnh
+    if (partIndex === 1) return !g.audioUrl || !g.imagesUrl?.length;
+    // 🔹 Part 2–4 chỉ cần audio
+    if ([2, 3, 4].includes(partIndex)) return !g.audioUrl;
+    // 🔹 Part 6–7 cần ảnh
+    if ([6, 7].includes(partIndex)) return !g.imagesUrl?.length;
+    return false;
   };
 
-  // Đếm tổng số câu trong Part 7
+  // ✅ Mô tả yêu cầu từng Part
+  const renderRequiredInfo = (p: number) => {
+    switch (p) {
+      case 1:
+        return "Bắt buộc có Audio 🎧 và Hình ảnh 📸. Cần chọn đáp án đúng.";
+      case 2:
+        return "Bắt buộc có Audio 🎧. Cần chọn đáp án đúng.";
+      case 3:
+      case 4:
+        return "Bắt buộc có Audio 🎧. Ảnh tùy chọn. Cần nhập nội dung câu hỏi, 4 đáp án và chọn đáp án đúng.";
+      case 5:
+        return "Cần nhập nội dung câu hỏi, 4 đáp án và chọn đáp án đúng.";
+      case 6:
+        return "Bắt buộc có Hình ảnh 📸, nhập 4 đáp án và chọn đáp án đúng.";
+      case 7:
+        return "Bắt buộc có Hình ảnh 📸, nhập nội dung câu hỏi, 4 đáp án và chọn đáp án đúng. Tổng cộng phải đủ 54 câu.";
+      default:
+        return "";
+    }
+  };
+
+  // ✅ Tổng số câu hỏi part 7
   const totalQuestionsPart7 =
     partIndex === 7
-      ? groups.reduce((sum, g) => sum + (g.questions?.length || 0), 0)
+      ? groups.reduce((s, g) => s + (g.questions?.length || 0), 0)
       : 0;
 
+  // ✅ Part hiện tại có lỗi không
+  const isPartHasError =
+    hasValidated && (errorParts?.includes(partIndex) ?? false);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* ⚠️ Thông báo đầu Part */}
+      {isPartHasError && (
+        <Alert
+          severity="warning"
+          variant="outlined"
+          sx={{
+            mb: 2,
+            borderRadius: 1.5,
+            borderColor: alpha(theme.palette.warning.main, 0.5),
+            bgcolor: alpha(theme.palette.warning.light, 0.08),
+            color: theme.palette.text.primary,
+            fontWeight: 500,
+            "& .MuiAlert-icon": { color: theme.palette.warning.main },
+          }}
+        >
+          {renderRequiredInfo(partIndex)}
+        </Alert>
+      )}
+
+      {/* Danh sách group */}
       {groups.map((g, idx) => {
         const isOpen = openIndex === idx;
+        const isError =
+          hasValidated &&
+          errorGroups?.some((e) => e.part === partIndex && e.group === idx);
+
+        const isMissing = hasValidated && isGroupMissingRequired(g);
+
         return (
-          <div
+          <Box
             key={idx}
-            style={{
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 6,
+            id={`part-${partIndex}-group-${idx}`}
+            sx={{
+              border: `1px solid ${theme.palette.divider}`, // ✅ viền đen nhạt mặc định
+              borderRadius: 2,
               overflow: "hidden",
-              backgroundColor: theme.palette.background.paper,
-              color: theme.palette.text.primary,
+              bgcolor: theme.palette.background.paper,
+              transition: "all 0.3s ease",
             }}
           >
-            {/* Header */}
-            <div
+            {/* Header Group */}
+            <Box
               onClick={() => toggleAccordion(idx)}
-              style={{
+              sx={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                padding: "8px 16px",
+                px: 2,
+                py: 1.2,
                 cursor: "pointer",
-                userSelect: "none",
-                backgroundColor: isOpen
-                  ? theme.palette.action.hover
+                bgcolor: isOpen
+                  ? alpha(theme.palette.action.hover, 0.2)
                   : theme.palette.background.paper,
               }}
             >
-              {/* Title */}
-              <span
-                style={{
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.8,
                   flex: 1,
-                  fontWeight: 600,
-                  fontFamily: theme.typography.fontFamily,
                 }}
               >
-                Group {idx + 1}
-              </span>
+                {/* ⚠️ Chỉ hiện icon khi có lỗi */}
+                {hasValidated && (isError || isMissing) && (
+                  <WarningAmberIcon
+                    fontSize="small"
+                    sx={{ color: theme.palette.warning.main }}
+                  />
+                )}
+                <Typography sx={{ fontWeight: 600 }}>
+                  Group {idx + 1}
+                </Typography>
+              </Box>
 
-              {/* Action buttons */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {/* Mũi tên xuống (xoay lên khi mở) */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <ExpandMoreIcon
                   htmlColor={theme.palette.text.secondary}
                   sx={{
-                    display: "inline-flex",
-                    verticalAlign: "middle",
-                    alignSelf: "center",
                     transition: "transform 0.25s ease",
                     transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                   }}
                 />
-
-                {/* Nút xóa chỉ cho Part 7 */}
                 {partIndex === 7 && onRemoveGroup && (
-                  <button
+                  <DeleteIcon
+                    fontSize="small"
+                    htmlColor={theme.palette.error.main}
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveGroup(idx);
                     }}
-                    style={{
-                      padding: 4,
-                      borderRadius: 4,
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <DeleteIcon
-                      fontSize="small"
-                      htmlColor={theme.palette.error.main}
-                      sx={{
-                        display: "inline-flex",
-                        verticalAlign: "middle",
-                        alignSelf: "center",
-                      }}
-                    />
-                  </button>
+                    sx={{ cursor: "pointer" }}
+                  />
                 )}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            {/* Content với hiệu ứng Collapse */}
+            {/* Nội dung Group */}
             <Collapse in={isOpen} timeout="auto" unmountOnExit>
-              <div
-                style={{
-                  borderTop: `1px solid ${theme.palette.divider}`,
-                  padding: 16,
-                }}
+              <Box
+                sx={{ borderTop: `1px solid ${theme.palette.divider}`, p: 2 }}
               >
                 <GroupForm
                   groupIndex={idx}
@@ -150,45 +231,39 @@ const PartRenderer: React.FC<Props> = ({
                   onAddQuestion={onAddQuestion}
                   totalQuestionsPart7={totalQuestionsPart7}
                 />
-              </div>
+              </Box>
             </Collapse>
-          </div>
+          </Box>
         );
       })}
 
-      {/* Part 7 cho phép thêm group nếu chưa đủ 54 câu */}
+      {/* ➕ Giữ nguyên logic thêm group cho Part 7 */}
       {partIndex === 7 &&
         onAddGroup &&
         totalQuestionsPart7 < MAX_PART7_QUESTIONS - 1 && (
-          <div style={{ textAlign: "center", marginTop: 8 }}>
+          <Box sx={{ textAlign: "center", mt: 1 }}>
             <button
+              onClick={onAddGroup}
               style={{
                 padding: "6px 12px",
                 borderRadius: 6,
-                fontSize: 14,
-                fontWeight: 500,
                 border: `1px solid ${theme.palette.divider}`,
                 color: theme.palette.primary.main,
-                fontFamily: theme.typography.button?.fontFamily,
                 cursor: "pointer",
                 background: "transparent",
               }}
-              onClick={onAddGroup}
             >
               + Thêm Group mới
             </button>
-            <p
-              style={{
-                fontSize: 12,
-                marginTop: 4,
-                color: theme.palette.text.secondary,
-              }}
+            <Typography
+              variant="caption"
+              sx={{ display: "block", mt: 0.5, color: "text.secondary" }}
             >
               ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu)
-            </p>
-          </div>
+            </Typography>
+          </Box>
         )}
-    </div>
+    </Box>
   );
 };
 
