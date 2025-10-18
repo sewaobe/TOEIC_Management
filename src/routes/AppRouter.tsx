@@ -40,6 +40,7 @@ import CommentPage from "../features/Comment/CommentPage";
 import LessonManager from "../features/Grammar/LessonManager";
 import DictationPage from "../features/Dictation/DictationPage";
 import ShadowingPage from "../features/Shadowing/ShadowingPage";
+import LessonManagerPage from "../features/LessonManager/LessonManagerPage";
 
 
 export const AppRouter = () => {
@@ -90,6 +91,9 @@ export const AppRouter = () => {
             <Route path="questions" element={<QuestionPage />} />
             <Route path="questions/create" element={<CreateQuestionPage />} />
             <Route path="questions/:groupId/edit" element={<EditQuestionPage />} />
+
+            {/* ===== LessonManager ===== */}
+            <Route path="integrated-lessons" element={<LessonManagerPage />} />
 
             {/* ===== Grammar ===== */}
             <Route path="grammar" element={<GrammarPage />} />
