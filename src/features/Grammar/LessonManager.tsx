@@ -16,6 +16,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../../stores/store";
+import { hideFab, showFab } from "../../stores/fabSlice";
+import { EmptyState } from "../../components/EmptyState";
 
 // --- INTERFACES ---
 interface Example { en?: string; vi?: string; note?: string; }
@@ -90,6 +94,12 @@ function LessonPreview({ open, onClose, lesson }: LessonPreviewProps) {
       <DialogContent dividers>
         <Typography variant="subtitle1" color="text.secondary" gutterBottom>{lesson.summary}</Typography>
         <Stack spacing={3} mt={2}>
+          {lesson.sections.length === 0 &&
+            <EmptyState
+              mode="empty"
+              title="Chưa có section nào"
+              description="Hãy thêm section mới để bắt đầu."
+            />}
           {lesson.sections.map(section => (
             <Box key={section.id}>
               <Typography variant="h6" gutterBottom>{section.title}</Typography>
@@ -135,6 +145,8 @@ export default function LessonManager() {
     sections: [],
   });
 
+  const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
     if (!grammar) {
       console.log("⚠️ Không có state. Giả lập fetch theo id:", id);
@@ -145,6 +157,12 @@ export default function LessonManager() {
       });
     } else {
       console.log("🧩 Nhận từ GrammarPage:", grammar);
+    }
+
+    dispatch(hideFab());
+
+    return () => {
+      dispatch(showFab());
     }
   }, [grammar, id]);
 
@@ -279,6 +297,12 @@ export default function LessonManager() {
                 items={lesson.sections.map((s) => s.id)}
                 strategy={verticalListSortingStrategy}
               >
+                {lesson.sections.length === 0 &&
+                  <EmptyState
+                    mode="empty"
+                    title="Chưa có section nào"
+                    description="Hãy thêm section mới để bắt đầu."
+                  />}
                 <Box mt={3} display="flex" flexDirection="column" gap={2}>
                   {lesson.sections.map((section) => (
                     <SortableLessonSection

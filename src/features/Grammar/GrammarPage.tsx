@@ -1,7 +1,6 @@
 import {
   Box,
   Typography,
-  Button,
   Paper,
   Table,
   TableBody,
@@ -14,13 +13,18 @@ import {
   InputAdornment,
   Tooltip,
   useTheme,
+  Zoom,
+  Fab,
 } from "@mui/material";
-import { Add, Search, Edit, Delete } from "@mui/icons-material";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import { Search, Edit, Delete } from "@mui/icons-material";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GrammarModal, { GrammarFormData } from "./components/GrammarModal";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../../stores/store";
+import { hideFab, showFab } from "../../stores/fabSlice";
 
 export interface GrammarFormDataWithId extends GrammarFormData {
   id: number;
@@ -81,6 +85,16 @@ const GrammarPage = () => {
     navigate(`${item.id}`, { state: { grammar: item } });
   };
 
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(hideFab());
+
+    return () => {
+      dispatch(showFab());
+    }
+  }, [])
   return (
     <Box sx={{ p: 3, width: "100%", height: "100%", bgcolor: theme.palette.background.default }}>
       <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
@@ -107,11 +121,6 @@ const GrammarPage = () => {
             ),
           }}
         />
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button variant="contained" color="primary" startIcon={<Add />} onClick={handleAdd}>
-            Tạo mới
-          </Button>
-        </motion.div>
       </Box>
 
       {/* Bảng danh sách */}
@@ -173,6 +182,25 @@ const GrammarPage = () => {
         onConfirm={confirmDelete}
         itemTitle={deleteItem?.title}
       />
+      {/* Floating Add Button */}
+      <Zoom in unmountOnExit>
+        <Tooltip title="Thêm bài giảng ngữ pháp mới" arrow placement="left">
+          <Fab
+            color="primary"
+            onClick={handleAdd}
+            sx={{
+              position: "fixed",
+              bottom: 32,
+              right: 32,
+              backgroundColor: "#4f46e5",
+              "&:hover": { backgroundColor: "#4338ca" },
+              boxShadow: 6,
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        </Tooltip>
+      </Zoom>
     </Box>
   );
 };

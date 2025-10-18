@@ -83,7 +83,7 @@ export default function DictationPage() {
             if (modeFilter && r.display_mode !== modeFilter) return false;
             const q = query.trim().toLowerCase();
             if (!q) return true;
-            return r.topic.toLowerCase().includes(q) || r.transcript.toLowerCase().includes(q);
+            return r.title.toLowerCase().includes(q) || r.transcript.toLowerCase().includes(q);
         });
     }, [rows, query, levelFilter, modeFilter]);
 
@@ -92,7 +92,7 @@ export default function DictationPage() {
     // =============================
     const openCreate = () => {
         setEditing({
-            topic: "",
+            title: "",
             level: "A1",
             transcript: "",
             display_mode: "sentence",
@@ -171,7 +171,7 @@ export default function DictationPage() {
     if (loading) return <EmptyState mode="loading" />
 
     return (
-        <Box className="w-full h-full bg-gradient-to-b from-gray-50 to-gray-100 text-gray-900">
+        <Box className="w-full h-full">
             <Box className="max-w-6xl mx-auto p-5 space-y-5">
                 <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
                     Bài tập nghe chép chính tả
@@ -228,7 +228,7 @@ export default function DictationPage() {
                     <Table size="small">
                         <TableHead>
                             <TableRow className="bg-gray-50">
-                                <TableCell>Topic</TableCell>
+                                <TableCell>Title</TableCell>
                                 <TableCell>Level</TableCell>
                                 <TableCell>Duration</TableCell>
                                 <TableCell>Display</TableCell>
@@ -239,7 +239,7 @@ export default function DictationPage() {
                         <TableBody>
                             {filtered.map((r) => (
                                 <TableRow key={r._id} hover>
-                                    <TableCell>{r.topic}</TableCell>
+                                    <TableCell>{r.title}</TableCell>
                                     <TableCell>
                                         <Chip label={r.level} size="small" color="primary" variant="outlined" />
                                     </TableCell>

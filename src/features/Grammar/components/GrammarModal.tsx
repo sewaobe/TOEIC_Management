@@ -40,6 +40,8 @@ export default function GrammarModal({
     else setFormData({ title: "", level: "", status: "" });
   }, [initialData, open]);
 
+  
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
