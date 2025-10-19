@@ -33,14 +33,10 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { AnimatePresence } from "framer-motion";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "../../stores/store";
-import { hideFab, showFab } from "../../stores/fabSlice";
 import { Dictation } from "../../types/Dictation";
 import DictationModal from "./components/DictationModal";
 import { dictationService } from "../../services/dictation.service";
 import { EmptyState } from "../../components/EmptyState";
-import { parseArgs } from "util";
 
 
 // --------------------------
@@ -137,7 +133,6 @@ export default function DictationPage() {
         setToast({ open: true, msg: "Đã xoá bài nghe", sev: "success" });
     };
 
-    const dispatch = useDispatch<AppDispatch>();
 
     const fetchData = async (pageNum = 1, limit = rowsPerPage) => {
         try {
@@ -159,14 +154,6 @@ export default function DictationPage() {
         }
     };
 
-    useEffect(() => {
-        dispatch(hideFab());
-        fetchData();
-
-        return () => {
-            dispatch(showFab());
-        }
-    }, [])
 
     if (loading) return <EmptyState mode="loading" />
 

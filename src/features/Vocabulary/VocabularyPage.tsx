@@ -18,11 +18,6 @@ import { vocabularyService } from "../../services/vocabulary.service"
 import { EmptyState } from "../../components/EmptyState"
 import { TopicInfo } from "../../types/Topic"
 import { useFetchOne } from "../../hooks/useFetchOne"
-import { useDispatch } from "react-redux"
-import { AppDispatch } from "../../stores/store"
-import { hideFab, showFab } from "../../stores/fabSlice"
-
-
 
 const wordTypes = ["noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "interjection"]
 const commonTags = ["TOEIC", "Business", "Travel", "Daily Life", "Academic", "Technology", "Health", "Food"]
@@ -31,7 +26,6 @@ const VocabularyPage = () => {
     const location = useLocation();
     const url = location.pathname.split("/");
     const topicId = url[url.length - 1];
-    const dispatch = useDispatch<AppDispatch>();
     const {
         items: vocabulary,
         isLoading,
@@ -140,8 +134,6 @@ const VocabularyPage = () => {
         if (el) {
             el.scrollTo({ top: 0, behavior: 'smooth' })
         }
-        dispatch(hideFab())
-        return () => { dispatch(showFab()) }
     }, [])
 
     if (isLoading) return <EmptyState mode="loading" />

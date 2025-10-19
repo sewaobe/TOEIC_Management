@@ -41,6 +41,7 @@ import LessonManager from "../features/Grammar/LessonManager";
 import DictationPage from "../features/Dictation/DictationPage";
 import ShadowingPage from "../features/Shadowing/ShadowingPage";
 import LessonManagerPage from "../features/LessonManager/LessonManagerPage";
+import LessonManagerDetailPage from "../features/LessonManager/LessonManagerDetailPage";
 
 
 export const AppRouter = () => {
@@ -94,6 +95,7 @@ export const AppRouter = () => {
 
             {/* ===== LessonManager ===== */}
             <Route path="integrated-lessons" element={<LessonManagerPage />} />
+            <Route path="integrated-lessons/:id" element={<LessonManagerDetailPage />} />
 
             {/* ===== Grammar ===== */}
             <Route path="grammar" element={<GrammarPage />} />

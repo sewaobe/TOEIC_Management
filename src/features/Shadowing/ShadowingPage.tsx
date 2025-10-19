@@ -33,9 +33,6 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { AnimatePresence } from "framer-motion";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "../../stores/store";
-import { hideFab, showFab } from "../../stores/fabSlice";
 import { EmptyState } from "../../components/EmptyState";
 import { Shadowing } from "../../types/Shadowing";
 import { fmtTime, LEVELS } from "../Dictation/DictationPage";
@@ -129,8 +126,6 @@ export default function ShadowingPage() {
         setToast({ open: true, msg: "Đã xoá bài shadowing", sev: "success" });
     };
 
-    const dispatch = useDispatch<AppDispatch>();
-
     const fetchData = async (pageNum = 1, limit = rowsPerPage) => {
         try {
             setLoading(true);
@@ -151,14 +146,6 @@ export default function ShadowingPage() {
         }
     };
 
-    useEffect(() => {
-        dispatch(hideFab());
-        fetchData();
-
-        return () => {
-            dispatch(showFab());
-        }
-    }, [])
 
     if (loading) return <EmptyState mode="loading" />
 

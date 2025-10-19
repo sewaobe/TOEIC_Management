@@ -6,8 +6,10 @@ import { ActionItems, AttentionItem, ContentByStatus, KPIData, TopContentItem, W
 import DashboardActionSection from "./components/DashboardActionSection"
 import DashboardContentSection from "./components/DashboardContentSection"
 import DashboardChartsSection from "./components/DashboardChartSection"
-import { useSelector } from "react-redux"
-import { RootState } from "../../stores/store"
+import { useDispatch, useSelector } from "react-redux"
+import { AppDispatch, RootState } from "../../stores/store"
+import { useEffect } from "react"
+import { hideFab, showFab } from "../../stores/fabSlice"
 
 const kpiData: KPIData = {
   totalLearners: 2847,
@@ -60,6 +62,15 @@ const contentByStatus: ContentByStatus[] = [
 
 const DashboardPage = () => {
   const user = useSelector((state: RootState) => state.user.user);
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(showFab());
+
+    return () => {
+      dispatch(hideFab());
+    }
+  }, [dispatch])
   return (
     <Box
       className="p-6 w-full h-full overflow-auto"

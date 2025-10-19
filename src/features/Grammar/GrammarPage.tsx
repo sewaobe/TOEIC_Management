@@ -18,13 +18,10 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { Search, Edit, Delete } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GrammarModal, { GrammarFormData } from "./components/GrammarModal";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "../../stores/store";
-import { hideFab, showFab } from "../../stores/fabSlice";
 
 export interface GrammarFormDataWithId extends GrammarFormData {
   id: number;
@@ -86,15 +83,8 @@ const GrammarPage = () => {
   };
 
 
-  const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    dispatch(hideFab());
-
-    return () => {
-      dispatch(showFab());
-    }
-  }, [])
+ 
   return (
     <Box sx={{ p: 3, width: "100%", height: "100%", bgcolor: theme.palette.background.default }}>
       <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
