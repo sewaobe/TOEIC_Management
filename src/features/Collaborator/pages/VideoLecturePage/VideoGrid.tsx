@@ -1,5 +1,5 @@
 import { Box, Paper, Typography, Chip, Button, IconButton } from "@mui/material";
-import { Edit, MoreVert, PlayArrow, Delete } from "@mui/icons-material";
+import { Edit, PlayArrow, Delete } from "@mui/icons-material";
 import { VideoFile } from "./VideoLecturePageContent";
 
 interface Props {
@@ -17,12 +17,38 @@ export default function VideoGrid({ files, onPlay, onMenu, onEdit, onDelete }: P
         <Paper
           key={file.id}
           className="rounded-xl border hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-white flex flex-col"
-          sx={{ width: 280, flexShrink: 0 }}
+          sx={{ width: 280, flexShrink: 0, cursor: "grab" }}
+          draggable // ✅ Cho phép kéo
+          onDragStart={(e) => {
+            // ✅ Khi bắt đầu kéo: đính kèm thông tin video
+            e.dataTransfer.setData(
+              "video",
+              JSON.stringify({
+                id: file.id,
+                url: file.url,
+                title: file.title,
+                type: "VIDEO",
+              })
+            );
+            e.currentTarget.style.opacity = "0.6"; // Hiệu ứng đang kéo
+            e.currentTarget.style.transform = "scale(0.98)";
+          }}
+          onDragEnd={(e) => {
+            // ✅ Khi kết thúc kéo: khôi phục lại style
+            e.currentTarget.style.opacity = "1";
+            e.currentTarget.style.transform = "none";
+          }}
         >
           {/* Thumbnail */}
-          <Box className="relative cursor-pointer group overflow-hidden" onClick={() => onPlay(file.url)}>
+          <Box
+            className="relative cursor-pointer group overflow-hidden"
+            onClick={() => onPlay(file.url)}
+          >
             <img
-              src={file.thumbnail || "https://via.placeholder.com/280x180?text=No+Thumbnail"}
+              src={
+                file.thumbnail ||
+                "https://via.placeholder.com/280x180?text=No+Thumbnail"
+              }
               alt={file.title}
               className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"
             />

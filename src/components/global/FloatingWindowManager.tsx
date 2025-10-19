@@ -21,13 +21,14 @@ export default function FloatingWindowManager() {
       width="80vw"
       height="80vh"
       defaultFloating={true}
-      onClose={() => dispatch(closeVideoManager())} // ✅ khi bấm nút "X"
+      onClose={() => dispatch(closeVideoManager())}
       onFloatChange={(isFloat) => {
-        // ✅ nếu người dùng đóng từ icon (nếu cần đồng bộ)
         if (!isFloat) dispatch(closeVideoManager());
       }}
     >
-      <VideoLecturePageContent />
+      <div style={{ height: "100%", overflow: "auto", paddingBottom: "80px" }}>
+        <VideoLecturePageContent />
+      </div>
     </FloatingWindow>
   );
 }

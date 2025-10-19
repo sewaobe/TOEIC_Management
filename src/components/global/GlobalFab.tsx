@@ -20,6 +20,10 @@ import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { VocabularyDraftMap } from "../../hooks/useVocabularyForm";
 
+import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
+import { useDispatch } from "react-redux"; // dùng Redux
+import { openVideoManager } from "../../stores/floatingWindowSlice"; // action mở cửa sổ nổi
+
 function ActionIcon({
   children,
   showDot,
@@ -59,10 +63,16 @@ function ActionIcon({
 
 export default function GlobalFab() {
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
+
   const [open, setOpen] = React.useState(false);
 
   // 📦 lấy toàn bộ bản nháp
-  const [vocabDrafts, setVocabDrafts] = useLocalStorage<VocabularyDraftMap>("draft_vocab", {});
+  const [vocabDrafts, setVocabDrafts] = useLocalStorage<VocabularyDraftMap>(
+    "draft_vocab",
+    {}
+  );
   const [dictationDraft] = useLocalStorage<any>("draft_dictation", null);
 
   const vocabKeys = Object.keys(vocabDrafts || {});
@@ -127,6 +137,19 @@ export default function GlobalFab() {
       onClick: () => {
         setOpen(false);
         navigate("/dictation/new");
+      },
+    },
+    {
+      key: "video",
+      name: "Mở trình quản lý Video",
+      icon: (
+        <ActionIcon color="#22c55e">
+          <VideoLibraryIcon sx={{ color: "#22c55e" }} />
+        </ActionIcon>
+      ),
+      onClick: () => {
+        setOpen(false); // đóng menu FAB
+        dispatch(openVideoManager()); // 🚀 mở cửa sổ video qua Redux
       },
     },
   ];
