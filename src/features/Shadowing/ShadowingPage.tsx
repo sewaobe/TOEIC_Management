@@ -146,6 +146,9 @@ export default function ShadowingPage() {
         }
     };
 
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     if (loading) return <EmptyState mode="loading" />
 

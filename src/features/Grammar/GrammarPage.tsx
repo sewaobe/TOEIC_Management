@@ -348,6 +348,7 @@ export default function GrammarPage() {
                 title: editItem.title,
                 summary: editItem.summary,
                 part_type: editItem.part_type,
+                topic: editItem.topic,
                 status: editItem.status,
                 planned_completion_time: editItem.planned_completion_time || 0,
                 weight: editItem.weight || 0.1,

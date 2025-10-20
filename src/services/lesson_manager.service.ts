@@ -1,4 +1,5 @@
 import { LessonManager } from "../types/LessonManager";
+import { LessonManagerDetail } from "../types/LessonManagerDetail";
 import { PaginationResult } from "../types/PaginationResult";
 import axiosClient from "./axiosClient";
 
@@ -24,6 +25,10 @@ export const lessonManagerService = {
             data: res.data,
             pagination: res.meta
         };
+    },
+    getLessonManagerDetail: async (lessonManagerId: string): Promise<LessonManagerDetail> => {
+        const res = await axiosClient.get(`${BASE_URL}/${lessonManagerId}`);
+        return res.data;
     },
     createLessonManager: async (payload: Partial<LessonManager>): Promise<LessonManager> => {
         const res = await axiosClient.post(`${BASE_URL}/`, payload);

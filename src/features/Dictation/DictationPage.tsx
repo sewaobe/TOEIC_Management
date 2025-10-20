@@ -154,6 +154,10 @@ export default function DictationPage() {
         }
     };
 
+    useEffect(() => {
+        fetchData();
+    }, []);
+
 
     if (loading) return <EmptyState mode="loading" />
 

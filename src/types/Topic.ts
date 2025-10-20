@@ -1,6 +1,7 @@
 export interface Topic {
   id: string
   title: string
+  topic?: string[]
   description: string
   level: string
   wordCount: number

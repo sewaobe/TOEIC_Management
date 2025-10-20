@@ -7,9 +7,11 @@ import {
   Button,
   MenuItem,
   Box,
+  Autocomplete,
 } from "@mui/material";
 import { useState, useEffect, ChangeEvent } from "react";
 import { Lesson } from "../../../types/lesson"; // ✅ import type chung
+import { lessonManagerService } from "../../../services/lesson_manager.service";
 
 interface GrammarModalProps {
   open: boolean;
@@ -33,6 +35,21 @@ export default function GrammarModal({
     planned_completion_time: 0,
     weight: 0.1,
   });
+
+  const [topicTitles, setTopicTitles] = useState<{ id: string; title: string }[]>([]);
+  // Fetch dữ liệu tên chủ đề lessonManager
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const topics = await lessonManagerService.getAllTopicTitles();
+        setTopicTitles(topics);
+      } catch (error) {
+        console.error("Error fetching topics:", error);
+      }
+    };
+
+    fetchData();
+  }, [])
 
   // 🔄 Reset form khi mở / đóng modal
   useEffect(() => {
@@ -58,8 +75,8 @@ export default function GrammarModal({
       ...prev,
       [name]:
         name === "planned_completion_time" ||
-        name === "weight" ||
-        name === "part_type"
+          name === "weight" ||
+          name === "part_type"
           ? Number(value)
           : value,
     }));
@@ -104,6 +121,77 @@ export default function GrammarModal({
             fullWidth
             multiline
             minRows={2}
+          />
+
+          <Autocomplete
+            multiple
+            options={topicTitles}
+            getOptionLabel={(option) => option.title}
+            getOptionKey={(option) => option.id}
+            renderInput={(params) => (
+              <TextField {...params} label="Chủ đề bài học lý thuyết & ngữ pháp" placeholder="Chọn chủ đề" />
+            )}
+            value={topicTitles.filter(t => formData.topic?.includes(t.id))}
+            onChange={(event, newValue) => {
+              setFormData({
+                ...formData,
+                topic: newValue.map(item => item.id),
+              });
+            }}
+            sx={{
+              flex: 1,
+              '& .MuiAutocomplete-inputRoot': {
+                flexWrap: 'nowrap !important',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                scrollbarWidth: 'none',
+                maxWidth: "100%", // ✅ Giới hạn chiều ngang gọn gàng
+                '&::-webkit-scrollbar': {
+                  height: 6,
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: 'transparent',
+                  borderRadius: 3,
+                },
+                '&:hover::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#bbb', // Chỉ hiện khi hover
+                },
+                '& input': {
+                  minWidth: 120, // Giúp placeholder không bị ép
+                },
+              },
+              '& .MuiAutocomplete-tag': {
+                fontSize: '0.85rem',
+                backgroundColor: '#f1f3f4',
+                color: '#333',
+                borderRadius: '20px',
+                padding: '2px 8px',
+                marginRight: '4px',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  backgroundColor: '#e0e0e0',
+                },
+              },
+            }}
+            componentsProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, 4], // ✅ cách khung input 4px cho tự nhiên
+                    },
+                  },
+                ],
+              },
+              paper: {
+                sx: {
+                  borderRadius: 2,
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                  overflow: 'hidden',
+                },
+              },
+            }}
           />
 
           {/* Loại Part */}
