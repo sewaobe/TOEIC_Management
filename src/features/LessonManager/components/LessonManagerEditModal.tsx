@@ -131,7 +131,7 @@ const LessonManagerEditModal: React.FC<Props> = ({
                     </Box>
 
                     {preview && (
-                        <Box className="relative border rounded-lg overflow-hidden">
+                        <Box className="relative border rounded-lg overflow-hidden !my-2">
                             <img
                                 src={preview}
                                 alt="Preview"

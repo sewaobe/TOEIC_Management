@@ -36,3 +36,25 @@ export const getIconInfoByName = (iconName: string) => {
   const found = availableIcons.find((item) => item.name === iconName)
   return found || null
 }
+
+
+export const getIconComponentByName = (
+  iconName: string
+): { IconComponent: React.ElementType; bgColor: string } => {
+  const found = availableIcons.find(
+    (item) => item.name.toLowerCase() === iconName.toLowerCase()
+  );
+
+  if (found) {
+    return {
+      IconComponent: found.icon,
+      bgColor: found.bgColor,
+    };
+  }
+
+  // 🔹 Trường hợp không tìm thấy → fallback mặc định
+  return {
+    IconComponent: SchoolIcon,
+    bgColor: "bg-gray-50",
+  };
+};

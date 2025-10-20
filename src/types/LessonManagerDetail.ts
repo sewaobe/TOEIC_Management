@@ -1,66 +1,59 @@
-import { LessonManager } from "./LessonManager";
+import { LessonSection } from "./lesson";
+import { CERFLevel, LessonManager, PartType } from "./LessonManager";
 
-// Type definitions
-export interface Section {
-    id: string;
-    name: string;
+export interface LessonTrailer {
+    _id: string;
+    title: string;
+    part_type: PartType;
+    summary: string;
+    planned_completion_time: number;
+    sections_id: LessonSection[];
+}
+
+export interface VocabularyTopicTrailer {
+    _id: string;
+    title: string;
+    level: CERFLevel;
+    iconName: string;
+    vocabularies_id: {
+        _id: string;
+        word: string;
+        definition: string;
+    }[]
+}
+
+export interface DictationTrailer {
+    _id: string;
+    title: string;
+    part_type: PartType;
+    level: CERFLevel;
     duration: number;
+    transcript: string;
+    audio_url: string;
 }
 
-export interface Lesson {
-    id: string;
+export interface ShadowingTrailer {
+    _id: string;
     title: string;
+    part_type: PartType;
+    level: CERFLevel;
     duration: number;
-    sections: Section[];
+    transcript: string;
+    audio_url: string;
 }
 
-export interface VocabularyTopic {
-    id: string;
+export interface QuizTrailer {
+    _id: string;
     title: string;
-    word_count: number;
-    words: string[];
-}
-
-export interface DictationScript {
-    id: string;
-    text: string;
-}
-
-export interface Dictation {
-    id: string;
-    title: string;
-    difficulty: string;
-    scripts: DictationScript[];
-}
-
-export interface ShadowingSentence {
-    id: string;
-    line: string;
-}
-
-export interface Shadowing {
-    id: string;
-    title: string;
-    videoUrl: string;
-    sentences: ShadowingSentence[];
-}
-
-export interface QuizQuestion {
-    id: string;
-    question: string;
-}
-
-export interface Quiz {
-    id: string;
-    title: string;
-    questionCount: number;
-    questions: QuizQuestion[];
+    part_type: PartType;
+    level: CERFLevel;
+    planned_completion_time: number;
 }
 
 export interface LessonManagerDetail extends LessonManager {
-    topic_vocabulary_ids: VocabularyTopic[];
-    lesson_ids: Lesson[];
-    dictation_ids: Dictation[];
-    shadowing_ids: Shadowing[];
-    quiz_ids: Quiz[];
+    topic_vocabulary_ids: VocabularyTopicTrailer[];
+    lesson_ids: LessonTrailer[];
+    dictation_ids: DictationTrailer[];
+    shadowing_ids: ShadowingTrailer[];
+    quiz_ids: QuizTrailer[];
 }
