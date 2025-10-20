@@ -7,7 +7,8 @@ export type Timing = {
 };
 export type Dictation = {
     _id?: string;
-    topic: string;
+    topic?: string[];
+    title: string;
     part_type?: number;
     level: string;
     transcript: string;

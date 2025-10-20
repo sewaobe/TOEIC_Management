@@ -49,7 +49,10 @@ export default function GrammarModal({
   }, [initialData, open]);
 
   // 🖋️ Xử lý thay đổi input
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -60,6 +63,7 @@ export default function GrammarModal({
           ? Number(value)
           : value,
     }));
+    console.log(formData.part_type)
   };
 
   // 💾 Gửi dữ liệu lên cha

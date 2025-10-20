@@ -1,7 +1,6 @@
 import {
   Box,
   Typography,
-  Button,
   Paper,
   Table,
   TableBody,
@@ -19,6 +18,9 @@ import {
   Select,
   Pagination,
   Stack,
+  Button,
+  Fab,
+  Zoom,
 } from "@mui/material";
 import { Add, Search, Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
@@ -30,12 +32,13 @@ import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import lessonService from "../../services/lesson.service";
 import { Lesson } from "../../types/lesson";
 
+// 🏷️ Hàm hiển thị trạng thái có màu
 const renderStatusLabel = (status?: string) => {
   const colorMap: Record<string, string> = {
-    draft: "#9e9e9e", // xám
-    pending: "#ff9800", // cam
-    approved: "#4caf50", // xanh lá
-    rejected: "#f44336", // đỏ
+    draft: "#9e9e9e",
+    pending: "#ff9800",
+    approved: "#4caf50",
+    rejected: "#f44336",
   };
   const labelMap: Record<string, string> = {
     draft: "Nháp",
@@ -61,13 +64,14 @@ export default function GrammarPage() {
   const theme = useTheme();
   const navigate = useNavigate();
 
+  // 🧩 State cơ bản
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [editItem, setEditItem] = useState<Lesson | null>(null);
   const [deleteItem, setDeleteItem] = useState<Lesson | null>(null);
 
-  // ⚙️ Bộ lọc và phân trang
+  // ⚙️ Bộ lọc & phân trang
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -76,13 +80,13 @@ export default function GrammarPage() {
   const [status, setStatus] = useState("");
   const [partType, setPartType] = useState<number | "">("");
 
-  // 🕓 Debounce 500ms cho ô tìm kiếm
+  // 🕓 Debounce 500ms cho tìm kiếm
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // 🟢 Lấy danh sách
+  // 🟢 Fetch danh sách bài học
   const fetchLessons = async () => {
     try {
       setLoading(true);
@@ -97,7 +101,7 @@ export default function GrammarPage() {
       const data = res.data;
       if (data?.items) {
         setLessons(data.items);
-        setTotalPages(data.totalPages);
+        setTotalPages(data.totalPages || 1);
       } else {
         setLessons([]);
         setTotalPages(1);
@@ -119,14 +123,14 @@ export default function GrammarPage() {
     setOpenModal(true);
   };
 
-  // ✏️ Sửa cơ bản
+  // ✏️ Sửa
   const handleEdit = (item: Lesson, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditItem(item);
     setOpenModal(true);
   };
 
-  // 💾 Lưu (tạo mới hoặc sửa cơ bản)
+  // 💾 Lưu (tạo mới hoặc sửa)
   const handleSave = async (formData: Partial<Lesson>) => {
     try {
       if (editItem && editItem._id) {
@@ -183,10 +187,10 @@ export default function GrammarPage() {
       <Stack
         direction="row"
         alignItems="center"
-        justifyContent="space-between" // 👈 Chia trái-phải
+        justifyContent="space-between"
         mb={2}
       >
-        {/* Nhóm bên trái: Tìm kiếm + Lọc */}
+        {/* Nhóm bên trái */}
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
             variant="outlined"
@@ -198,7 +202,7 @@ export default function GrammarPage() {
               bgcolor: theme.palette.background.paper,
               borderRadius: 1,
               boxShadow: 1,
-              width: "35%",
+              width: 260,
             }}
             InputProps={{
               startAdornment: (
@@ -245,18 +249,13 @@ export default function GrammarPage() {
 
         {/* Nhóm bên phải: Nút tạo mới */}
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleAdd}
-            sx={{ minWidth: 120 }}
-          >
+          <Button variant="contained" startIcon={<Add />} onClick={handleAdd}>
             Tạo mới
           </Button>
         </motion.div>
       </Stack>
 
-      {/* 📋 Danh sách bài học */}
+      {/* 📋 Danh sách */}
       <Paper sx={{ p: 2, borderRadius: 2, boxShadow: 2 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
@@ -292,7 +291,6 @@ export default function GrammarPage() {
                       <TableCell>{item.title}</TableCell>
                       <TableCell>Part {item.part_type}</TableCell>
                       <TableCell>{renderStatusLabel(item.status)}</TableCell>
-
                       <TableCell>
                         {item.created_at
                           ? new Date(item.created_at).toLocaleDateString(
@@ -339,7 +337,7 @@ export default function GrammarPage() {
         )}
       </Paper>
 
-      {/* ✏️ Modal Thêm / Sửa */}
+      {/* ✏️ Modal thêm / sửa */}
       <GrammarModal
         open={openModal}
         onClose={() => setOpenModal(false)}
@@ -358,13 +356,33 @@ export default function GrammarPage() {
         }
       />
 
-      {/* ❌ Modal Xác nhận xóa */}
+      {/* ❌ Modal xóa */}
       <ConfirmDeleteModal
         open={!!deleteItem}
         onClose={() => setDeleteItem(null)}
         onConfirm={confirmDelete}
         itemTitle={deleteItem?.title}
       />
+
+      {/* ⚡ Floating Add Button */}
+      <Zoom in unmountOnExit>
+        <Tooltip title="Thêm bài giảng ngữ pháp mới" arrow placement="left">
+          <Fab
+            color="primary"
+            onClick={handleAdd}
+            sx={{
+              position: "fixed",
+              bottom: 32,
+              right: 32,
+              backgroundColor: "#4f46e5",
+              "&:hover": { backgroundColor: "#4338ca" },
+              boxShadow: 6,
+            }}
+          >
+            <Add />
+          </Fab>
+        </Tooltip>
+      </Zoom>
     </Box>
   );
 }

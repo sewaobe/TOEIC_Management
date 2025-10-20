@@ -29,6 +29,7 @@ import {
     Stack,
     Tabs,
     Tab,
+    Autocomplete,
 } from "@mui/material";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import HeadphonesOutlinedIcon from "@mui/icons-material/HeadphonesOutlined";
@@ -49,6 +50,7 @@ import { uploadToCloudinary } from "../../../services/cloudinary.service";
 import { whisperService } from "../../../services/whisper.service";
 import { Timing } from "../../../types/Dictation";
 import { fmtTime, LEVELS, PART_TYPES } from "../../Dictation/DictationPage";
+import { lessonManagerService } from "../../../services/lesson_manager.service";
 
 
 export default function ShadowingModal({
@@ -71,6 +73,7 @@ export default function ShadowingModal({
     const [confirmExit, setConfirmExit] = useState(false);
     const [controller, setController] = useState<AbortController | null>(null);
     const [taskId, setTaskId] = useState<string | null>(null);
+    const [topicTitles, setTopicTitles] = useState<{ id: string; title: string }[]>([]);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -100,12 +103,29 @@ export default function ShadowingModal({
         };
     }, [open, activeTab, form.timings]);
 
+    // Fetch dữ liệu tên chủ đề lessonManager
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const topics = await lessonManagerService.getAllTopicTitles();
+                setTopicTitles(topics);
+            } catch (error) {
+                console.error("Error fetching topics:", error);
+            }
+        };
+
+        fetchData();
+    }, [])
+
     // ---------------------
     // FUNCTIONS
     // ---------------------
     const handleSave = () => {
-        if (!form.topic?.trim()) {
-            setError("Vui lòng nhập chủ đề bài nghe");
+        if (!form.title.trim()) {
+            setError("Vui lòng nhập tiêu đề bài nghe");
+            return;
+        } else if (!form.transcript.trim()) {
+            setError("Vui lòng nhập transcript bài nghe");
             return;
         }
         onSave({ ...form, updated_at: new Date().toISOString() });
@@ -210,7 +230,7 @@ export default function ShadowingModal({
     const fillSample = () => {
         setForm((p) => ({
             ...p,
-            topic: p.topic || "Reception Dialogue",
+            title: p.title || "Reception Dialogue",
             level: p.level || "A1",
             part_type: p.part_type || 1,
             transcript:
@@ -336,11 +356,10 @@ export default function ShadowingModal({
                                     </Typography>
                                     <Box className="space-y-5 bg-gray-50 p-5 rounded-2xl">
                                         <TextField
-                                            label="Chủ đề bài nghe"
+                                            label="Tiêu đề bài nghe (Title)"
                                             fullWidth
-                                            value={form.topic}
-                                            onChange={(e) => setForm({ ...form, topic: e.target.value })}
-                                            placeholder="Ví dụ: Office Announcement..."
+                                            value={form.title}
+                                            onChange={(e) => setForm({ ...form, title: e.target.value })}
                                         />
                                         <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
                                             <TextField
@@ -360,7 +379,7 @@ export default function ShadowingModal({
                                                 select
                                                 label="Loại part (Part type)"
                                                 className="w-full sm:w-48"
-                                                value={String(form.part_type || "")} // 👈 ép kiểu về string
+                                                value={String(form.part_type || "")}
                                                 onChange={(e) => setForm({ ...form, part_type: Number(e.target.value) })}
                                             >
                                                 {PART_TYPES.map((part) => (
@@ -369,6 +388,75 @@ export default function ShadowingModal({
                                                     </MenuItem>
                                                 ))}
                                             </TextField>
+                                            <Autocomplete
+                                                multiple
+                                                options={topicTitles}
+                                                getOptionLabel={(option) => option.title}
+                                                renderInput={(params) => (
+                                                    <TextField {...params} label="Chủ đề bài nghe" placeholder="Chọn chủ đề" />
+                                                )}
+                                                value={topicTitles.filter(t => form.topic?.includes(t.id))}
+                                                onChange={(event, newValue) => {
+                                                    setForm({
+                                                        ...form,
+                                                        topic: newValue.map(item => item.id),
+                                                    });
+                                                }}
+                                                sx={{
+                                                    flex: 1,
+                                                    '& .MuiAutocomplete-inputRoot': {
+                                                        flexWrap: 'nowrap !important',
+                                                        overflowX: 'auto',
+                                                        overflowY: 'hidden',
+                                                        scrollbarWidth: 'none',
+                                                        maxWidth: 305, // ✅ Giới hạn chiều ngang gọn gàng
+                                                        '&::-webkit-scrollbar': {
+                                                            height: 6,
+                                                        },
+                                                        '&::-webkit-scrollbar-thumb': {
+                                                            backgroundColor: 'transparent',
+                                                            borderRadius: 3,
+                                                        },
+                                                        '&:hover::-webkit-scrollbar-thumb': {
+                                                            backgroundColor: '#bbb', // Chỉ hiện khi hover
+                                                        },
+                                                        '& input': {
+                                                            minWidth: 120, // Giúp placeholder không bị ép
+                                                        },
+                                                    },
+                                                    '& .MuiAutocomplete-tag': {
+                                                        fontSize: '0.85rem',
+                                                        backgroundColor: '#f1f3f4',
+                                                        color: '#333',
+                                                        borderRadius: '20px',
+                                                        padding: '2px 8px',
+                                                        marginRight: '4px',
+                                                        transition: 'all 0.2s',
+                                                        '&:hover': {
+                                                            backgroundColor: '#e0e0e0',
+                                                        },
+                                                    },
+                                                }}
+                                                componentsProps={{
+                                                    popper: {
+                                                        modifiers: [
+                                                            {
+                                                                name: 'offset',
+                                                                options: {
+                                                                    offset: [0, 4], // ✅ cách khung input 4px cho tự nhiên
+                                                                },
+                                                            },
+                                                        ],
+                                                    },
+                                                    paper: {
+                                                        sx: {
+                                                            borderRadius: 2,
+                                                            boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                                                            overflow: 'hidden',
+                                                        },
+                                                    },
+                                                }}
+                                            />
                                             <Box className="flex-1">
                                                 <Typography variant="caption" className="text-gray-600 mb-1 block">
                                                     Chế độ hiển thị

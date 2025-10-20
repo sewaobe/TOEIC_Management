@@ -6,7 +6,7 @@ interface FabState {
 }
 
 const initialState: FabState = {
-    visible: true,
+    visible: false,
     mode: "global",
 };
 
