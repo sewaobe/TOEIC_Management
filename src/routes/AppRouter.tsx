@@ -24,7 +24,12 @@ import StudentsPage from "../features/Collaborator/pages/StudentsPage/index";
 import MinitestPage from "../features/Collaborator/pages/MinitestPage";
 import GrammarPage from "../features/Grammar/GrammarPage";
 import VocabularyPage from "../features/Vocabulary/VocabularyPage";
-import PracticePage from "../features/Collaborator/pages/PracticePage";
+
+import QuizListPage from "../features/Collaborator/pages/QuizPage/QuizListPage";
+import CreateQuizPage from "../features/Collaborator/pages/QuizPage/CreateQuizPage";
+import EditQuizPage from "../features/Collaborator/pages/QuizPage/EditQuizPage";
+import QuizDetailPage from "../features/Collaborator/pages/QuizPage/QuizDetailPage";
+
 import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/VideoLecturePage";
 
 // Error pages
@@ -42,7 +47,6 @@ import DictationPage from "../features/Dictation/DictationPage";
 import ShadowingPage from "../features/Shadowing/ShadowingPage";
 import LessonManagerPage from "../features/LessonManager/LessonManagerPage";
 import LessonManagerDetailPage from "../features/LessonManager/LessonManagerDetailPage";
-
 
 export const AppRouter = () => {
   return (
@@ -82,7 +86,10 @@ export const AppRouter = () => {
             <Route path="full-tests" element={<FullTestPage />} />
             <Route path="full-tests/create" element={<CreateFullTestPage />} />
             <Route path="full-tests/:id/edit" element={<EditFullTestPage />} />
-            <Route path="full-tests/:id/detail" element={<DetailFullTestPage />} />
+            <Route
+              path="full-tests/:id/detail"
+              element={<DetailFullTestPage />}
+            />
 
             {/* ===== Mini Test ===== */}
             <Route path="minitests" element={<MinitestPage />} />
@@ -91,11 +98,17 @@ export const AppRouter = () => {
             {/* ===== Question Bank ===== */}
             <Route path="questions" element={<QuestionPage />} />
             <Route path="questions/create" element={<CreateQuestionPage />} />
-            <Route path="questions/:groupId/edit" element={<EditQuestionPage />} />
+            <Route
+              path="questions/:groupId/edit"
+              element={<EditQuestionPage />}
+            />
 
             {/* ===== LessonManager ===== */}
             <Route path="integrated-lessons" element={<LessonManagerPage />} />
-            <Route path="integrated-lessons/:id" element={<LessonManagerDetailPage />} />
+            <Route
+              path="integrated-lessons/:id"
+              element={<LessonManagerDetailPage />}
+            />
 
             {/* ===== Grammar ===== */}
             <Route path="grammar" element={<GrammarPage />} />
@@ -108,8 +121,12 @@ export const AppRouter = () => {
             <Route path="topics/:id/" element={<VocabularyPage />} />
 
             {/* ===== Practice ===== */}
-            <Route path="practice" element={<PracticePage />} />
-            <Route path="quiz" element={<PracticePage />} />
+            <Route path="practice" element={<QuizListPage />} />
+            <Route path="quiz" element={<QuizListPage />} />
+            <Route path="quiz/create" element={<CreateQuizPage />} />
+            <Route path="quiz/edit/:id" element={<EditQuizPage />} />
+            <Route path="quiz/:id/detail" element={<QuizDetailPage />} />
+
             <Route path="dictation" element={<DictationPage />} />
             <Route path="shadowing" element={<ShadowingPage />} />
 

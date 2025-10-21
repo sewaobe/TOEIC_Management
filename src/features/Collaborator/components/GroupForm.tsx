@@ -27,7 +27,8 @@ interface Props {
   ) => void;
   onRemoveQuestion?: (groupIndex: number, questionIndex: number) => void;
   onAddQuestion?: (groupIndex: number) => void;
-  totalQuestionsPart7?: number; // ✅ thêm prop tổng số câu toàn Part 7
+  totalQuestionsPart7?: number;
+  isQuiz?: boolean; // 🆕 cho phép quiz thêm câu hỏi tự do
 }
 
 const MAX_PART7_QUESTIONS = 54;
@@ -41,25 +42,43 @@ const GroupForm: React.FC<Props> = ({
   onRemoveQuestion,
   onAddQuestion,
   totalQuestionsPart7 = 0,
+  isQuiz = false,
 }) => {
-  // Xóa 1 ảnh khỏi danh sách
+  // 🧹 Xóa 1 ảnh khỏi danh sách
   const handleRemoveImage = (idx: number) => {
     const newList = group.imagesUrl.filter((_: any, i: number) => i !== idx);
     onChange(groupIndex, "imagesUrl", newList);
   };
 
-  // Xóa audio
+  // 🧹 Xóa audio
   const handleRemoveAudio = () => {
     onChange(groupIndex, "audioUrl", null);
   };
 
   return (
-    <Box sx={{ border: "1px solid #ddd", borderRadius: 2, p: 2, mb: 3 }}>
+    <Box
+      sx={{
+        border: "1px solid #ddd",
+        borderRadius: 2,
+        p: 2,
+        mb: 3,
+        bgcolor: "#fafafa",
+      }}
+    >
       {/* Upload audio + ảnh */}
       <Grid container spacing={2} mb={2}>
         {/* Upload Audio */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Button variant="contained" component="label" fullWidth>
+          <Button
+            variant="contained"
+            component="label"
+            fullWidth
+            sx={{
+              bgcolor: "#2563eb",
+              ":hover": { bgcolor: "#1e40af" },
+              fontWeight: 600,
+            }}
+          >
             UPLOAD AUDIO
             <input
               type="file"
@@ -68,7 +87,7 @@ const GroupForm: React.FC<Props> = ({
               onChange={async (e) => {
                 if (e.target.files && e.target.files[0]) {
                   const uploaded = await uploadToCloudinary(e.target.files[0]);
-                  onChange(groupIndex, "audioUrl", uploaded); // { url, type: "AUDIO" }
+                  onChange(groupIndex, "audioUrl", uploaded);
                 }
               }}
             />
@@ -77,7 +96,16 @@ const GroupForm: React.FC<Props> = ({
 
         {/* Upload Images */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Button variant="contained" component="label" fullWidth>
+          <Button
+            variant="contained"
+            component="label"
+            fullWidth
+            sx={{
+              bgcolor: "#2563eb",
+              ":hover": { bgcolor: "#1e40af" },
+              fontWeight: 600,
+            }}
+          >
             UPLOAD IMAGES
             <input
               type="file"
@@ -89,7 +117,7 @@ const GroupForm: React.FC<Props> = ({
                   const uploadedList: any[] = [...(group.imagesUrl || [])];
                   for (const file of Array.from(e.target.files)) {
                     const uploaded = await uploadToCloudinary(file);
-                    uploadedList.push(uploaded); // { url, type: "IMAGE" }
+                    uploadedList.push(uploaded);
                   }
                   onChange(groupIndex, "imagesUrl", uploadedList);
                 }
@@ -192,6 +220,7 @@ const GroupForm: React.FC<Props> = ({
             multiline
             rows={2}
             value={group.transcriptEnglish || ""}
+            sx={{ "& .MuiInputBase-root": { bgcolor: "white" } }}
             onChange={(e) =>
               onChange(groupIndex, "transcriptEnglish", e.target.value)
             }
@@ -204,6 +233,7 @@ const GroupForm: React.FC<Props> = ({
             multiline
             rows={2}
             value={group.transcriptTranslation || ""}
+            sx={{ "& .MuiInputBase-root": { bgcolor: "white" } }}
             onChange={(e) =>
               onChange(groupIndex, "transcriptTranslation", e.target.value)
             }
@@ -235,20 +265,18 @@ const GroupForm: React.FC<Props> = ({
                 sx={{ flexGrow: 1, mr: 1 }}
               />
 
-              {group.part === 7 &&
-                onRemoveQuestion &&
-                group.questions.length > 2 && (
-                  <IconButton
-                    color="error"
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveQuestion(groupIndex, qIdx);
-                    }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                )}
+              {onRemoveQuestion && (
+                <IconButton
+                  color="error"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveQuestion(groupIndex, qIdx);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              )}
             </Box>
           </AccordionSummary>
 
@@ -272,25 +300,29 @@ const GroupForm: React.FC<Props> = ({
         </Accordion>
       ))}
 
-      {/* Nút thêm câu hỏi cho Part 7 */}
-      {group.part === 7 && (
+      {/* ➕ Nút thêm câu hỏi */}
+      {(isQuiz || group.part === 7) && (
         <Box textAlign="center" mt={2}>
           <Button
             variant="outlined"
             onClick={() => onAddQuestion && onAddQuestion(groupIndex)}
             disabled={
-              group.questions.length >= 5 ||
-              totalQuestionsPart7 >= MAX_PART7_QUESTIONS
+              !isQuiz &&
+              (group.questions.length >= 5 ||
+                totalQuestionsPart7 >= MAX_PART7_QUESTIONS)
             }
           >
-            + Add Question
+            + Thêm câu hỏi
           </Button>
-          <Typography
-            variant="caption"
-            sx={{ display: "block", mt: 1, color: "text.secondary" }}
-          >
-            {/* ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu trong Part 7) */}
-          </Typography>
+
+          {!isQuiz && (
+            <Typography
+              variant="caption"
+              sx={{ display: "block", mt: 1, color: "text.secondary" }}
+            >
+              ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu trong Part 7)
+            </Typography>
+          )}
         </Box>
       )}
     </Box>
