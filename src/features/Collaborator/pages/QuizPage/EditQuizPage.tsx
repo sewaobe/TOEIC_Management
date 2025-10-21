@@ -10,7 +10,11 @@ import {
   Divider,
   Autocomplete,
   CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
+import { ExpandMore } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import quizService from "./services/quiz.service";
@@ -21,8 +25,6 @@ import GroupForm from "../../components/GroupForm";
 export default function EditQuizPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  // 🧠 ViewModel phải được khởi tạo ở đầu component
   const vm = useQuizBuilderViewModel();
 
   const [loading, setLoading] = useState(true);
@@ -192,11 +194,15 @@ export default function EditQuizPage() {
               options={topicOptions}
               getOptionLabel={(option) => option.title}
               value={topicOptions.filter((t) => form.topic.includes(t.id))}
-              onChange={(event, newValue) =>
+              onChange={(_, newValue) =>
                 handleChange("topic", newValue.map((t) => t.id))
               }
               renderInput={(params) => (
-                <TextField {...params} label="Chủ đề (Topic)" placeholder="Chọn 1 hoặc nhiều chủ đề" />
+                <TextField
+                  {...params}
+                  label="Chủ đề (Topic)"
+                  placeholder="Chọn 1 hoặc nhiều chủ đề"
+                />
               )}
               sx={{ bgcolor: "white" }}
             />
@@ -230,29 +236,56 @@ export default function EditQuizPage() {
         </Grid>
       </Paper>
 
-      {/* 🔸 Danh sách nhóm câu hỏi */}
+      {/* 🔸 Danh sách nhóm câu hỏi (Accordion) */}
       {vm.groups.map((g: any, gi: number) => (
-        <Box key={gi} mb={3}>
-          <GroupForm
-            groupIndex={gi}
-            group={g}
-            tagOptions={["grammar", "vocabulary"]}
-            onChange={vm.updateGroup}
-            onChangeQuestion={vm.updateQuestion}
-            onAddQuestion={vm.addQuestion}
-            onRemoveQuestion={vm.removeQuestion}
-            isQuiz={true}
-          />
-          <Button
-            color="error"
-            variant="outlined"
-            size="small"
-            onClick={() => vm.removeGroup(gi)}
-            sx={{ mt: 1 }}
-          >
-            🗑️ Xóa nhóm {gi + 1}
-          </Button>
-        </Box>
+        <Paper
+          key={gi}
+          sx={{
+            mb: 2,
+            borderRadius: 2,
+            overflow: "hidden",
+            border: "1px solid #e0e0e0",
+          }}
+        >
+          <Accordion defaultExpanded>
+            <AccordionSummary
+              expandIcon={<ExpandMore />}
+              sx={{
+                bgcolor: "#f9fafb",
+                "& .MuiAccordionSummary-content": {
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                },
+              }}
+            >
+              <Typography fontWeight={600}>Nhóm {gi + 1}</Typography>
+              <Button
+                color="error"
+                size="small"
+                variant="outlined"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  vm.removeGroup(gi);
+                }}
+              >
+                🗑️ Xóa
+              </Button>
+            </AccordionSummary>
+
+            <AccordionDetails sx={{ bgcolor: "#fff" }}>
+              <GroupForm
+                groupIndex={gi}
+                group={g}
+                tagOptions={["grammar", "vocabulary"]}
+                onChange={vm.updateGroup}
+                onChangeQuestion={vm.updateQuestion}
+                onAddQuestion={vm.addQuestion}
+                onRemoveQuestion={vm.removeQuestion}
+                isQuiz={true}
+              />
+            </AccordionDetails>
+          </Accordion>
+        </Paper>
       ))}
 
       <Divider sx={{ my: 3 }} />

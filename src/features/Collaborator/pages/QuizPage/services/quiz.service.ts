@@ -5,7 +5,7 @@ import { ApiResponse } from "../../../../../types/api";
 export interface Quiz {
   _id: string;
   title: string;
-  topic?: { _id: string; title: string }[]; // ✅ để hiển thị được khi populate
+  topic?: (string | { _id: string; title: string })[]; // ✅ cho phép cả string[] và object[]
   group_ids?: any[];
   part_type?: number;
   level?: string;
@@ -15,6 +15,7 @@ export interface Quiz {
   created_at?: string;
   updated_at?: string;
 }
+
 
 // 🧩 Kiểu dữ liệu query khi lấy danh sách quiz
 export interface QuizQueryParams {

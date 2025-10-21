@@ -1,238 +1,319 @@
-import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Paper,
-  IconButton,
-  Tooltip,
-  Button,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TablePagination,
   TextField,
+  Button,
+  Paper,
+  Divider,
   MenuItem,
-  Stack,
+  Grid,
   Autocomplete,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
-import { Edit, Delete, Visibility, Search } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import { ExpandMore } from "@mui/icons-material";
+import { useQuizBuilderViewModel } from "./viewmodel/useQuizBuilderViewModel";
+import GroupForm from "../../components/GroupForm";
 import { toast } from "sonner";
 import quizService from "./services/quiz.service";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { lessonManagerService } from "../../../../services/lesson_manager.service";
-import QuizDetailDialog from "./QuizDetailDialog";
 
-export default function QuizListPage() {
+export default function CreateQuizPage() {
+  const vm = useQuizBuilderViewModel();
   const navigate = useNavigate();
 
-  // 🧠 State dữ liệu chính
-  const [quizzes, setQuizzes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<any | null>(null);
+  // 🧩 Form cơ bản của Quiz
+  const [form, setForm] = useState({
+    title: "",
+    topic: [] as string[], // lưu danh sách id topic
+    part_type: "",
+    level: "",
+    status: "draft",
+    planned_completion_time: 0,
+    weight: 0.1,
+  });
 
-  // 🔍 Bộ lọc + phân trang
-  const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [topicId, setTopicId] = useState("");
-  const [level, setLevel] = useState("");
-  const [status, setStatus] = useState("");
-  const [total, setTotal] = useState(0);
-
-  // 📚 Danh sách topic thật
+  // 🧠 Danh sách topic thật lấy từ LessonManager
   const [topicOptions, setTopicOptions] = useState<{ id: string; title: string }[]>([]);
 
-  // 🕐 Debounce tìm kiếm (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  // 🔄 Lấy danh sách Topic từ LessonManager
   useEffect(() => {
     const fetchTopics = async () => {
       try {
         const topics = await lessonManagerService.getAllTopicTitles();
         setTopicOptions(topics);
       } catch (error) {
-        console.error("❌ Lỗi khi tải topic:", error);
+        console.error("❌ Lỗi khi tải danh sách topic:", error);
       }
     };
     fetchTopics();
   }, []);
 
-  // 📥 Lấy danh sách quiz
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await quizService.getAll({
-        page: page + 1,
-        limit,
-        query: debouncedSearch,
-        topic: topicId,
-        level,
-        status,
-      });
-
-      const result = res.data!;
-      setQuizzes(result.items || []);
-      setTotal(result.total || 0);
-    } catch (err) {
-      toast.error("Không tải được danh sách quiz!");
-    } finally {
-      setLoading(false);
-    }
+  // Cập nhật giá trị form
+  const handleChange = (field: string, value: any) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  // 🔁 Load khi thay đổi filter / trang
-  useEffect(() => {
-    fetchData();
-  }, [page, limit, debouncedSearch, topicId, level, status]);
-
-  // 🗑️ Xóa quiz
-  const handleDelete = async (id: string) => {
-    if (!confirm("Xác nhận xóa quiz này?")) return;
+  // ✅ Lưu Quiz
+  const handleSave = async () => {
     try {
-      await quizService.delete(id);
-      toast.success("Xóa quiz thành công!");
-      fetchData();
-    } catch {
-      toast.error("Không thể xóa quiz!");
+      if (!form.title.trim()) {
+        toast.error("Vui lòng nhập tên quiz!");
+        return;
+      }
+      if (vm.groups.length === 0) {
+        toast.error("Cần ít nhất 1 nhóm câu hỏi!");
+        return;
+      }
+
+      const payload = {
+        ...form,
+        part_type: form.part_type ? Number(form.part_type) : undefined,
+        topic: form.topic, // ✅ gửi mảng id topic
+        group_ids: vm.groups,
+      };
+
+      await quizService.create(payload);
+      toast.success("🎉 Tạo quiz thành công!");
+      navigate("/ctv/quiz");
+    } catch (error) {
+      console.error(error);
+      toast.error("❌ Lưu quiz thất bại!");
     }
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* 🔹 Header */}
-      <Box display="flex" justifyContent="space-between" mb={2}>
-        <Typography variant="h4" fontWeight={700}>
-          Danh sách Quiz
-        </Typography>
-        <Button variant="contained" onClick={() => navigate("/ctv/quiz/create")}>
-          + Tạo Quiz
-        </Button>
-      </Box>
+    <Box sx={{ p: 3, maxWidth: 1100, mx: "auto" }}>
+      <Typography variant="h4" fontWeight={700} mb={3}>
+        🧩 Tạo Quiz Mới
+      </Typography>
 
-      {/* 🔍 Bộ lọc */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-          <TextField
-            label="Tìm kiếm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            size="small"
-            sx={{ minWidth: 220 }}
-            InputProps={{ endAdornment: <Search fontSize="small" /> }}
-          />
+      {/* 🔹 Thông tin cơ bản */}
+      <Paper
+        elevation={2}
+        sx={{
+          p: 3,
+          mb: 4,
+          bgcolor: "#fafafa",
+          borderRadius: 3,
+        }}
+      >
+        <Grid container spacing={2}>
+          {/* Hàng 1 */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Tên Quiz"
+              value={form.title}
+              onChange={(e) => handleChange("title", e.target.value)}
+              sx={{ bgcolor: "white" }}
+            />
+          </Grid>
 
-          <Autocomplete
-            options={topicOptions}
-            getOptionLabel={(option) => option.title}
-            value={topicOptions.find((t) => t.id === topicId) || null}
-            onChange={(event, newValue) => setTopicId(newValue ? newValue.id : "")}
-            renderInput={(params) => (
-              <TextField {...params} label="Topic" size="small" sx={{ minWidth: 180 }} />
-            )}
-          />
+          <Grid size={{ xs: 12, md: 2.5 }}>
+            <TextField
+              select
+              fullWidth
+              label="Trạng thái"
+              value={form.status}
+              onChange={(e) => handleChange("status", e.target.value)}
+              sx={{ bgcolor: "white" }}
+            >
+              <MenuItem value="draft">Nháp</MenuItem>
+              <MenuItem value="published">Công khai</MenuItem>
+            </TextField>
+          </Grid>
 
-          <TextField
-            select
-            label="Level"
-            size="small"
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            sx={{ minWidth: 130 }}
-          >
-            <MenuItem value="">Tất cả</MenuItem>
-            <MenuItem value="A2">A2</MenuItem>
-            <MenuItem value="B1">B1</MenuItem>
-            <MenuItem value="B2">B2</MenuItem>
-            <MenuItem value="C1">C1</MenuItem>
-          </TextField>
+          <Grid size={{ xs: 12, md: 2.5 }}>
+            <TextField
+              select
+              fullWidth
+              label="Trình độ (Level)"
+              value={form.level}
+              onChange={(e) => handleChange("level", e.target.value)}
+              sx={{ bgcolor: "white" }}
+            >
+              <MenuItem value="">Chưa chọn</MenuItem>
+              <MenuItem value="A2">A2</MenuItem>
+              <MenuItem value="B1">B1</MenuItem>
+              <MenuItem value="B2">B2</MenuItem>
+              <MenuItem value="C1">C1</MenuItem>
+            </TextField>
+          </Grid>
 
-          <TextField
-            select
-            label="Trạng thái"
-            size="small"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="">Tất cả</MenuItem>
-            <MenuItem value="draft">Nháp</MenuItem>
-            <MenuItem value="published">Đã xuất bản</MenuItem>
-          </TextField>
-        </Stack>
-      </Paper>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              select
+              fullWidth
+              label="Phần thi (Part Type)"
+              value={form.part_type}
+              onChange={(e) => handleChange("part_type", e.target.value)}
+              sx={{ bgcolor: "white" }}
+            >
+              <MenuItem value="">Chưa chọn</MenuItem>
+              <MenuItem value={1}>Part 1</MenuItem>
+              <MenuItem value={2}>Part 2</MenuItem>
+              <MenuItem value={3}>Part 3</MenuItem>
+              <MenuItem value={4}>Part 4</MenuItem>
+              <MenuItem value={5}>Part 5</MenuItem>
+              <MenuItem value={6}>Part 6</MenuItem>
+              <MenuItem value={7}>Part 7</MenuItem>
+            </TextField>
+          </Grid>
 
-      {/* 🧮 Bảng danh sách */}
-      <Paper>
-        {loading ? (
-          <Typography p={2}>Đang tải...</Typography>
-        ) : (
-          <>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Tên Quiz</TableCell>
-                  <TableCell>Topic</TableCell>
-                  <TableCell>Level</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                  <TableCell align="right">Hành động</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {quizzes.map((q) => (
-                  <TableRow key={q._id}>
-                    <TableCell>{q.title}</TableCell>
-                    <TableCell>
-                      {q.topic?.map((t: any) => t.title).join(", ") || "—"}
-                    </TableCell>
-                    <TableCell>{q.level ?? "—"}</TableCell>
-                    <TableCell>{q.status ?? "draft"}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Xem chi tiết">
-                        <IconButton onClick={() => setSelected(q)}>
-                          <Visibility />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Sửa">
-                        <IconButton onClick={() => navigate(`/ctv/quiz/edit/${q._id}`)}>
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Xóa">
-                        <IconButton color="error" onClick={() => handleDelete(q._id)}>
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            <TablePagination
-              component="div"
-              count={total}
-              page={page}
-              onPageChange={(_, p) => setPage(p)}
-              rowsPerPage={limit}
-              onRowsPerPageChange={(e) => {
-                setLimit(parseInt(e.target.value, 10));
-                setPage(0);
+          {/* Hàng 2 */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Autocomplete
+              multiple
+              options={topicOptions}
+              getOptionLabel={(option) => option.title}
+              value={topicOptions.filter((t) => form.topic.includes(t.id))}
+              onChange={(_, newValue) =>
+                handleChange("topic", newValue.map((t) => t.id))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Chủ đề (Topic)"
+                  placeholder="Chọn 1 hoặc nhiều chủ đề"
+                />
+              )}
+              sx={{
+                bgcolor: "white",
+                "& .MuiAutocomplete-inputRoot": {
+                  flexWrap: "nowrap !important",
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                  scrollbarWidth: "none",
+                  "&::-webkit-scrollbar": {
+                    height: 6,
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: "transparent",
+                  },
+                  "&:hover::-webkit-scrollbar-thumb": {
+                    backgroundColor: "#bbb",
+                  },
+                },
+                "& .MuiAutocomplete-tag": {
+                  fontSize: "0.85rem",
+                  backgroundColor: "#f1f3f4",
+                  color: "#333",
+                  borderRadius: "20px",
+                  padding: "2px 8px",
+                  marginRight: "4px",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    backgroundColor: "#e0e0e0",
+                  },
+                },
               }}
             />
-          </>
-        )}
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Thời gian dự kiến (phút)"
+              value={form.planned_completion_time}
+              onChange={(e) =>
+                handleChange("planned_completion_time", Number(e.target.value))
+              }
+              sx={{ bgcolor: "white" }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Trọng số (weight)"
+              value={form.weight}
+              onChange={(e) => handleChange("weight", Number(e.target.value))}
+              sx={{ bgcolor: "white" }}
+            />
+          </Grid>
+        </Grid>
       </Paper>
 
-      <QuizDetailDialog open={!!selected} quiz={selected} onClose={() => setSelected(null)} />
+      {/* 🔸 Danh sách nhóm câu hỏi */}
+      {vm.groups.map((g, gi) => (
+        <Paper
+          key={gi}
+          sx={{
+            mb: 2,
+            borderRadius: 2,
+            overflow: "hidden",
+            border: "1px solid #e0e0e0",
+          }}
+        >
+          <Accordion defaultExpanded>
+            <AccordionSummary
+              expandIcon={<ExpandMore />}
+              sx={{
+                bgcolor: "#f9fafb",
+                "& .MuiAccordionSummary-content": {
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                },
+              }}
+            >
+              <Typography fontWeight={600}>Nhóm {gi + 1}</Typography>
+              <Button
+                color="error"
+                size="small"
+                variant="outlined"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  vm.removeGroup(gi);
+                }}
+              >
+                🗑️ Xóa
+              </Button>
+            </AccordionSummary>
+
+            <AccordionDetails sx={{ bgcolor: "#fff" }}>
+              <GroupForm
+                groupIndex={gi}
+                group={g}
+                tagOptions={["grammar", "vocabulary"]}
+                onChange={vm.updateGroup}
+                onChangeQuestion={vm.updateQuestion}
+                onAddQuestion={vm.addQuestion}
+                onRemoveQuestion={vm.removeQuestion}
+                isQuiz={true}
+              />
+            </AccordionDetails>
+          </Accordion>
+        </Paper>
+      ))}
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* ➕ Nút thêm nhóm + Lưu Quiz */}
+      <Box display="flex" gap={2}>
+        <Button
+          variant="outlined"
+          onClick={vm.addGroup}
+          sx={{
+            borderColor: "#2563eb",
+            color: "#2563eb",
+            ":hover": { bgcolor: "#eff6ff" },
+          }}
+        >
+          ➕ Thêm nhóm mới
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          sx={{ bgcolor: "#2563eb", ":hover": { bgcolor: "#1e40af" } }}
+        >
+          💾 Lưu Quiz
+        </Button>
+      </Box>
     </Box>
   );
 }
