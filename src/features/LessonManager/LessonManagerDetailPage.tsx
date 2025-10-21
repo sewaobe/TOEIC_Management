@@ -12,6 +12,7 @@ import {
     IconButton,
     Collapse,
     Tooltip,
+    Divider,
 } from "@mui/material";
 import {
     PlayCircleOutline as MediaIcon,
@@ -21,8 +22,6 @@ import {
     TableChart as TableIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
-import SchoolIcon from "@mui/icons-material/School";
-import ArticleIcon from "@mui/icons-material/Article";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -36,9 +35,21 @@ import LessonManagerEditModal from "./components/LessonManagerEditModal";
 import { toast } from "sonner";
 import { lessonManagerService } from "../../services/lesson_manager.service";
 import { EmptyState } from "../../components/EmptyState";
-import { DictationTrailer, LessonManagerDetail, LessonTrailer, QuizTrailer, ShadowingTrailer, VocabularyTopicTrailer } from "../../types/LessonManagerDetail";
-import { getIconComponentByName, mapBgToIconColor } from "../../utils/colorMapFromBg";
+import { LessonManagerDetail, LessonTrailer, QuizTrailer, VocabularyTopicTrailer } from "../../types/LessonManagerDetail";
+import { availableIcons, getIconComponentByName, mapBgToIconColor } from "../../utils/colorMapFromBg";
 import { LessonSection } from "../../types/lesson";
+import TopicModal from "../Collaborator/pages/TopicPage/TopicModal";
+import { gradientOptions } from "../Collaborator/pages/TopicPage/TopicPage";
+import { Topic } from "../../types/Topic";
+import { topicService } from "../../services/topic.service";
+import GrammarModal from "../Grammar/components/GrammarModal";
+import DictationModal from "../Dictation/components/DictationModal";
+import { Dictation } from "../../types/Dictation";
+import { Shadowing } from "../../types/Shadowing";
+import lessonService from "../../services/lesson.service";
+import { dictationService } from "../../services/dictation.service";
+import ShadowingModal from "../Shadowing/components/ShadowingModal";
+import { shadowingService } from "../../services/shadowing.service";
 
 
 
@@ -135,9 +146,11 @@ export default function LessonManagerDetailPage(): JSX.Element {
     const [loading, setLoading] = useState<boolean>(true);
     const [loadingTab, setLoadingTab] = useState<boolean>(false);
     const [editModal, setEditModal] = useState<boolean>(false);
+    const [isOpenModal, setIsOpenModal] = useState<boolean>(false);
+    const [isModeModal, setIsModeModal] = useState<"add" | "edit">("add");
+    const [formData, setFormData] = useState<any>({});
     const [form, setForm] = useState<Partial<LessonManagerDetail>>(lessonManager || {});
     const navigate = useNavigate();
-
     useEffect(() => {
         const timer = setTimeout(() => setLoadingTab(false), 800);
         return () => clearTimeout(timer);
@@ -164,6 +177,8 @@ export default function LessonManagerDetailPage(): JSX.Element {
 
     const handleTabChange = (event: SyntheticEvent, newValue: number): void => {
         setTab(newValue);
+        setIsOpenModal(false);
+        setIsModeModal("add");
         setExpanded(null);
         setLoadingTab(true);
     };
@@ -214,6 +229,48 @@ export default function LessonManagerDetailPage(): JSX.Element {
         </Box>
     );
 
+    const handleClickCreateModal = () => {
+        setIsOpenModal(true);
+        setIsModeModal("add");
+        if (tab === 0) {
+            setFormData({
+                id: "0",
+                title: "",
+                description: "",
+                topic: [`${lessonManagerId}`],
+                level: "A1",
+                wordCount: 0,
+                learnerCount: 0,
+                iconName: "Book",
+                gradient: gradientOptions[0].value,
+                bgColor: "bg-blue-50",
+                new: false,
+                createdAt: Date.now().toString(),
+                updatedAt: "",
+            });
+        } else {
+            setFormData({
+                topic: [`${lessonManagerId}`],
+            })
+        } 
+
+    }
+
+    const handleClickEditModal = (data: any) => {
+        setIsOpenModal(true);
+        setIsModeModal("edit");
+        setFormData(data);
+    }
+
+    const handleViewDetail = (data: any) => {
+        if (tab === 0) {
+            navigate(`/ctv/topics/${data._id}`);
+        } else if (tab === 1) {
+            navigate(`/ctv/grammar/${data._id}`, { state: { grammar: data } });
+        } else if (tab === 4) {
+            navigate(`/ctv/quiz/${data._id}/detail`);
+        }
+    }
     if (loading) {
         return (
             <Box className="min-h-screen p-6">
@@ -250,8 +307,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                         >
                             {renderHeader(item)}
                             <ExpandMoreIcon
-                                className={`transform transition-transform ${expanded === item.id ? "rotate-180" : ""
-                                    }`}
+                                className={`transform transition-transform ${expanded === item.id ? "rotate-180" : ""}`}
                             />
                         </Box>
 
@@ -260,13 +316,15 @@ export default function LessonManagerDetailPage(): JSX.Element {
                                 {renderBody(item)}
                                 <Box className="flex justify-end mt-3 gap-2">
                                     <Tooltip title="Chỉnh sửa">
-                                        <IconButton color="info" size="small">
+                                        <IconButton color="info" size="small" onClick={() => handleClickEditModal(item)}>
                                             <EditIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
-                                    <Button size="small" variant="outlined">
-                                        Xem chi tiết
-                                    </Button>
+                                    {tab !== 2 && tab !== 3 && (
+                                        <Button size="small" variant="outlined" onClick={() => handleViewDetail(item)}>
+                                            Xem chi tiết
+                                        </Button>
+                                    )}
                                 </Box>
                             </CardContent>
                         </Collapse>
@@ -327,7 +385,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                     <Tab label="Shadowing" />
                     <Tab label="Quiz" />
                 </Tabs>
-                <Button startIcon={<AddIcon />} variant="contained" color="primary" size="small">
+                <Button startIcon={<AddIcon />} variant="contained" color="primary" size="small" onClick={handleClickCreateModal}>
                     {tab === 0 && 'Thêm chủ đề từ vựng'}
                     {tab === 1 && 'Thêm bài học chính'}
                     {tab === 2 && 'Thêm dictation'}
@@ -337,7 +395,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
             </Box>
 
             {/* Tab Content */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="sync">
                 {loadingTab ? (
                     renderSkeletonList()
                 ) : (
@@ -522,7 +580,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                             )
                         )}
 
-                        {tab === 2 && renderExpandableList<DictationTrailer>(
+                        {tab === 2 && renderExpandableList<Dictation>(
                             lessonManager.dictation_ids,
                             (d) => (
                                 <Box className="flex justify-between items-center w-full">
@@ -566,7 +624,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                             )
                         )}
 
-                        {tab === 3 && renderExpandableList<ShadowingTrailer>(
+                        {tab === 3 && renderExpandableList<Shadowing>(
                             lessonManager.shadowing_ids,
                             (s) => (
                                 <Box className="flex items-center gap-3">
@@ -614,17 +672,84 @@ export default function LessonManagerDetailPage(): JSX.Element {
                                 <Box className="flex items-center gap-3">
                                     <QuizIcon color="secondary" />
                                     <Box>
-                                        <Typography variant="subtitle1" fontWeight={600}>{q.title}</Typography>
-                                        <Typography variant="body2" color="text.secondary">{q.part_type} câu hỏi</Typography>
+                                        <Typography variant="subtitle1" fontWeight={600}>
+                                            {q.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            🧩 Part {q.part_type} • {q.level} • ⏱ {q.planned_completion_time} phút
+                                        </Typography>
                                     </Box>
                                 </Box>
                             ),
                             (q) => (
-                                <>
-                                    {/* {q.questions.map((question) => (
-                                        <Typography key={question.id} variant="body2" className="py-1 border-b last:border-0">• {question.question}</Typography>
-                                    ))} */}
-                                </>
+                                <Box className="space-y-4">
+                                    {q.group_ids && q.group_ids.length > 0 ? (
+                                        q.group_ids.map((group, gi) => (
+                                            <Box
+                                                key={group._id || gi}
+                                                className="p-3 border border-gray-200 rounded-xl bg-gray-50"
+                                            >
+                                                {/* Tiêu đề group */}
+                                                <Typography variant="subtitle2" fontWeight={600}>
+                                                    {group.part
+                                                        ? `Nhóm ${gi + 1} — ${group.part}`
+                                                        : `Nhóm ${gi + 1}`}
+                                                </Typography>
+
+                                                <Divider sx={{ my: 1 }} />
+
+                                                {/* Danh sách câu hỏi */}
+                                                {group.questions && group.questions.length > 0 ? (
+                                                    <Box className="space-y-3">
+                                                        {group.questions.map((question, qi) => (
+                                                            <Box
+                                                                key={question._id || qi}
+                                                                className="p-2 rounded-lg bg-white border border-gray-100"
+                                                            >
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    fontWeight={600}
+                                                                    className="mb-1"
+                                                                >
+                                                                    {qi + 1}. {question.textQuestion}
+                                                                </Typography>
+
+                                                                <Box className="pl-4 space-y-0.5">
+                                                                    {Array.from(question.choices).map(
+                                                                        ([key, value]: [string, string]) => {
+                                                                            const isCorrect =
+                                                                                question.correctAnswer === key;
+                                                                            return (
+                                                                                <Typography
+                                                                                    key={key}
+                                                                                    variant="body2"
+                                                                                    className={`flex items-center gap-1 ${isCorrect
+                                                                                        ? "text-green-600 font-medium"
+                                                                                        : "text-gray-700"
+                                                                                        }`}
+                                                                                >
+                                                                                    {isCorrect ? "✅" : "•"} {key}. {value}
+                                                                                </Typography>
+                                                                            );
+                                                                        }
+                                                                    )}
+                                                                </Box>
+                                                            </Box>
+                                                        ))}
+                                                    </Box>
+                                                ) : (
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        (Nhóm này chưa có câu hỏi)
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        ))
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Bài quiz này chưa có nhóm câu hỏi nào.
+                                        </Typography>
+                                    )}
+                                </Box>
                             )
                         )}
                     </motion.div>
@@ -634,12 +759,146 @@ export default function LessonManagerDetailPage(): JSX.Element {
             {/* EditModal */}
             <LessonManagerEditModal
                 open={editModal}
-                onClose={() => setEditModal(false)}
+                onClose={() => {
+                    setEditModal(false)
+                    setFormData({});
+                }}
                 form={form}
                 onChange={setForm}
                 onSave={handleSaveEditLessonManager}
                 isEdit={true}
             />
+
+            {/* TopicVocabulary modal */}
+            <TopicModal
+                open={tab === 0 && isOpenModal}
+                onClose={() => {
+                    setIsOpenModal(false)
+                    setFormData({});
+                }}
+                onSave={async () => {
+                    try {
+                        if (isModeModal === "add") {
+                            const newTopicVocabulary: Partial<Topic> = {
+                                ...formData,
+                                learnerCount: 0,
+                                id: undefined,
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString(),
+                            }
+                            await topicService.createTopic(newTopicVocabulary);
+                            toast.success("Thêm chủ đề từ vựng thành công.");
+                        } else {
+                            await topicService.updateTopic(formData._id, formData);
+                            toast.success("Cập nhật chủ đề từ vựng thành công.");
+                        }
+
+                        fetchLessonManager();
+                    }
+                    catch (err) {
+                        toast.error("Thêm chủ đề từ vựng thất bại. Vui lòng thử lại.");
+                    }
+                    finally {
+                        setIsOpenModal(false);
+                    }
+                }}
+                formData={formData}
+                setFormData={setFormData}
+                availableIcons={availableIcons}
+                gradientOptions={gradientOptions}
+                title={isModeModal === "add" ? "Thêm chủ đề từ vựng" : "Chỉnh sửa chủ đề từ vựng"}
+            />
+
+            {/* Lesson modal */}
+            <GrammarModal
+                open={tab === 1 && isOpenModal}
+                onClose={() => {
+                    setIsOpenModal(false)
+                    setFormData({});
+                }}
+                onSave={async (data) => {
+                    try {
+                        if (isModeModal === "add") {
+                            await lessonService.create(data);
+                        }
+                        else {
+                            if (data._id) {
+                                await lessonService.updateBasic(data._id, data);
+                            }
+                        }
+                        toast.success("Lưu bài học thành công.");
+                        fetchLessonManager();
+                    }
+                    catch (err) {
+                        toast.error("Lưu bài học thất bại. Vui lòng thử lại.");
+                    }
+                    finally {
+                        setIsOpenModal(false);
+                    }
+                }}
+                initialData={isModeModal === "edit" ? formData : null}
+            />
+
+            {/* Dictation modal */}
+            <DictationModal
+                open={tab === 2 && isOpenModal}
+                value={formData}
+                onClose={() => {
+                    setIsOpenModal(false)
+                    setFormData({});
+                }}
+                onSave={async (data) => {
+                    try {
+                        if (isModeModal === "add") {
+                            await dictationService.create(data);
+                        } else {
+                            if (data._id) {
+                                await dictationService.update(data, data._id);
+                            }
+                            toast.success("Lưu dictation thành công.");
+                            fetchLessonManager();
+                        }
+                    }
+                    catch (err) {
+                        toast.error("Lưu dictation thất bại. Vui lòng thử lại.");
+                    }
+                    finally {
+                        setIsOpenModal(false);
+                    }
+                }}
+            />
+
+            {/* Shadowing modal */}
+            <ShadowingModal
+                open={tab === 3 && isOpenModal}
+                value={formData}
+                onClose={() => {
+                    setIsOpenModal(false)
+                    setFormData({});
+                }}
+                onSave={async (data) => {
+                    try {
+                        if (isModeModal === "add") {
+                            await shadowingService.create(data);
+                        } else {
+                            if (data._id) {
+                                await shadowingService.update(data, data._id);
+                            }
+                            toast.success("Lưu shadowing thành công.");
+                            fetchLessonManager();
+                        }
+                    }
+                    catch (err) {
+                        toast.error("Lưu shadowing thất bại. Vui lòng thử lại.");
+                    }
+                    finally {
+                        setIsOpenModal(false);
+                    }
+                }}
+            />
+
+            {/* Quiz modal */}
+            
         </Box>
     );
 }
