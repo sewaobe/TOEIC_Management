@@ -356,7 +356,7 @@ export default function DictationModal({
                                         <TextField
                                             label="Tiêu đề bài nghe (Title)"
                                             fullWidth
-                                            value={form.title}
+                                            value={form.title ?? ""}
                                             onChange={(e) => setForm({ ...form, title: e.target.value })}
                                         />
                                         <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
@@ -364,7 +364,7 @@ export default function DictationModal({
                                                 select
                                                 label="Độ khó (TOEIC Level)"
                                                 className="w-full sm:w-48"
-                                                value={form.level}
+                                                value={form.level || "A1"}
                                                 onChange={(e) => setForm({ ...form, level: e.target.value })}
                                             >
                                                 {LEVELS.map((lv) => (
@@ -461,7 +461,7 @@ export default function DictationModal({
                                                 </Typography>
                                                 <RadioGroup
                                                     row
-                                                    value={form.display_mode}
+                                                    value={form.display_mode || "sentence"}
                                                     onChange={(e) => setForm({ ...form, display_mode: e.target.value as any })}
                                                 >
                                                     <FormControlLabel value="sentence" control={<Radio />} label="Theo câu" />
@@ -485,7 +485,7 @@ export default function DictationModal({
                                             multiline
                                             minRows={5}
                                             fullWidth
-                                            value={form.transcript}
+                                            value={form.transcript ?? ""}
                                             onChange={(e) => setForm({ ...form, transcript: e.target.value })}
                                             placeholder="Nhập hoặc dán transcript..."
                                         />

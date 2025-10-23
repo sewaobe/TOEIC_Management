@@ -12,7 +12,7 @@ import { useFetchList } from "../../../../hooks/useFetchList"
 import { EmptyState } from "../../../../components/EmptyState"
 
 // Gradient options 
-const gradientOptions = [
+export const gradientOptions = [
     { name: "Blue", value: "from-blue-500 to-cyan-500" },
     { name: "Purple", value: "from-purple-500 to-pink-500" },
     { name: "Orange", value: "from-amber-500 to-orange-500" },
@@ -26,7 +26,7 @@ const gradientOptions = [
     { name: "Emerald", value: "from-emerald-500 to-green-500" },
     { name: "OrangeDeep", value: "from-orange-500 to-red-500" },
 ]
-const getDefaultFormData = (): Topic => ({
+export const getDefaultFormData = (): Topic => ({
     id: "0",
     title: "",
     description: "",
