@@ -17,7 +17,7 @@ export interface VocabularyTopicTrailer {
     title: string;
     level: CERFLevel;
     iconName: string;
-    bgColor:string;
+    bgColor: string;
     description: string;
     gradient: string;
     vocabularies_id: {
@@ -33,16 +33,12 @@ export interface QuizTrailer {
     part_type: PartType;
     level: CERFLevel;
     planned_completion_time: number;
-    group_ids: {
+    question_ids: {
         _id: string;
-        part: string;
-        questions: {
-            _id: string;
-            name: string;
-            textQuestion: string;
-            choices: Map<string, string>;
-            correctAnswer: string;
-        }[]
+        name: string;
+        textQuestion: string;
+        choices: Map<string, string>;
+        correctAnswer: string;
     }[]
 }
 

@@ -252,7 +252,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
             setFormData({
                 topic: [`${lessonManagerId}`],
             })
-        } 
+        }
 
     }
 
@@ -683,72 +683,48 @@ export default function LessonManagerDetailPage(): JSX.Element {
                             ),
                             (q) => (
                                 <Box className="space-y-4">
-                                    {q.group_ids && q.group_ids.length > 0 ? (
-                                        q.group_ids.map((group, gi) => (
-                                            <Box
-                                                key={group._id || gi}
-                                                className="p-3 border border-gray-200 rounded-xl bg-gray-50"
-                                            >
-                                                {/* Tiêu đề group */}
-                                                <Typography variant="subtitle2" fontWeight={600}>
-                                                    {group.part
-                                                        ? `Nhóm ${gi + 1} — ${group.part}`
-                                                        : `Nhóm ${gi + 1}`}
-                                                </Typography>
-
-                                                <Divider sx={{ my: 1 }} />
-
-                                                {/* Danh sách câu hỏi */}
-                                                {group.questions && group.questions.length > 0 ? (
-                                                    <Box className="space-y-3">
-                                                        {group.questions.map((question, qi) => (
-                                                            <Box
-                                                                key={question._id || qi}
-                                                                className="p-2 rounded-lg bg-white border border-gray-100"
-                                                            >
-                                                                <Typography
-                                                                    variant="body2"
-                                                                    fontWeight={600}
-                                                                    className="mb-1"
-                                                                >
-                                                                    {qi + 1}. {question.textQuestion}
-                                                                </Typography>
-
-                                                                <Box className="pl-4 space-y-0.5">
-                                                                    {Array.from(question.choices).map(
-                                                                        ([key, value]: [string, string]) => {
-                                                                            const isCorrect =
-                                                                                question.correctAnswer === key;
-                                                                            return (
-                                                                                <Typography
-                                                                                    key={key}
-                                                                                    variant="body2"
-                                                                                    className={`flex items-center gap-1 ${isCorrect
-                                                                                        ? "text-green-600 font-medium"
-                                                                                        : "text-gray-700"
-                                                                                        }`}
-                                                                                >
-                                                                                    {isCorrect ? "✅" : "•"} {key}. {value}
-                                                                                </Typography>
-                                                                            );
-                                                                        }
-                                                                    )}
-                                                                </Box>
-                                                            </Box>
-                                                        ))}
-                                                    </Box>
-                                                ) : (
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        (Nhóm này chưa có câu hỏi)
+                                    <Box className="space-y-4">
+                                        {q.question_ids && q.question_ids.length > 0 ? (
+                                            q.question_ids.map((question, qi) => (
+                                                <Box
+                                                    key={question._id || qi}
+                                                    className="p-3 border border-gray-200 rounded-xl bg-gray-50"
+                                                >
+                                                    {/* Tiêu đề câu hỏi */}
+                                                    <Typography
+                                                        variant="body2"
+                                                        fontWeight={600}
+                                                        className="mb-1"
+                                                    >
+                                                        {qi + 1}. {question.textQuestion}
                                                     </Typography>
-                                                )}
-                                            </Box>
-                                        ))
-                                    ) : (
-                                        <Typography variant="body2" color="text.secondary">
-                                            Bài quiz này chưa có nhóm câu hỏi nào.
-                                        </Typography>
-                                    )}
+
+                                                    {/* Danh sách lựa chọn */}
+                                                    <Box className="pl-4 space-y-0.5">
+                                                        {question.choices && (
+                                                            Object.entries(question.choices).map(([key, value]) => {
+                                                                const isCorrect = question.correctAnswer === key;
+                                                                return (
+                                                                    <Typography
+                                                                        key={key}
+                                                                        variant="body2"
+                                                                        className={`flex items-center gap-1 ${isCorrect ? "text-green-600 font-medium" : "text-gray-700"
+                                                                            }`}
+                                                                    >
+                                                                        {isCorrect ? "✅" : "•"} {key}. {value}
+                                                                    </Typography>
+                                                                );
+                                                            })
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            ))
+                                        ) : (
+                                            <Typography variant="body2" color="text.secondary">
+                                                Bài quiz này chưa có câu hỏi nào.
+                                            </Typography>
+                                        )}
+                                    </Box>
                                 </Box>
                             )
                         )}
@@ -898,7 +874,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
             />
 
             {/* Quiz modal */}
-            
+
         </Box>
     );
 }
