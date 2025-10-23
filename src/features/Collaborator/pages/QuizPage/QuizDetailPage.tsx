@@ -7,36 +7,29 @@ import {
   Button,
   Chip,
   Divider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  IconButton,
   useTheme,
 } from "@mui/material";
 import {
   ArrowBack,
   Edit,
   Delete,
-  ExpandMore,
   AccessTime,
   Layers,
-  Translate,
-  TextSnippet,
 } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import quizService from "./services/quiz.service";
 import { toast } from "sonner";
 
 /* ────────────────────────────────
-   TRANG CHI TIẾT QUIZ
+   TRANG CHI TIẾT QUIZ (Model mới)
 ──────────────────────────────── */
 export default function QuizDetailPage() {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [quiz, setQuiz] = useState<any | null>(null);
-  const [openConfirm, setOpenConfirm] = useState(false);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -171,101 +164,50 @@ export default function QuizDetailPage() {
         </Box>
       </Paper>
 
-      {/* 🧩 Nhóm câu hỏi */}
+      {/* 🧩 Danh sách câu hỏi */}
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 1 }}>
         <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
-          Danh sách nhóm câu hỏi
+          Danh sách câu hỏi
         </Typography>
 
-        {quiz.group_ids?.length ? (
-          quiz.group_ids.map((g: any, i: number) => (
-            <Accordion key={i} defaultExpanded={i === 0} sx={{ mb: 1 }}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography fontWeight="bold">
-                  Nhóm {i + 1} — {g.questions?.length || 0} câu
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {/* Transcript */}
-                {(g.transcriptEnglish || g.transcriptTranslation) && (
-                  <Box mb={2}>
-                    {g.transcriptEnglish && (
-                      <Box
-                        sx={{
-                          bgcolor: "#EFF6FF",
-                          p: 2,
-                          borderRadius: 1,
-                          mb: 1,
-                        }}
-                      >
-                        <TextSnippet fontSize="small" color="primary" sx={{ mr: 1 }} />
-                        <Typography
-                          variant="body2"
-                          sx={{ whiteSpace: "pre-wrap", display: "inline" }}
-                        >
-                          {g.transcriptEnglish}
-                        </Typography>
-                      </Box>
-                    )}
-                    {g.transcriptTranslation && (
-                      <Box
-                        sx={{
-                          bgcolor: "#ECFDF5",
-                          p: 2,
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Translate fontSize="small" color="success" sx={{ mr: 1 }} />
-                        <Typography
-                          variant="body2"
-                          sx={{ whiteSpace: "pre-wrap", display: "inline" }}
-                        >
-                          {g.transcriptTranslation}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                )}
+        {quiz.question_ids?.length ? (
+          quiz.question_ids.map((q: any, i: number) => (
+            <Box
+              key={i}
+              sx={{
+                p: 2,
+                mb: 2,
+                borderRadius: 2,
+                border: "1px solid #e0e0e0",
+                bgcolor: "#fafafa",
+              }}
+            >
+              <Typography fontWeight="bold" mb={1}>
+                Câu {i + 1}: {q.textQuestion || "—"}
+              </Typography>
 
-                {/* Câu hỏi */}
-                {g.questions?.map((q: any, qi: number) => (
-                  <Box
-                    key={qi}
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      border: "1px solid #e0e0e0",
-                      mb: 1.5,
-                      bgcolor: "#fafafa",
-                    }}
+              <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={1}>
+                {["A", "B", "C", "D"].map((opt) => (
+                  <Typography
+                    key={opt}
+                    variant="body2"
+                    color={q.correctAnswer === opt ? "primary" : "text.secondary"}
+                    fontWeight={q.correctAnswer === opt ? 700 : 400}
                   >
-                    <Typography fontWeight="bold" mb={0.5}>
-                      Câu {qi + 1}: {q.textQuestion || "—"}
-                    </Typography>
-                    <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={1}>
-                      {["A", "B", "C", "D"].map((opt) => (
-                        <Typography
-                          key={opt}
-                          variant="body2"
-                          color={q.correctAnswer === opt ? "primary" : "text.secondary"}
-                          fontWeight={q.correctAnswer === opt ? 700 : 400}
-                        >
-                          {opt}. {q.choices?.[opt] || ""}
-                        </Typography>
-                      ))}
-                    </Box>
-                    {q.explanation && (
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        <strong>Giải thích:</strong> {q.explanation}
-                      </Typography>
-                    )}
-                  </Box>
+                    {opt}. {q.choices?.[opt] || ""}
+                  </Typography>
                 ))}
-              </AccordionDetails>
-            </Accordion>
+              </Box>
+
+              {q.explanation && (
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  <strong>Giải thích:</strong> {q.explanation}
+                </Typography>
+              )}
+            </Box>
           ))
         ) : (
-          <Typography color="text.secondary">Chưa có nhóm nào.</Typography>
+          <Typography color="text.secondary">Chưa có câu hỏi nào.</Typography>
         )}
       </Paper>
     </Box>

@@ -21,7 +21,13 @@ import EditQuestionPage from "../features/Collaborator/pages/QuestionPage/EditQu
 
 // ===== Other pages =====
 import StudentsPage from "../features/Collaborator/pages/StudentsPage/index";
-import MinitestPage from "../features/Collaborator/pages/MinitestPage";
+
+// ===== Minitest pages =====
+import MinitestPage from "../features/Collaborator/pages/MinitestPage/MiniTestListPage";
+import CreateMiniTestPage from "../features/Collaborator/pages/MinitestPage/CreateMiniTestPage";
+import EditMiniTestPage from "../features/Collaborator/pages/MinitestPage/EditMiniTestPage";
+import MiniTestDetailPage from "../features/Collaborator/pages/MinitestPage/MiniTestDetailPage";
+
 import GrammarPage from "../features/Grammar/GrammarPage";
 import VocabularyPage from "../features/Vocabulary/VocabularyPage";
 
@@ -93,6 +99,13 @@ export const AppRouter = () => {
 
             {/* ===== Mini Test ===== */}
             <Route path="minitests" element={<MinitestPage />} />
+            <Route path="minitests/create" element={<CreateMiniTestPage />} />
+            <Route path="minitests/edit/:id" element={<EditMiniTestPage />} />
+            <Route
+              path="minitests/:id/detail"
+              element={<MiniTestDetailPage />}
+            />
+
             {/* nếu sau này có Create/Edit thì thêm tương tự */}
 
             {/* ===== Question Bank ===== */}

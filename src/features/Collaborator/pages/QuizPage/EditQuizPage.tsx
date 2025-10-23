@@ -10,17 +10,12 @@ import {
   Divider,
   Autocomplete,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
 } from "@mui/material";
-import { ExpandMore } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import quizService from "./services/quiz.service";
 import { lessonManagerService } from "../../../../services/lesson_manager.service";
 import { useQuizBuilderViewModel } from "./viewmodel/useQuizBuilderViewModel";
-import GroupForm from "../../components/GroupForm";
 
 export default function EditQuizPage() {
   const { id } = useParams();
@@ -33,13 +28,12 @@ export default function EditQuizPage() {
     topic: [],
     part_type: "",
     level: "",
-    status: "",
+    status: "draft",
     planned_completion_time: 0,
     weight: 0.1,
   });
   const [topicOptions, setTopicOptions] = useState<{ id: string; title: string }[]>([]);
 
-  // 🧭 Lấy danh sách topic thật
   useEffect(() => {
     const fetchTopics = async () => {
       try {
@@ -53,14 +47,11 @@ export default function EditQuizPage() {
     fetchTopics();
   }, []);
 
-  // 🧠 Lấy quiz hiện có
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
         const res = await quizService.getById(id!);
         const quiz = res.data!;
-
-        // Gán vào form
         setForm({
           title: quiz.title || "",
           topic: quiz.topic?.map((t: any) => t._id || t.id) || [],
@@ -70,8 +61,6 @@ export default function EditQuizPage() {
           planned_completion_time: quiz.planned_completion_time || 0,
           weight: quiz.weight || 0.1,
         });
-
-        // Gán dữ liệu quiz vào ViewModel
         vm.initFromQuiz(quiz);
       } catch (error) {
         console.error(error);
@@ -91,19 +80,28 @@ export default function EditQuizPage() {
     );
   }
 
-  // 🖊️ Cập nhật giá trị form
   const handleChange = (field: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [field]: value }));
   };
 
-  // 💾 Lưu quiz sau chỉnh sửa
   const handleUpdate = async () => {
     try {
+      if (!form.title.trim()) {
+        toast.error("Vui lòng nhập tên quiz!");
+        return;
+      }
+      if (vm.questions.length === 0) {
+        toast.error("Cần ít nhất 1 câu hỏi!");
+        return;
+      }
+
+      const { status, ...formWithoutStatus } = form; // 🟢 bỏ status khỏi payload
+
       const payload = {
-        ...form,
+        ...formWithoutStatus,
         part_type: form.part_type ? Number(form.part_type) : undefined,
         topic: form.topic,
-        group_ids: vm.groups,
+        question_ids: vm.questions,
       };
 
       await quizService.update(id!, payload);
@@ -124,7 +122,6 @@ export default function EditQuizPage() {
       {/* 🔹 Form thông tin cơ bản */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 3, bgcolor: "#fafafa" }}>
         <Grid container spacing={2}>
-          {/* Tên quiz */}
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
@@ -135,22 +132,22 @@ export default function EditQuizPage() {
             />
           </Grid>
 
-          {/* Trạng thái */}
           <Grid size={{ xs: 12, md: 2.5 }}>
             <TextField
-              select
               fullWidth
               label="Trạng thái"
-              value={form.status}
-              onChange={(e) => handleChange("status", e.target.value)}
+              value={
+                form.status === "approved"
+                  ? "Đã duyệt"
+                  : form.status === "pending"
+                  ? "Chờ duyệt"
+                  : "Nháp"
+              }
+              disabled
               sx={{ bgcolor: "white" }}
-            >
-              <MenuItem value="draft">Nháp</MenuItem>
-              <MenuItem value="published">Công khai</MenuItem>
-            </TextField>
+            />
           </Grid>
 
-          {/* Level */}
           <Grid size={{ xs: 12, md: 2.5 }}>
             <TextField
               select
@@ -168,7 +165,6 @@ export default function EditQuizPage() {
             </TextField>
           </Grid>
 
-          {/* Part Type */}
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               select
@@ -187,7 +183,6 @@ export default function EditQuizPage() {
             </TextField>
           </Grid>
 
-          {/* Chủ đề (topic) */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Autocomplete
               multiple
@@ -208,7 +203,6 @@ export default function EditQuizPage() {
             />
           </Grid>
 
-          {/* Planned completion */}
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
@@ -222,7 +216,6 @@ export default function EditQuizPage() {
             />
           </Grid>
 
-          {/* Weight */}
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
@@ -236,72 +229,97 @@ export default function EditQuizPage() {
         </Grid>
       </Paper>
 
-      {/* 🔸 Danh sách nhóm câu hỏi (Accordion) */}
-      {vm.groups.map((g: any, gi: number) => (
+      {/* 🔸 Danh sách câu hỏi */}
+      {vm.questions.map((q, qi) => (
         <Paper
-          key={gi}
+          key={qi}
           sx={{
             mb: 2,
+            p: 2,
             borderRadius: 2,
-            overflow: "hidden",
             border: "1px solid #e0e0e0",
+            bgcolor: "#fff",
           }}
         >
-          <Accordion defaultExpanded>
-            <AccordionSummary
-              expandIcon={<ExpandMore />}
-              sx={{
-                bgcolor: "#f9fafb",
-                "& .MuiAccordionSummary-content": {
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                },
-              }}
-            >
-              <Typography fontWeight={600}>Nhóm {gi + 1}</Typography>
-              <Button
-                color="error"
-                size="small"
-                variant="outlined"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  vm.removeGroup(gi);
-                }}
-              >
-                🗑️ Xóa
-              </Button>
-            </AccordionSummary>
+          <Typography fontWeight={600} mb={1}>
+            Câu hỏi {qi + 1}
+          </Typography>
 
-            <AccordionDetails sx={{ bgcolor: "#fff" }}>
-              <GroupForm
-                groupIndex={gi}
-                group={g}
-                tagOptions={["grammar", "vocabulary"]}
-                onChange={vm.updateGroup}
-                onChangeQuestion={vm.updateQuestion}
-                onAddQuestion={vm.addQuestion}
-                onRemoveQuestion={vm.removeQuestion}
-                isQuiz={true}
-              />
-            </AccordionDetails>
-          </Accordion>
+          <TextField
+            fullWidth
+            label="Nội dung câu hỏi"
+            value={q.textQuestion}
+            onChange={(e) => vm.updateQuestion(qi, "textQuestion", e.target.value)}
+            sx={{ mb: 2 }}
+          />
+
+          <Grid container spacing={2}>
+            {["A", "B", "C", "D"].map((opt) => (
+              <Grid key={opt} size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label={`Đáp án ${opt}`}
+                  value={q.choices?.[opt] || ""}
+                  onChange={(e) =>
+                    vm.updateQuestion(qi, "choices", {
+                      ...q.choices,
+                      [opt]: e.target.value,
+                    })
+                  }
+                />
+              </Grid>
+            ))}
+          </Grid>
+
+          <TextField
+            fullWidth
+            select
+            label="Đáp án đúng"
+            value={q.correctAnswer}
+            onChange={(e) => vm.updateQuestion(qi, "correctAnswer", e.target.value)}
+            sx={{ mt: 2 }}
+          >
+            <MenuItem value="">Chưa chọn</MenuItem>
+            <MenuItem value="A">A</MenuItem>
+            <MenuItem value="B">B</MenuItem>
+            <MenuItem value="C">C</MenuItem>
+            <MenuItem value="D">D</MenuItem>
+          </TextField>
+
+          <TextField
+            fullWidth
+            label="Giải thích"
+            value={q.explanation}
+            onChange={(e) => vm.updateQuestion(qi, "explanation", e.target.value)}
+            sx={{ mt: 2 }}
+          />
+
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => vm.removeQuestion(qi)}
+            >
+              🗑️ Xóa câu hỏi
+            </Button>
+          </Box>
         </Paper>
       ))}
 
       <Divider sx={{ my: 3 }} />
 
-      {/* ➕ Thêm nhóm + Lưu thay đổi */}
+      {/* ➕ Thêm câu hỏi + Lưu thay đổi */}
       <Box display="flex" gap={2}>
         <Button
           variant="outlined"
-          onClick={vm.addGroup}
+          onClick={vm.addQuestion}
           sx={{
             borderColor: "#2563eb",
             color: "#2563eb",
             ":hover": { bgcolor: "#eff6ff" },
           }}
         >
-          ➕ Thêm nhóm mới
+          ➕ Thêm câu hỏi
         </Button>
         <Button
           variant="contained"

@@ -8,6 +8,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Typography,
+  useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -28,7 +29,7 @@ interface Props {
   onRemoveQuestion?: (groupIndex: number, questionIndex: number) => void;
   onAddQuestion?: (groupIndex: number) => void;
   totalQuestionsPart7?: number;
-  isQuiz?: boolean; // 🆕 cho phép quiz thêm câu hỏi tự do
+  isQuiz?: boolean;
 }
 
 const MAX_PART7_QUESTIONS = 54;
@@ -44,25 +45,32 @@ const GroupForm: React.FC<Props> = ({
   totalQuestionsPart7 = 0,
   isQuiz = false,
 }) => {
-  // 🧹 Xóa 1 ảnh khỏi danh sách
+  const theme = useTheme();
+
   const handleRemoveImage = (idx: number) => {
     const newList = group.imagesUrl.filter((_: any, i: number) => i !== idx);
     onChange(groupIndex, "imagesUrl", newList);
   };
 
-  // 🧹 Xóa audio
   const handleRemoveAudio = () => {
     onChange(groupIndex, "audioUrl", null);
   };
 
+  // 🎨 Colors theo theme
+  const bgBox =
+    theme.palette.mode === "light"
+      ? theme.palette.background.paper
+      : theme.palette.background.default;
+  const borderColor = theme.palette.divider;
+
   return (
     <Box
       sx={{
-        border: "1px solid #ddd",
+        border: `1px solid ${borderColor}`,
         borderRadius: 2,
         p: 2,
         mb: 3,
-        bgcolor: "#fafafa",
+        bgcolor: bgBox,
       }}
     >
       {/* Upload audio + ảnh */}
@@ -74,8 +82,8 @@ const GroupForm: React.FC<Props> = ({
             component="label"
             fullWidth
             sx={{
-              bgcolor: "#2563eb",
-              ":hover": { bgcolor: "#1e40af" },
+              bgcolor: theme.palette.primary.main,
+              ":hover": { bgcolor: theme.palette.primary.dark },
               fontWeight: 600,
             }}
           >
@@ -101,8 +109,8 @@ const GroupForm: React.FC<Props> = ({
             component="label"
             fullWidth
             sx={{
-              bgcolor: "#2563eb",
-              ":hover": { bgcolor: "#1e40af" },
+              bgcolor: theme.palette.primary.main,
+              ":hover": { bgcolor: theme.palette.primary.dark },
               fontWeight: 600,
             }}
           >
@@ -129,9 +137,15 @@ const GroupForm: React.FC<Props> = ({
 
       {/* Media Preview */}
       {(group.audioUrl || (group.imagesUrl && group.imagesUrl.length > 0)) && (
-        <Accordion sx={{ mb: 2 }}>
+        <Accordion
+          sx={{
+            mb: 2,
+            bgcolor: bgBox,
+            border: `1px solid ${borderColor}`,
+          }}
+        >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography sx={{ fontWeight: 600 }}>Media Preview</Typography>
+            <Typography fontWeight={600}>Media Preview</Typography>
           </AccordionSummary>
           <AccordionDetails>
             {/* Audio */}
@@ -153,8 +167,10 @@ const GroupForm: React.FC<Props> = ({
                     position: "absolute",
                     top: 0,
                     right: 0,
-                    background: "white",
-                    "&:hover": { background: "#fdd" },
+                    background: theme.palette.background.paper,
+                    "&:hover": {
+                      background: theme.palette.error.light,
+                    },
                   }}
                 >
                   <DeleteIcon fontSize="small" />
@@ -176,6 +192,8 @@ const GroupForm: React.FC<Props> = ({
                         position: "relative",
                         width: 80,
                         height: 80,
+                        borderRadius: 1,
+                        overflow: "hidden",
                       }}
                     >
                       <img
@@ -196,8 +214,10 @@ const GroupForm: React.FC<Props> = ({
                           position: "absolute",
                           top: -8,
                           right: -8,
-                          background: "white",
-                          "&:hover": { background: "#fdd" },
+                          background: theme.palette.background.paper,
+                          "&:hover": {
+                            background: theme.palette.error.light,
+                          },
                         }}
                       >
                         <DeleteIcon fontSize="small" />
@@ -220,7 +240,11 @@ const GroupForm: React.FC<Props> = ({
             multiline
             rows={2}
             value={group.transcriptEnglish || ""}
-            sx={{ "& .MuiInputBase-root": { bgcolor: "white" } }}
+            sx={{
+              "& .MuiInputBase-root": {
+                bgcolor: theme.palette.background.paper,
+              },
+            }}
             onChange={(e) =>
               onChange(groupIndex, "transcriptEnglish", e.target.value)
             }
@@ -233,7 +257,11 @@ const GroupForm: React.FC<Props> = ({
             multiline
             rows={2}
             value={group.transcriptTranslation || ""}
-            sx={{ "& .MuiInputBase-root": { bgcolor: "white" } }}
+            sx={{
+              "& .MuiInputBase-root": {
+                bgcolor: theme.palette.background.paper,
+              },
+            }}
             onChange={(e) =>
               onChange(groupIndex, "transcriptTranslation", e.target.value)
             }
@@ -243,7 +271,14 @@ const GroupForm: React.FC<Props> = ({
 
       {/* Danh sách câu hỏi */}
       {group.questions.map((q: any, qIdx: number) => (
-        <Accordion key={qIdx} sx={{ mb: 1 }}>
+        <Accordion
+          key={qIdx}
+          sx={{
+            mb: 1,
+            bgcolor: bgBox,
+            border: `1px solid ${borderColor}`,
+          }}
+        >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Box
               sx={{
@@ -280,7 +315,11 @@ const GroupForm: React.FC<Props> = ({
             </Box>
           </AccordionSummary>
 
-          <AccordionDetails>
+          <AccordionDetails
+            sx={{
+              bgcolor: theme.palette.background.paper,
+            }}
+          >
             <QuestionForm
               form={q}
               partIndex={group.part}
@@ -311,6 +350,11 @@ const GroupForm: React.FC<Props> = ({
               (group.questions.length >= 5 ||
                 totalQuestionsPart7 >= MAX_PART7_QUESTIONS)
             }
+            sx={{
+              borderColor: theme.palette.primary.main,
+              color: theme.palette.primary.main,
+              ":hover": { bgcolor: theme.palette.action.hover },
+            }}
           >
             + Thêm câu hỏi
           </Button>
@@ -318,7 +362,7 @@ const GroupForm: React.FC<Props> = ({
           {!isQuiz && (
             <Typography
               variant="caption"
-              sx={{ display: "block", mt: 1, color: "text.secondary" }}
+              sx={{ display: "block", mt: 1, color: theme.palette.text.secondary }}
             >
               ({totalQuestionsPart7}/{MAX_PART7_QUESTIONS} câu trong Part 7)
             </Typography>
