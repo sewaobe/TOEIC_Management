@@ -38,6 +38,14 @@ import QuizDetailPage from "../features/Collaborator/pages/QuizPage/QuizDetailPa
 
 import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/VideoLecturePage";
 
+// ===== Admin layout & pages =====
+import AdminLayout from "../features/Admin/AdminLayout";
+import AdminDashboardPage from "../features/Admin/pages/DashboardPage.tsx";
+import UserManagementPage from "../features/Admin/pages/UserManagementPage.tsx";
+import CollaboratorManagementPage from "../features/Admin/pages/CollaboratorManagementPage/index.tsx";
+import TestApprovalPage from "../features/Admin/pages/TestApprovalPage.tsx";
+import LessonApprovalPage from "../features/Admin/pages/LessonApprovalPage.tsx";
+
 // Error pages
 import NotFound from "../components/NotFound";
 import Unauthorized from "../components/Unauthorized";
@@ -153,15 +161,25 @@ export const AppRouter = () => {
           </Route>
 
           {/* Private route - admin */}
-          {/* <Route
+          <Route
             path="/admin"
             element={
               <RouteWrapper
-                element={<Dashboard />}
+                element={<AdminLayout />}
+                requireAuth={true}
                 guard={{ role: "admin" }}
               />
             }
-          /> */}
+          >
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="users" element={<UserManagementPage />} />
+            <Route
+              path="collaborators"
+              element={<CollaboratorManagementPage />}
+            />
+            <Route path="tests" element={<TestApprovalPage />} />
+            <Route path="lessons" element={<LessonApprovalPage />} />
+          </Route>
 
           {/* 401 redirect */}
           <Route path="/401" element={<Unauthorized />} />
