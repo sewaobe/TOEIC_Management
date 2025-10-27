@@ -18,6 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 type LessonStatus = "pending" | "approved" | "rejected";
 
@@ -55,7 +56,6 @@ export default function LessonApprovalPage() {
   const [creator, setCreator] = useState("");
   const [showPending, setShowPending] = useState(true);
 
-  // ✅ Bộ lọc tổng hợp
   const filtered = lessons.filter(
     (l) =>
       l.title.toLowerCase().includes(search.toLowerCase()) &&
@@ -74,7 +74,6 @@ export default function LessonApprovalPage() {
       (creator ? l.creator === creator : true)
   );
 
-  // 🔹 Lấy danh sách người tạo (unique)
   const creatorOptions = Array.from(new Set(lessons.map((l) => l.creator)));
 
   return (
@@ -83,7 +82,6 @@ export default function LessonApprovalPage() {
         Duyệt bài học tổng hợp
       </Typography>
 
-      {/* 🔍 Toolbar */}
       <Paper
         sx={{
           p: 2,
@@ -176,18 +174,12 @@ export default function LessonApprovalPage() {
         )}
       </Paper>
 
-      {/* 🧾 Bảng hiển thị */}
-      {!status && showPending && (
-        <SectionTable title="Cần duyệt" items={pendingList} />
-      )}
+      {!status && showPending && <SectionTable title="Cần duyệt" items={pendingList} />}
       <SectionTable title="Tất cả bài học" items={filtered} />
     </Box>
   );
 }
 
-// ==========================
-// 🔧 Sub-component hiển thị bảng
-// ==========================
 function SectionTable({
   title,
   items,
@@ -195,6 +187,7 @@ function SectionTable({
   title: string;
   items: LessonManager[];
 }) {
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const paginated = items.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -225,7 +218,12 @@ function SectionTable({
             </TableHead>
             <TableBody>
               {paginated.map((l, i) => (
-                <TableRow key={l.id} hover>
+                <TableRow
+                  key={l.id}
+                  hover
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => navigate(`/admin/lessons/${l.id}`)} // ✅ chuyển sang trang chi tiết
+                >
                   <TableCell>{page * rowsPerPage + i + 1}</TableCell>
                   <TableCell>{l.title}</TableCell>
                   <TableCell>{l.part}</TableCell>

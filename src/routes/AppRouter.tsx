@@ -40,11 +40,14 @@ import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/Vi
 
 // ===== Admin layout & pages =====
 import AdminLayout from "../features/Admin/AdminLayout";
-import AdminDashboardPage from "../features/Admin/pages/DashboardPage.tsx";
-import UserManagementPage from "../features/Admin/pages/UserManagementPage.tsx";
+import AdminDashboardPage from "../features/Admin/pages/DashboardPage/index.tsx";
+import UserManagementPage from "../features/Admin/pages/UserManagementPage/index.tsx";
 import CollaboratorManagementPage from "../features/Admin/pages/CollaboratorManagementPage/index.tsx";
-import TestApprovalPage from "../features/Admin/pages/TestApprovalPage.tsx";
-import LessonApprovalPage from "../features/Admin/pages/LessonApprovalPage.tsx";
+import TestApprovalPage from "../features/Admin/pages/TestApprovalPage/index.tsx";
+import TestApprovalDetailPage from "../features/Admin/pages/TestApprovalPage/TestApprovalDetailPage/index.tsx";
+
+import LessonApprovalPage from "../features/Admin/pages/LessonApprovalPage/index.tsx";
+import LessonApprovalDetailPage from "../features/Admin/pages/LessonApprovalPage/LessonApprovalDetailPage/index.tsx";
 
 // Error pages
 import NotFound from "../components/NotFound";
@@ -178,7 +181,9 @@ export const AppRouter = () => {
               element={<CollaboratorManagementPage />}
             />
             <Route path="tests" element={<TestApprovalPage />} />
+            <Route path="tests/:id" element={<TestApprovalDetailPage />} />
             <Route path="lessons" element={<LessonApprovalPage />} />
+            <Route path="lessons/:id" element={<LessonApprovalDetailPage />} />
           </Route>
 
           {/* 401 redirect */}
