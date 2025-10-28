@@ -19,6 +19,7 @@ import {
 } from "@mui/icons-material"
 import { motion, AnimatePresence } from "framer-motion"
 import { Link, useLocation } from "react-router-dom"
+import { VpnKeyOutlined } from "@mui/icons-material";
 
 export interface AdminSidebarItem {
   main: {
@@ -45,6 +46,9 @@ export const adminSidebarStructure: AdminSidebarItem[] = [
   {
     main: { text: "Duyệt bài học tổng hợp", icon: <BarChartOutlined />, to: "/admin/lessons", badge: 3 },
   },
+  {
+    main: { text: "Phân quyền (Coming soon)", icon: <VpnKeyOutlined />, to: "/admin/roles" }
+  }
 ]
 
 const AdminSidebar: React.FC = () => {

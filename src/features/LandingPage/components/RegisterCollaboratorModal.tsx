@@ -6,6 +6,8 @@ import {
   ArrowForward as ChevronRightIcon,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
+import { uploadDocumentToCloudinary } from "../../../services/cloudinary.service";
+import { requestCollaboratorService } from "../../../services/request_collaborator.service";
 
 interface RegisterCollaboratorModalProps {
   isOpen: boolean;
@@ -23,11 +25,11 @@ export default function RegisterCollaboratorModal({
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    phone: "",
     experience: "",
     expertise: [] as string[],
     motivation: "",
     availability: "",
+    cvFile: null as File | null,
   });
 
   const expertiseOptions = [
@@ -62,7 +64,6 @@ export default function RegisterCollaboratorModal({
       step === 1 &&
       formData.fullName &&
       formData.email &&
-      formData.phone &&
       formData.experience
     ) {
       setStep(2);
@@ -74,14 +75,57 @@ export default function RegisterCollaboratorModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setLoading(false);
-    setSubmitted(true);
-    setTimeout(() => {
-      onClose();
-      setSubmitted(false);
-      setStep(1);
-    }, 2800);
+
+    try {
+      let cvUrl = "";
+
+      // 1. Upload file CV nếu có
+      if (formData.cvFile) {
+        const uploadRes = await uploadDocumentToCloudinary(formData.cvFile);
+        cvUrl = uploadRes.url;
+        console.log("Uploaded CV:", cvUrl);
+      }
+
+      // 2. Gửi toàn bộ thông tin lên backend
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        experience: formData.experience,
+        expertise: formData.expertise,
+        motivation: formData.motivation,
+        availability: formData.availability,
+        cv_url: cvUrl, // chỉ gửi URL, không gửi file nhị phân
+      };
+      requestCollaboratorService.submitRequestCollaborator(payload);
+      
+      // 3. Hiển thị trạng thái thành công
+      setSubmitted(true);
+    } catch (err) {
+      console.error("❌ Lỗi upload hoặc gửi form:", err);
+      alert("Đã xảy ra lỗi khi gửi thông tin, vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+      // 4. Tự động đóng modal sau khi gửi xong
+      setTimeout(() => {
+        onClose();
+        setSubmitted(false);
+        setStep(1);
+      }, 2800);
+    }
+  };
+
+
+  const handleFileChange = (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      alert("Vui lòng chọn file PDF hợp lệ!");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File vượt quá 5MB, vui lòng chọn file nhỏ hơn!");
+      return;
+    }
+    setFormData((prev) => ({ ...prev, cvFile: file }));
   };
 
   return (
@@ -121,7 +165,7 @@ export default function RegisterCollaboratorModal({
             </div>
 
             {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-8 py-6 bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30">
+            <div className="flex-1 overflow-y-auto px-8 py-6 bg-gradient-to-br from-white via-teal-50/30 to-cyan-50/30 mb-2">
               <AnimatePresence mode="wait">
                 {submitted ? (
                   <motion.div
@@ -203,6 +247,7 @@ export default function RegisterCollaboratorModal({
                               handleSubmit={handleSubmit}
                               loading={loading}
                               expertiseOptions={expertiseOptions}
+                              handleFileChange={handleFileChange}
                             />
                           </motion.div>
                         )}
@@ -232,7 +277,6 @@ export default function RegisterCollaboratorModal({
                     disabled={
                       !formData.fullName ||
                       !formData.email ||
-                      !formData.phone ||
                       !formData.experience
                     }
                     className="flex-1 py-2.5 rounded-md bg-gradient-to-r from-cyan-500 to-teal-400 text-white hover:shadow-[0_0_12px_rgba(20,184,166,0.4)] hover:brightness-105 transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
@@ -247,7 +291,8 @@ export default function RegisterCollaboratorModal({
                       loading ||
                       !formData.expertise.length ||
                       !formData.motivation ||
-                      !formData.availability
+                      !formData.availability ||
+                      !formData.cvFile
                     }
                     className="flex-1 py-2.5 rounded-md bg-gradient-to-r from-cyan-500 to-teal-400 text-white hover:shadow-[0_0_12px_rgba(20,184,166,0.4)] hover:brightness-105 transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                   >
@@ -283,8 +328,7 @@ function Step1({ formData, handleInputChange }: any) {
   return (
     <form className="space-y-6">
       <Input label="Họ và tên" required name="fullName" value={formData.fullName} onChange={handleInputChange} />
-      <Input label="Email" required name="email" type="email" value={formData.email} onChange={handleInputChange} />
-      <Input label="Số điện thoại" required name="phone" type="tel" value={formData.phone} onChange={handleInputChange} />
+      <Input label="Email" required name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="Email sẽ được dùng để đăng nhập sau khi trở thành công tác viên. Vui lòng nhập đúng!" />
       <Select
         label="Kinh nghiệm giảng dạy"
         required
@@ -310,6 +354,7 @@ function Step2({
   handleSubmit,
   loading,
   expertiseOptions,
+  handleFileChange,
 }: any) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -323,11 +368,10 @@ function Step2({
               key={skill}
               type="button"
               onClick={() => handleExpertiseToggle(skill)}
-              className={`px-4 py-2 rounded-md border text-sm font-medium transition-all ${
-                formData.expertise.includes(skill)
-                  ? "bg-gradient-to-r from-cyan-500 to-teal-400 text-white border-transparent shadow-sm"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-100"
-              }`}
+              className={`px-4 py-2 rounded-md border text-sm font-medium transition-all ${formData.expertise.includes(skill)
+                ? "bg-gradient-to-r from-cyan-500 to-teal-400 text-white border-transparent shadow-sm"
+                : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                }`}
             >
               {skill}
             </button>
@@ -355,6 +399,11 @@ function Step2({
         value={formData.motivation}
         onChange={handleInputChange}
         rows={4}
+      />
+
+      <FileDropzone
+        onFileSelect={handleFileChange}
+        selectedFile={formData.cvFile}
       />
     </form>
   );
@@ -438,6 +487,64 @@ function Select({
           ▼
         </span>
       </div>
+    </div>
+  );
+}
+
+function FileDropzone({
+  onFileSelect,
+  selectedFile,
+}: {
+  onFileSelect: (file: File | null) => void;
+  selectedFile: File | null;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) onFileSelect(file);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onFileSelect(file);
+  };
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+      className={`border-2 border-dashed rounded-lg p-5 text-center transition-all cursor-pointer ${isDragging
+        ? "border-cyan-500 bg-cyan-50"
+        : "border-slate-300 hover:border-cyan-400"
+        }`}
+      onClick={() => document.getElementById("cv-input")?.click()}
+    >
+      <input
+        id="cv-input"
+        type="file"
+        accept="application/pdf"
+        onChange={handleChange}
+        className="hidden"
+      />
+      {selectedFile ? (
+        <p className="text-sm text-teal-700 font-medium">
+          Đã chọn: {selectedFile.name}
+        </p>
+      ) : (
+        <p className="text-slate-600 text-sm">
+          Kéo & thả file CV (PDF) vào đây hoặc{" "}
+          <span className="text-cyan-600 underline">chọn từ máy</span>
+        </p>
+      )}
     </div>
   );
 }

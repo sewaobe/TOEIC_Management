@@ -6,7 +6,7 @@ import SectionBenefits from "./components/SectionBenefits";
 import SectionGuide from "./components/SectionGuide";
 import SectionFAQ from "./components/SectionFAQ";
 import JoinBadge from "./components/JoinBadge";
-import RegisterCollaboratorModal from "../../components/RegisterCollaboratorModal";
+import RegisterCollaboratorModal from "./components/RegisterCollaboratorModal";
 
 export default function LandingPage() {
   const sections = ["hero", "benefits", "guide", "faq"];
