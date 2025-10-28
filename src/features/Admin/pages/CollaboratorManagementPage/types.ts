@@ -1,28 +1,26 @@
-// 🧩 Các kiểu dữ liệu dùng chung trong trang Quản lý CTV
+import { Badge } from "../../../../types/Badge";
+import { MasterPart } from "../../../../types/MasterPart";
+import { UserProfile } from "../../../../types/User";
 
-// Trạng thái cộng tác viên
 export type CollaboratorStatus = "pending" | "approved" | "rejected";
 
-// Dữ liệu cơ bản của cộng tác viên trong bảng
-export interface Collaborator {
-  id: string;
-  name: string;
+export interface CollaboratorRequest {
+  _id: string;
+  user_id?: {
+    _id: string;
+    profile?: UserProfile;
+    badges?: Badge[];
+    master_parts?: MasterPart[];
+  } | null;
+  fullName: string;
   email: string;
-  requested_at: string;
-  joined_at?: string;
+  experience: string;
+  expertise: string[];
+  motivation: string;
+  availability: "part-time" | "full-time" | "flexible";
+  cv_url: string;
   status: CollaboratorStatus;
-}
-
-// Dữ liệu chi tiết trong Drawer
-export interface UserDetail {
-  id: string;
-  email: string;
-  status: CollaboratorStatus;
-  profile: {
-    fullname: string;
-    avatar: string;
-  };
-  badges: { title: string }[];
-  master_parts: { part_name: string; accuracy: number }[];
-  topic_vocabularies: { title: string }[];
+  rejection_reason?: string;
+  created_at: string;
+  updated_at: string;
 }
