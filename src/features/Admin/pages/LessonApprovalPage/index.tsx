@@ -16,36 +16,31 @@ import {
   IconButton,
 } from "@mui/material";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-
-type LessonStatus = "pending" | "approved" | "rejected";
+import adminLessonService from "./services/adminLesson.service";
 
 interface LessonManager {
-  id: number;
+  _id: string;
   title: string;
-  part: string;
-  level: string;
-  creator: string;
-  created_at: string;
-  status: LessonStatus;
+  part_type?: string;
+  level?: string;
+  created_by?: any;
+  created_at?: string;
+  status?: string;
+  thumbnail?: string;
 }
 
-const lessons: LessonManager[] = [
-  { id: 1, title: "Unit 3 - Office Communication", part: "Part 3", level: "B1", creator: "Trần Minh Quân", created_at: "2024-09-01", status: "pending" },
-  { id: 2, title: "Unit 5 - Grammar Focus", part: "Part 5", level: "B1", creator: "Lê Thị Hà", created_at: "2024-09-08", status: "approved" },
-  { id: 3, title: "Unit 7 - Reading Intensive", part: "Part 7", level: "B2", creator: "Phạm Thảo My", created_at: "2024-09-15", status: "pending" },
-  { id: 4, title: "Unit 9 - Listening Practice", part: "Part 4", level: "A2", creator: "Nguyễn Minh Anh", created_at: "2024-09-22", status: "rejected" },
+const partOptions = [
+  "Part 1",
+  "Part 2",
+  "Part 3",
+  "Part 4",
+  "Part 5",
+  "Part 6",
+  "Part 7",
 ];
-
-const statusConfig = {
-  pending: { color: "warning", label: "Chờ duyệt" },
-  approved: { color: "success", label: "Đã duyệt" },
-  rejected: { color: "error", label: "Từ chối" },
-} as const;
-
-const partOptions = ["Part 1", "Part 2", "Part 3", "Part 4", "Part 5", "Part 6", "Part 7"];
 const levelOptions = ["A1", "A2", "B1", "B2", "C1"];
 
 export default function LessonApprovalPage() {
@@ -55,26 +50,72 @@ export default function LessonApprovalPage() {
   const [level, setLevel] = useState("");
   const [creator, setCreator] = useState("");
   const [showPending, setShowPending] = useState(true);
+  // server-side paging
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [items, setItems] = useState<LessonManager[]>([]);
 
-  const filtered = lessons.filter(
-    (l) =>
-      l.title.toLowerCase().includes(search.toLowerCase()) &&
-      (status ? l.status === status : true) &&
-      (part ? l.part === part : true) &&
-      (level ? l.level === level : true) &&
-      (creator ? l.creator === creator : true)
+  // pending table separate paging
+  const [pendingPage, setPendingPage] = useState(0);
+  const [pendingRows, setPendingRows] = useState(5);
+  const [pendingItems, setPendingItems] = useState<LessonManager[]>([]);
+  const [pendingTotal, setPendingTotal] = useState<number | undefined>(
+    undefined
   );
 
-  const pendingList = lessons.filter(
-    (l) =>
-      l.status === "pending" &&
-      l.title.toLowerCase().includes(search.toLowerCase()) &&
-      (part ? l.part === part : true) &&
-      (level ? l.level === level : true) &&
-      (creator ? l.creator === creator : true)
-  );
+  // fetch list from server
+  const fetchList = async (opts?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }) => {
+    try {
+      const p = (opts?.page ?? page) + 1; // server 1-based
+      const limit = opts?.limit ?? rowsPerPage;
+      const res: any = await adminLessonService.list({
+        page: p,
+        limit,
+        search: search || undefined,
+        status: status || undefined,
+        part: part || undefined,
+        level: level || undefined,
+      });
+      setItems(res.items || []);
+      setTotal(res.total || 0);
+    } catch (err) {
+      // ignore for now
+      setItems([]);
+      setTotal(0);
+    }
+  };
 
-  const creatorOptions = Array.from(new Set(lessons.map((l) => l.creator)));
+  const fetchPending = async (opts?: { page?: number; limit?: number }) => {
+    try {
+      const p = (opts?.page ?? pendingPage) + 1;
+      const limit = opts?.limit ?? pendingRows;
+      const res: any = await adminLessonService.list({
+        page: p,
+        limit,
+        status: "pending",
+      });
+      setPendingItems(res.items || []);
+    } catch {
+      setPendingItems([]);
+    }
+  };
+
+  useEffect(() => {
+    // reset to first page when filters change
+    setPage(0);
+    fetchList({ page: 0, limit: rowsPerPage });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, status, part, level, rowsPerPage]);
+
+  useEffect(() => {
+    fetchPending({ page: pendingPage, limit: pendingRows });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, part, level, pendingPage, pendingRows]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -108,9 +149,11 @@ export default function LessonApprovalPage() {
             sx={{ width: 150 }}
           >
             <MenuItem value="">Tất cả</MenuItem>
+            <MenuItem value="draft">Bản nháp</MenuItem>
             <MenuItem value="pending">Chờ duyệt</MenuItem>
             <MenuItem value="approved">Đã duyệt</MenuItem>
-            <MenuItem value="rejected">Từ chối</MenuItem>
+            <MenuItem value="open">Đang mở</MenuItem>
+            <MenuItem value="closed">Đã đóng / Từ chối</MenuItem>
           </TextField>
 
           <TextField
@@ -151,7 +194,26 @@ export default function LessonApprovalPage() {
             sx={{ width: 180 }}
           >
             <MenuItem value="">Tất cả</MenuItem>
-            {creatorOptions.map((c) => (
+            {Array.from(
+              new Set(
+                [
+                  ...items.map(
+                    (it) =>
+                      (it.created_by &&
+                        (it.created_by.displayName ||
+                          it.created_by.username)) ||
+                      ""
+                  ),
+                  ...pendingItems.map(
+                    (it) =>
+                      (it.created_by &&
+                        (it.created_by.displayName ||
+                          it.created_by.username)) ||
+                      ""
+                  ),
+                ].filter(Boolean)
+              )
+            ).map((c) => (
               <MenuItem key={c} value={c}>
                 {c}
               </MenuItem>
@@ -160,7 +222,9 @@ export default function LessonApprovalPage() {
         </Box>
 
         {!status && (
-          <Tooltip title={showPending ? "Ẩn bảng cần duyệt" : "Hiện bảng cần duyệt"}>
+          <Tooltip
+            title={showPending ? "Ẩn bảng cần duyệt" : "Hiện bảng cần duyệt"}
+          >
             <IconButton
               onClick={() => setShowPending((prev) => !prev)}
               sx={{
@@ -174,8 +238,40 @@ export default function LessonApprovalPage() {
         )}
       </Paper>
 
-      {!status && showPending && <SectionTable title="Cần duyệt" items={pendingList} />}
-      <SectionTable title="Tất cả bài học" items={filtered} />
+      {!status && showPending && (
+        <SectionTable
+          title="Cần duyệt"
+          items={pendingItems}
+          page={pendingPage}
+          rowsPerPage={pendingRows}
+          total={pendingTotal}
+          onPageChange={(p) => {
+            setPendingPage(p);
+            fetchPending({ page: p, limit: pendingRows });
+          }}
+          onRowsPerPageChange={(r) => {
+            setPendingRows(r);
+            setPendingPage(0);
+            fetchPending({ page: 0, limit: r });
+          }}
+        />
+      )}
+      <SectionTable
+        title="Tất cả bài học"
+        items={items}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={total}
+        onPageChange={(p) => {
+          setPage(p);
+          fetchList({ page: p, limit: rowsPerPage });
+        }}
+        onRowsPerPageChange={(r) => {
+          setRowsPerPage(r);
+          setPage(0);
+          fetchList({ page: 0, limit: r });
+        }}
+      />
     </Box>
   );
 }
@@ -183,14 +279,30 @@ export default function LessonApprovalPage() {
 function SectionTable({
   title,
   items,
+  page,
+  rowsPerPage,
+  total,
+  onPageChange,
+  onRowsPerPageChange,
 }: {
   title: string;
   items: LessonManager[];
+  page?: number;
+  rowsPerPage?: number;
+  total?: number;
+  onPageChange?: (p: number) => void;
+  onRowsPerPageChange?: (r: number) => void;
 }) {
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const paginated = items.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const [localPage, setLocalPage] = useState(0);
+  const [localRowsPerPage, setLocalRowsPerPage] = useState(5);
+  const serverMode = typeof total === "number";
+  const paginated = serverMode
+    ? items
+    : items.slice(
+        localPage * localRowsPerPage,
+        localPage * localRowsPerPage + localRowsPerPage
+      );
 
   return (
     <motion.div
@@ -219,21 +331,61 @@ function SectionTable({
             <TableBody>
               {paginated.map((l, i) => (
                 <TableRow
-                  key={l.id}
+                  key={(l as any)._id || (l as any).id || i}
                   hover
                   sx={{ cursor: "pointer" }}
-                  onClick={() => navigate(`/admin/lessons/${l.id}`)} // ✅ chuyển sang trang chi tiết
+                  onClick={() =>
+                    navigate(
+                      `/admin/lessons/${(l as any)._id || (l as any).id}`
+                    )
+                  } // ✅ chuyển sang trang chi tiết
                 >
-                  <TableCell>{page * rowsPerPage + i + 1}</TableCell>
+                  <TableCell>
+                    {(page ?? localPage) * (rowsPerPage ?? localRowsPerPage) +
+                      i +
+                      1}
+                  </TableCell>
                   <TableCell>{l.title}</TableCell>
-                  <TableCell>{l.part}</TableCell>
-                  <TableCell>{l.level}</TableCell>
-                  <TableCell>{l.creator}</TableCell>
-                  <TableCell>{l.created_at}</TableCell>
+                  <TableCell>{l.part_type || "-"}</TableCell>
+                  <TableCell>{l.level || "-"}</TableCell>
+                  <TableCell>
+                    {(l.created_by &&
+                      (l.created_by.displayName || l.created_by.username)) ||
+                      "-"}
+                  </TableCell>
+                  <TableCell>
+                    {l.created_at
+                      ? new Date(l.created_at).toLocaleDateString()
+                      : "-"}
+                  </TableCell>
                   <TableCell>
                     <Chip
-                      label={statusConfig[l.status].label}
-                      color={statusConfig[l.status].color}
+                      label={
+                        l.status === "draft"
+                          ? "Bản nháp"
+                          : l.status === "pending"
+                          ? "Chờ duyệt"
+                          : l.status === "approved"
+                          ? "Đã duyệt"
+                          : l.status === "open"
+                          ? "Đang mở"
+                          : l.status === "closed"
+                          ? "Đã đóng"
+                          : "-"
+                      }
+                      color={
+                        l.status === "draft"
+                          ? "default"
+                          : l.status === "pending"
+                          ? "warning"
+                          : l.status === "approved"
+                          ? "success"
+                          : l.status === "open"
+                          ? "info"
+                          : l.status === "closed"
+                          ? "error"
+                          : "default"
+                      }
                     />
                   </TableCell>
                 </TableRow>
@@ -243,13 +395,26 @@ function SectionTable({
         </TableContainer>
         <TablePagination
           component="div"
-          count={items.length}
-          page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          rowsPerPage={rowsPerPage}
+          count={serverMode ? total || 0 : items.length}
+          page={serverMode ? page ?? 0 : localPage}
+          onPageChange={(_, newPage) => {
+            if (serverMode) {
+              onPageChange && onPageChange(newPage);
+            } else {
+              setLocalPage(newPage);
+            }
+          }}
+          rowsPerPage={
+            serverMode ? rowsPerPage ?? localRowsPerPage : localRowsPerPage
+          }
           onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10));
-            setPage(0);
+            const val = parseInt(e.target.value, 10);
+            if (serverMode) {
+              onRowsPerPageChange && onRowsPerPageChange(val);
+            } else {
+              setLocalRowsPerPage(val);
+              setLocalPage(0);
+            }
           }}
           labelRowsPerPage="Số dòng mỗi trang:"
           sx={{ borderTop: "1px solid #e0e0e0" }}

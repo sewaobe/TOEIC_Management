@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { lessonManagerService } from "../../../../../services/lesson_manager.service";
+import adminLessonService from "../services/adminLesson.service";
 import { EmptyState } from "../../../../../components/EmptyState";
 import { LessonManagerDetail } from "../../../../../types/LessonManagerDetail";
 import { TestStatus } from "../../../../../types/enums/TestStatus.ts";
@@ -41,7 +41,8 @@ export default function LessonApprovalDetailPage(): JSX.Element {
   const navigate = useNavigate();
   const lessonManagerId = location.pathname.split("/")[3];
 
-  const [lessonManager, setLessonManager] = useState<LessonManagerDetail | null>(null);
+  const [lessonManager, setLessonManager] =
+    useState<LessonManagerDetail | null>(null);
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingTab, setLoadingTab] = useState(false);
@@ -50,7 +51,7 @@ export default function LessonApprovalDetailPage(): JSX.Element {
   const fetchLessonManager = async () => {
     try {
       setLoading(true);
-      const res = await lessonManagerService.getLessonManagerDetail(lessonManagerId);
+      const res = await adminLessonService.getDetail(lessonManagerId);
       setLessonManager(res);
     } catch {
       toast.error("❌ Lấy thông tin bài học thất bại. Vui lòng thử lại!");
@@ -78,16 +79,37 @@ export default function LessonApprovalDetailPage(): JSX.Element {
 
   // 🧠 Nút duyệt / từ chối / xóa
   const handleApprove = () => {
-    toast.success("✅ Đã duyệt bài học!");
-    navigate("/admin/lessons");
+    (async () => {
+      try {
+        await adminLessonService.approve(lessonManagerId);
+        toast.success("✅ Đã duyệt bài học!");
+        navigate("/admin/lessons");
+      } catch {
+        toast.error("Duyệt thất bại");
+      }
+    })();
   };
   const handleReject = () => {
-    toast.error("❌ Đã từ chối bài học!");
-    navigate("/admin/lessons");
+    (async () => {
+      try {
+        await adminLessonService.reject(lessonManagerId);
+        toast.error("❌ Đã từ chối bài học!");
+        navigate("/admin/lessons");
+      } catch {
+        toast.error("Từ chối thất bại");
+      }
+    })();
   };
   const handleDelete = () => {
-    toast.warning("🗑️ Đã xóa bài học!");
-    navigate("/admin/lessons");
+    (async () => {
+      try {
+        await adminLessonService.softDelete(lessonManagerId);
+        toast.warning("🗑️ Đã xóa bài học!");
+        navigate("/admin/lessons");
+      } catch {
+        toast.error("Xóa thất bại");
+      }
+    })();
   };
 
   // 🎬 Animation config
@@ -176,7 +198,14 @@ export default function LessonApprovalDetailPage(): JSX.Element {
       }}
     >
       {/* 🧠 Header */}
-      <Box sx={{ position: "relative", borderRadius: 3, overflow: "hidden", boxShadow: theme.shadows[3] }}>
+      <Box
+        sx={{
+          position: "relative",
+          borderRadius: 3,
+          overflow: "hidden",
+          boxShadow: theme.shadows[3],
+        }}
+      >
         <img
           src={
             lessonManager.thumbnail ||
@@ -203,7 +232,13 @@ export default function LessonApprovalDetailPage(): JSX.Element {
           }}
         >
           {/* 🔙 Back + Actions */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Button
               startIcon={<ArrowBack />}
               variant="outlined"
@@ -266,7 +301,8 @@ export default function LessonApprovalDetailPage(): JSX.Element {
               <Chip label={statusChip.label} color={statusChip.color as any} />
             </Box>
             <Typography variant="body2" sx={{ opacity: 0.85, mt: 1 }}>
-              ⭐ {lessonManager.rating || 0} | 👥 {lessonManager.student_count || 0} | ⏱{" "}
+              ⭐ {lessonManager.rating || 0} | 👥{" "}
+              {lessonManager.student_count || 0} | ⏱{" "}
               {lessonManager.planned_completion_time || 0} phút
             </Typography>
           </Box>
@@ -290,9 +326,17 @@ export default function LessonApprovalDetailPage(): JSX.Element {
         }}
       >
         <Tab label="Từ vựng" icon={<Translate />} iconPosition="start" />
-        <Tab label="Bài học chính" icon={<LibraryBooks />} iconPosition="start" />
+        <Tab
+          label="Bài học chính"
+          icon={<LibraryBooks />}
+          iconPosition="start"
+        />
         <Tab label="Dictation" icon={<Hearing />} iconPosition="start" />
-        <Tab label="Shadowing" icon={<RecordVoiceOver />} iconPosition="start" />
+        <Tab
+          label="Shadowing"
+          icon={<RecordVoiceOver />}
+          iconPosition="start"
+        />
         <Tab label="Quiz" icon={<Quiz />} iconPosition="start" />
       </Tabs>
 

@@ -13,7 +13,7 @@ import UserManagementTable from "./components/UserManagementTable";
 import UserDetailDrawer from "./components/UserDetailDrawer";
 import { useUserManagementViewModel } from "./viewmodel/useUserManagementViewModel";
 import { User } from "./types";
-import { users } from "./mockUsers";
+import adminUserService from "./services/adminUser.service";
 
 // 🧩 MUI Icons
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
@@ -22,7 +22,7 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 export default function UserManagementPage() {
-  const vm = useUserManagementViewModel(users);
+  const vm = useUserManagementViewModel();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -61,7 +61,7 @@ export default function UserManagementPage() {
 
         {/* Nút refresh */}
         <IconButton
-          onClick={() => window.location.reload()}
+          onClick={() => vm.refresh()}
           sx={{
             color: isLight ? theme.palette.text.primary : "#E2E8F0",
             bgcolor: isLight ? "#E0F2FE" : "#334155",
@@ -91,7 +91,9 @@ export default function UserManagementPage() {
           onChange={(e) => vm.setSearch(e.target.value)}
           sx={{ width: "40%" }}
           InputProps={{
-            startAdornment: <SearchIcon sx={{ mr: 1, color: "action.active" }} />,
+            startAdornment: (
+              <SearchIcon sx={{ mr: 1, color: "action.active" }} />
+            ),
           }}
         />
 
@@ -129,15 +131,20 @@ export default function UserManagementPage() {
 
       {/* Bảng người dùng */}
       <UserManagementTable
-        users={vm.paginated}
+        users={vm.users}
         page={vm.page}
         rowsPerPage={vm.rowsPerPage}
-        total={vm.filtered.length}
-        onChangePage={vm.setPage}
-        onChangeRows={vm.setRowsPerPage}
-        onSelectUser={(u) => {
-          setSelectedUser(u);
-          setDrawerOpen(true);
+        total={vm.total}
+        onChangePage={(p) => vm.setPage(p)}
+        onChangeRows={(r) => vm.setRowsPerPage(r)}
+        onSelectUser={async (u) => {
+          try {
+            const detail: any = await adminUserService.getUserDetail(u.id);
+            setSelectedUser(detail);
+            setDrawerOpen(true);
+          } catch (err) {
+            console.error("Lỗi khi lấy chi tiết người dùng", err);
+          }
         }}
       />
 
@@ -146,6 +153,10 @@ export default function UserManagementPage() {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         user={selectedUser}
+        onActionComplete={() => {
+          vm.refresh();
+          setDrawerOpen(false);
+        }}
       />
     </Box>
   );

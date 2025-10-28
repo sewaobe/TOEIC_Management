@@ -1,4 +1,11 @@
-import { Box, Paper, TextField, MenuItem, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  Paper,
+  TextField,
+  MenuItem,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 interface Props {
@@ -47,19 +54,45 @@ export default function FilterToolbar({
       }}
     >
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", flex: 1 }}>
-        <TextField label="Tìm kiếm" value={search} onChange={(e) => setSearch(e.target.value)} sx={{ width: "40%" }} />
-        <TextField label="Trạng thái" select value={status} onChange={(e) => setStatus(e.target.value)} sx={{ width: 150 }}>
+        <TextField
+          label="Tìm kiếm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ width: "40%" }}
+        />
+        <TextField
+          label="Trạng thái"
+          select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          sx={{ width: 150 }}
+        >
           <MenuItem value="">Tất cả</MenuItem>
+          <MenuItem value="draft">Bản nháp</MenuItem>
           <MenuItem value="pending">Chờ duyệt</MenuItem>
           <MenuItem value="approved">Đã duyệt</MenuItem>
-          <MenuItem value="rejected">Từ chối</MenuItem>
+          <MenuItem value="open">Đang mở</MenuItem>
+          <MenuItem value="closed">Đã đóng / Từ chối</MenuItem>
         </TextField>
-        <TextField label="Loại đề" select value={type} onChange={(e) => setType(e.target.value)} sx={{ width: 150 }}>
+        <TextField
+          label="Loại đề"
+          select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          sx={{ width: 150 }}
+        >
           <MenuItem value="">Tất cả</MenuItem>
-          <MenuItem value="FULL_TEST">Đề thi lớn</MenuItem>
-          <MenuItem value="MINI_TEST">Đề thi nhỏ</MenuItem>
+          {/* Giá trị truyền về backend phải khớp enum TestType (full-test, mini-test, part-test) */}
+          <MenuItem value="full-test">Đề thi lớn</MenuItem>
+          <MenuItem value="mini-test">Đề thi nhỏ</MenuItem>
         </TextField>
-        <TextField label="Chủ đề" select value={topic} onChange={(e) => setTopic(e.target.value)} sx={{ width: 150 }}>
+        <TextField
+          label="Chủ đề"
+          select
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          sx={{ width: 150 }}
+        >
           <MenuItem value="">Tất cả</MenuItem>
           {topicOptions.map((tp) => (
             <MenuItem key={tp} value={tp}>
@@ -67,7 +100,13 @@ export default function FilterToolbar({
             </MenuItem>
           ))}
         </TextField>
-        <TextField label="Người tạo" select value={creator} onChange={(e) => setCreator(e.target.value)} sx={{ width: 180 }}>
+        <TextField
+          label="Người tạo"
+          select
+          value={creator}
+          onChange={(e) => setCreator(e.target.value)}
+          sx={{ width: 180 }}
+        >
           <MenuItem value="">Tất cả</MenuItem>
           {creatorOptions.map((c) => (
             <MenuItem key={c} value={c}>
@@ -78,7 +117,9 @@ export default function FilterToolbar({
       </Box>
 
       {!status && (
-        <Tooltip title={showPending ? "Ẩn bảng cần duyệt" : "Hiện bảng cần duyệt"}>
+        <Tooltip
+          title={showPending ? "Ẩn bảng cần duyệt" : "Hiện bảng cần duyệt"}
+        >
           <IconButton
             onClick={() => setShowPending(!showPending)}
             sx={{

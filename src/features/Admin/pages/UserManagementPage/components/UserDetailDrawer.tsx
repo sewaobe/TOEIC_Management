@@ -21,6 +21,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { User } from "../types";
 import { statusColor } from "../viewmodel/useUserManagementViewModel";
+import adminUserService from "../services/adminUser.service";
 import {
   Gavel,
   Block,
@@ -49,32 +50,57 @@ interface Props {
   open: boolean;
   user: User | null;
   onClose: () => void;
+  // callback khi thực hiện hành động (ban/unban) thành công để FE refresh
+  onActionComplete?: () => void;
 }
 
-export default function UserDetailDrawer({ open, onClose, user }: Props) {
+export default function UserDetailDrawer({
+  open,
+  onClose,
+  user,
+  onActionComplete,
+}: Props) {
   const theme = useTheme();
   const [banType, setBanType] = useState<"temp" | "perm" | null>(null);
   const [reason, setReason] = useState("");
 
   if (!user) return null;
 
-  const isAdmin = user.role_id.name === "admin";
+  // Role có thể là string hoặc object tuỳ payload, tuỳ backend. Chuẩn hoá an toàn ở đây.
+  const roleName =
+    typeof user.role_id === "string" ? user.role_id : user.role_id?.name;
+  const isAdmin = roleName === "admin";
 
-  const handleSubmitBan = () => {
-    // 🔧 Giả lập gọi API
-    const action =
-      banType === "temp" ? "Tạm khóa người dùng" : "Ban vĩnh viễn người dùng";
+  const handleSubmitBan = async () => {
+    if (!user || !banType) return;
 
-    console.log(`🛑 ${action}:`, user.email, "Lý do:", reason);
+    try {
+      const payload = {
+        type: banType,
+        reason,
+      } as any;
 
-    toast.success(`${action} "${user.name}" thành công!`, {
-      description: `Lý do: ${reason}`,
-      duration: 4000,
-      icon: banType === "temp" ? <LockClock /> : <Block />,
-    });
+      // Gọi API ban
+      await adminUserService.banUser(user.id, payload);
 
-    setBanType(null);
-    setReason("");
+      const action = banType === "temp" ? "Tạm khóa" : "Ban vĩnh viễn";
+      toast.success(`${action} "${user.name}" thành công!`, {
+        description: `Lý do: ${reason}`,
+        duration: 4000,
+        icon: banType === "temp" ? <LockClock /> : <Block />,
+      });
+
+      // gọi callback để refresh danh sách ở parent
+      if (onActionComplete) {
+        onActionComplete();
+      }
+
+      setBanType(null);
+      setReason("");
+    } catch (err) {
+      console.error("Ban user failed", err);
+      toast.error("Không thể thực hiện hành động. Vui lòng thử lại.");
+    }
   };
 
   const handleCloseDialog = () => {
@@ -85,11 +111,18 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
   return (
     <>
       <Drawer anchor="right" open={open} onClose={onClose}>
-        <Box sx={{ width: 480, p: 3, background: theme.palette.background.default }}>
+        <Box
+          sx={{
+            width: 480,
+            p: 3,
+            background: theme.palette.background.default,
+          }}
+        >
           {/* Header */}
           <Stack alignItems="center" spacing={1} mb={2}>
             <Avatar
-              src={user.avatar}
+              // Avatar có thể undefined/object - chuyển thành string hoặc để trống
+              src={typeof user.avatar === "string" ? user.avatar : undefined}
               sx={{
                 width: 90,
                 height: 90,
@@ -104,8 +137,9 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
             <Typography color="text.secondary">{user.email}</Typography>
 
             <Chip
-              label={roleLabel[user.role_id.name]}
-              color={roleColor[user.role_id.name]}
+              // Hiển thị nhãn vai trò an toàn
+              label={roleLabel[roleName as keyof typeof roleLabel] || "—"}
+              color={roleColor[roleName as keyof typeof roleColor] || "default"}
               variant="outlined"
               sx={{ fontWeight: 600 }}
               icon={<VerifiedUser />}
@@ -159,6 +193,28 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
 
           <Divider sx={{ my: 2 }} />
 
+          {/* Nếu đang bị ban, hiển thị chi tiết ban */}
+          {user.status === "suspended" && (
+            <Box mb={2}>
+              <Typography fontWeight={600}>Tình trạng ban:</Typography>
+              <Typography variant="body2" color="error">
+                {user.banned_type === "perm"
+                  ? "Bị ban vĩnh viễn"
+                  : user.banned_until
+                  ? `Bị tạm khóa — đến ${new Date(
+                      user.banned_until
+                    ).toLocaleString("vi-VN")}`
+                  : "Bị tạm khóa"}
+              </Typography>
+              {user.banned_reason && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  <strong>Lý do:</strong> {user.banned_reason}
+                </Typography>
+              )}
+              <Divider sx={{ my: 2 }} />
+            </Box>
+          )}
+
           {/* Badges */}
           {user.badges && user.badges.length > 0 && (
             <>
@@ -167,9 +223,21 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
                 Huy hiệu đạt được
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                {user.badges.map((b: string, i: number) => (
-                  <Chip key={i} label={b} color="secondary" size="small" />
-                ))}
+                {user.badges.map((b: any, i: number) => {
+                  // badge có thể là string hoặc object -> hiển thị an toàn
+                  const label =
+                    typeof b === "string"
+                      ? b
+                      : b?.name || b?.title || b?._id || JSON.stringify(b);
+                  return (
+                    <Chip
+                      key={i}
+                      label={label}
+                      color="secondary"
+                      size="small"
+                    />
+                  );
+                })}
               </Stack>
               <Divider sx={{ my: 2 }} />
             </>
@@ -183,9 +251,15 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
                 Chủ đề đã học
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                {user.topic_vocabularies.map((t: string, i: number) => (
-                  <Chip key={i} label={t} color="info" size="small" />
-                ))}
+                {user.topic_vocabularies.map((t: any, i: number) => {
+                  const label =
+                    typeof t === "string"
+                      ? t
+                      : t?.name || t?.title || t?._id || JSON.stringify(t);
+                  return (
+                    <Chip key={i} label={label} color="info" size="small" />
+                  );
+                })}
               </Stack>
               <Divider sx={{ my: 2 }} />
             </>
@@ -198,7 +272,17 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
           </Typography>
           <Stack spacing={1}>
             {Array.from({ length: 7 }).map((_, i) => {
-              const part = user.master_parts[i] || { part_name: `Part ${i + 1}`, accuracy: 0 };
+              const raw = user.master_parts && user.master_parts[i];
+              const part = raw
+                ? {
+                    part_name:
+                      raw.part_name || (raw as any).name || `Part ${i + 1}`,
+                    accuracy:
+                      typeof (raw as any).accuracy === "number"
+                        ? (raw as any).accuracy
+                        : 0,
+                  }
+                : { part_name: `Part ${i + 1}`, accuracy: 0 };
               return (
                 <Box key={i}>
                   <Stack direction="row" justifyContent="space-between">
@@ -225,26 +309,50 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
           {/* Hành động */}
           {!isAdmin && (
             <Stack direction="row" spacing={2} justifyContent="center" mt={4}>
-              <Tooltip title="Tạm khóa tài khoản (có thể mở lại sau)">
-                <Button
-                  variant="contained"
-                  color="warning"
-                  startIcon={<LockClock />}
-                  onClick={() => setBanType("temp")}
-                >
-                  Tạm khóa
-                </Button>
-              </Tooltip>
-              <Tooltip title="Ban vĩnh viễn người dùng này">
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<Gavel />}
-                  onClick={() => setBanType("perm")}
-                >
-                  Ban vĩnh viễn
-                </Button>
-              </Tooltip>
+              {user.status === "suspended" ? (
+                <Tooltip title="Mở khóa tài khoản">
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<DoneAll />}
+                    onClick={async () => {
+                      try {
+                        await adminUserService.unbanUser(user.id);
+                        toast.success(`Đã mở khóa ${user.name}`);
+                        if (onActionComplete) onActionComplete();
+                      } catch (err) {
+                        console.error("Unban failed", err);
+                        toast.error("Không thể mở khóa. Vui lòng thử lại.");
+                      }
+                    }}
+                  >
+                    Mở khóa
+                  </Button>
+                </Tooltip>
+              ) : (
+                <>
+                  <Tooltip title="Tạm khóa tài khoản (có thể mở lại sau)">
+                    <Button
+                      variant="contained"
+                      color="warning"
+                      startIcon={<LockClock />}
+                      onClick={() => setBanType("temp")}
+                    >
+                      Tạm khóa
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title="Ban vĩnh viễn người dùng này">
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<Gavel />}
+                      onClick={() => setBanType("perm")}
+                    >
+                      Ban vĩnh viễn
+                    </Button>
+                  </Tooltip>
+                </>
+              )}
             </Stack>
           )}
 
@@ -262,7 +370,12 @@ export default function UserDetailDrawer({ open, onClose, user }: Props) {
       </Drawer>
 
       {/* Modal nhập lý do */}
-      <Dialog open={!!banType} onClose={handleCloseDialog} maxWidth="xs" fullWidth>
+      <Dialog
+        open={!!banType}
+        onClose={handleCloseDialog}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>
           {banType === "temp" ? (
             <>
