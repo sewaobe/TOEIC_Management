@@ -64,6 +64,7 @@ import DictationPage from "../features/Dictation/DictationPage";
 import ShadowingPage from "../features/Shadowing/ShadowingPage";
 import LessonManagerPage from "../features/LessonManager/LessonManagerPage";
 import LessonManagerDetailPage from "../features/LessonManager/LessonManagerDetailPage";
+import RBACRolesPage from "../features/Admin/pages/RBAC/RBACRolesPage.tsx";
 
 export const AppRouter = () => {
   return (
@@ -184,6 +185,7 @@ export const AppRouter = () => {
             <Route path="tests/:id" element={<TestApprovalDetailPage />} />
             <Route path="lessons" element={<LessonApprovalPage />} />
             <Route path="lessons/:id" element={<LessonApprovalDetailPage />} />
+            <Route path="roles" element={<RBACRolesPage />} />
           </Route>
 
           {/* 401 redirect */}
