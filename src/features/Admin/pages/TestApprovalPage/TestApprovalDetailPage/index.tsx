@@ -34,12 +34,17 @@ export default function TestApprovalDetailPage() {
 
         // Nếu backend trả về đối tượng test có type = 'mini-test' hoặc không có groups,
         // gọi API mini-test tương ứng để lấy đầy đủ groups (mini test dùng model/endpoint khác).
-        const maybeType = (res as any).type || (res as any).testType || (res as any).t?.type;
-        if (maybeType === "mini-test" || !((res as any).groups && (res as any).groups.length)) {
+        const maybeType =
+          (res as any).type || (res as any).testType || (res as any).t?.type;
+        if (
+          maybeType === "mini-test" ||
+          !((res as any).groups && (res as any).groups.length)
+        ) {
           try {
             const mini = await miniTestService.getById(`${id}?full=true`);
             // miniTestService trả về { data: {...} } hoặc data trực tiếp tùy implement
-            const payload = (mini as any).data?.data ?? (mini as any).data ?? mini;
+            const payload =
+              (mini as any).data?.data ?? (mini as any).data ?? mini;
             setTest(payload);
           } catch {
             // fallback: dùng res nếu mini fetch thất bại
