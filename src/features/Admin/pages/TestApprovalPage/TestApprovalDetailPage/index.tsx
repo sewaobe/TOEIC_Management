@@ -3,7 +3,8 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { FullTest } from "../../../../../types/fullTest";
-import fullTestService from "../../../../../services/fullTest.service";
+import adminTestService from "../services/adminTest.service";
+import miniTestService from "../../../../Collaborator/pages/MinitestPage/services/miniTest.service";
 import HeaderSection from "./components/HeaderSection";
 import InfoSection from "../../../../Collaborator/pages/FullTestPage/FullTestDetailPage/InfoSection"; // lấy lại từ CTV
 import GroupsSection from "../../../../Collaborator/pages/FullTestPage/FullTestDetailPage/GroupsSection"; // lấy lại từ CTV
@@ -24,9 +25,29 @@ export default function TestApprovalDetailPage() {
     const fetchTest = async () => {
       try {
         setLoading(true);
-        const res = await fullTestService.getById(`${id}?full=true`);
-        if (res.success) setTest(res.data);
-        else toast.error(res.message || "Không tải được đề thi");
+        // Với quyền admin, gọi API admin để lấy dữ liệu đầy đủ
+        const res = await adminTestService.getDetail(String(id));
+        if (!res) {
+          toast.error("Không tải được đề thi");
+          return;
+        }
+
+        // Nếu backend trả về đối tượng test có type = 'mini-test' hoặc không có groups,
+        // gọi API mini-test tương ứng để lấy đầy đủ groups (mini test dùng model/endpoint khác).
+        const maybeType = (res as any).type || (res as any).testType || (res as any).t?.type;
+        if (maybeType === "mini-test" || !((res as any).groups && (res as any).groups.length)) {
+          try {
+            const mini = await miniTestService.getById(`${id}?full=true`);
+            // miniTestService trả về { data: {...} } hoặc data trực tiếp tùy implement
+            const payload = (mini as any).data?.data ?? (mini as any).data ?? mini;
+            setTest(payload);
+          } catch {
+            // fallback: dùng res nếu mini fetch thất bại
+            setTest(res.data || res);
+          }
+        } else {
+          setTest(res.data || res);
+        }
       } catch {
         toast.error("Lỗi khi tải dữ liệu đề thi");
       } finally {
@@ -54,19 +75,44 @@ export default function TestApprovalDetailPage() {
 
   // 🧠 Xử lý hành động
   const handleApprove = () => {
-    toast.success("✅ Đề thi đã được duyệt!");
-    setTest({ ...test, status: "approved" });
+    (async () => {
+      try {
+        await adminTestService.approve(String(id));
+        toast.success("✅ Đề thi đã được duyệt!");
+        setTest((t) => (t ? { ...t, status: "approved" } : t));
+        // Quay về danh sách sau khi duyệt xong
+        navigate(-1);
+      } catch (err) {
+        toast.error("Duyệt đề thi thất bại");
+      }
+    })();
   };
 
   const handleReject = (reason: string) => {
-    toast.error(`❌ Đã từ chối: ${reason}`);
-    setTest({ ...test, status: "rejected" });
-    setOpenReject(false);
+    (async () => {
+      try {
+        await adminTestService.reject(String(id), reason);
+        toast.error(`❌ Đã từ chối: ${reason}`);
+        setTest((t) => (t ? { ...t, status: "closed" } : t));
+        setOpenReject(false);
+        // Quay về danh sách sau khi từ chối
+        navigate(-1);
+      } catch (err) {
+        toast.error("Từ chối đề thi thất bại");
+      }
+    })();
   };
 
   const handleDelete = () => {
-    toast.error("🗑️ Đề thi đã bị xóa!");
-    navigate(-1);
+    (async () => {
+      try {
+        await adminTestService.softDelete(String(id));
+        toast.error("🗑️ Đề thi đã bị xóa (soft)!");
+        navigate(-1);
+      } catch (err) {
+        toast.error("Xóa đề thi thất bại");
+      }
+    })();
   };
 
   return (

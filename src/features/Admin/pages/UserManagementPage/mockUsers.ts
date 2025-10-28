@@ -2,7 +2,7 @@ import { User } from "./types";
 
 export const users: User[] = [
   {
-    id: 1,
+    id: "1",
     name: "Nguyễn Văn A",
     email: "a.nguyen@example.com",
     role_id: { _id: "68fbe4e8c00763d5e9ca2ab3", name: "admin" },
@@ -16,7 +16,7 @@ export const users: User[] = [
     ],
   },
   {
-    id: 2,
+    id: "2",
     name: "Trần Thị B",
     email: "b.tran@example.com",
     role_id: { _id: "68d01fd658e349d39cd704af", name: "collaborator" },
@@ -30,7 +30,7 @@ export const users: User[] = [
     ],
   },
   {
-    id: 3,
+    id: "3",
     name: "Phạm Văn C",
     email: "c.pham@example.com",
     role_id: { _id: "68addc56f5a59b170fe47c03", name: "student" },
@@ -44,7 +44,7 @@ export const users: User[] = [
     ],
   },
   {
-    id: 4,
+    id: "4",
     name: "Lê Thị D",
     email: "d.le@example.com",
     role_id: { _id: "68addc56f5a59b170fe47c03", name: "student" },
@@ -58,7 +58,7 @@ export const users: User[] = [
     ],
   },
   {
-    id: 5,
+    id: "5",
     name: "Hoàng Văn E",
     email: "e.hoang@example.com",
     role_id: { _id: "68d01fd658e349d39cd704af", name: "collaborator" },

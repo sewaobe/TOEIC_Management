@@ -1,17 +1,62 @@
 import { Box, Typography } from "@mui/material";
-import { useState } from "react";
-import { mockTests } from "./mock/mockTests";
+import { useState, useEffect } from "react";
 import { useTestApprovalViewModel } from "./viewmodel/useTestApprovalViewModel";
 import FilterToolbar from "./components/FilterToolbar";
 import TestTable from "./components/TestTable";
+import adminTestService from "./services/adminTest.service";
 
 export default function TestApprovalPage() {
-  const vm = useTestApprovalViewModel(mockTests);
+  const vm = useTestApprovalViewModel();
   const [showPending, setShowPending] = useState(true);
 
-  const creatorOptions = Array.from(new Set(mockTests.map((t) => t.creator)));
-  const topicOptions = Array.from(new Set(mockTests.map((t) => t.topic)));
-  const pendingList = mockTests.filter((t) => t.status === "pending");
+  // Pending-specific paging & data (server-backed) so filters are accurate
+  const [pendingItems, setPendingItems] = useState<any[]>([]);
+  const [pendingTotal, setPendingTotal] = useState(0);
+  const [pendingPage, setPendingPage] = useState(0);
+  const [pendingRowsPerPage, setPendingRowsPerPage] = useState(10);
+
+  const creatorOptions = vm.creatorOptions;
+  const topicOptions = vm.topicOptions;
+
+  const fetchPending = async () => {
+    try {
+      const res = await adminTestService.list({
+        page: pendingPage + 1,
+        limit: pendingRowsPerPage,
+        search: vm.search || undefined,
+        status: "pending",
+        topic: vm.topic || undefined,
+        type: vm.type || undefined,
+      });
+
+      if (res) {
+        setPendingItems(res.items || []);
+        setPendingTotal(res.total || 0);
+      }
+    } catch (err) {
+      setPendingItems([]);
+      setPendingTotal(0);
+    }
+  };
+
+  useEffect(() => {
+    if (showPending) fetchPending();
+    // refresh when filters or pending paging changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    showPending,
+    vm.search,
+    vm.type,
+    vm.topic,
+    vm.status,
+    pendingPage,
+    pendingRowsPerPage,
+  ]);
+
+  // Nếu user thay đổi filter ở master view, reset trang pending về 0
+  useEffect(() => {
+    setPendingPage(0);
+  }, [vm.search, vm.type, vm.topic, vm.status]);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -30,21 +75,26 @@ export default function TestApprovalPage() {
       {!vm.status && showPending && (
         <TestTable
           title="Cần duyệt"
-          items={pendingList}
-          page={vm.page}
-          rowsPerPage={vm.rowsPerPage}
-          setPage={vm.setPage}
-          setRowsPerPage={vm.setRowsPerPage}
+          items={pendingItems}
+          page={pendingPage}
+          rowsPerPage={pendingRowsPerPage}
+          setPage={setPendingPage}
+          setRowsPerPage={(r) => {
+            setPendingRowsPerPage(r);
+            setPendingPage(0);
+          }}
+          count={pendingTotal}
         />
       )}
 
       <TestTable
         title="Tất cả đề thi"
-        items={vm.filtered}
+        items={vm.items}
         page={vm.page}
         rowsPerPage={vm.rowsPerPage}
         setPage={vm.setPage}
         setRowsPerPage={vm.setRowsPerPage}
+        count={vm.total}
       />
     </Box>
   );

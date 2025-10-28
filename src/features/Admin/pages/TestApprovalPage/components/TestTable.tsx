@@ -18,14 +18,17 @@ import { motion } from "framer-motion";
 import { TestItem } from "../mock/mockTests";
 
 const statusConfig = {
+  draft: { color: "default", label: "Bản nháp" },
   pending: { color: "warning", label: "Chờ duyệt" },
   approved: { color: "success", label: "Đã duyệt" },
-  rejected: { color: "error", label: "Từ chối" },
+  open: { color: "primary", label: "Đang mở" },
+  closed: { color: "error", label: "Đã đóng / Từ chối" },
 } as const;
 
 const typeConfig = {
-  FULL_TEST: { color: "#2563EB", label: "Đề thi lớn" },
-  MINI_TEST: { color: "#F59E0B", label: "Đề thi nhỏ" },
+  "full-test": { color: "#2563EB", label: "Đề thi lớn" },
+  "mini-test": { color: "#F59E0B", label: "Đề thi nhỏ" },
+  "part-test": { color: "#7C3AED", label: "Đề theo phần" },
 } as const;
 
 interface Props {
@@ -35,11 +38,24 @@ interface Props {
   rowsPerPage: number;
   setPage: (p: number) => void;
   setRowsPerPage: (r: number) => void;
+  count?: number; // total count from server
 }
 
-export default function TestTable({ title, items, page, rowsPerPage, setPage, setRowsPerPage }: Props) {
+export default function TestTable({
+  title,
+  items,
+  page,
+  rowsPerPage,
+  setPage,
+  setRowsPerPage,
+  count,
+}: Props) {
   const navigate = useNavigate();
-  const paginated = items.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // If `count` is provided we assume server-side paging (items already correspond to the page)
+  const paginated =
+    typeof count === "number"
+      ? items
+      : items.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <motion.div
@@ -79,23 +95,42 @@ export default function TestTable({ title, items, page, rowsPerPage, setPage, se
                   <TableCell>{t.title}</TableCell>
                   <TableCell>{t.topic}</TableCell>
                   <TableCell>
-                    <Chip
-                      label={typeConfig[t.type].label}
-                      sx={{
-                        bgcolor: `${typeConfig[t.type].color}15`,
-                        color: typeConfig[t.type].color,
-                        fontWeight: 600,
-                      }}
-                    />
+                    {(() => {
+                      const tc = (typeConfig as any)[t.type] || {
+                        label: String(t.type || ""),
+                        color: "#6b7280",
+                      };
+                      const isHex =
+                        typeof tc.color === "string" &&
+                        tc.color.startsWith("#");
+                      return (
+                        <Chip
+                          label={tc.label}
+                          sx={{
+                            bgcolor: isHex ? `${tc.color}15` : undefined,
+                            color: tc.color,
+                            fontWeight: 600,
+                          }}
+                        />
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>{t.creator}</TableCell>
                   <TableCell>{t.created_at}</TableCell>
                   <TableCell>{t.countComment}</TableCell>
                   <TableCell>{t.countSubmit}</TableCell>
                   <TableCell>
-                    <Tooltip title={statusConfig[t.status].label}>
-                      <Chip label={statusConfig[t.status].label} color={statusConfig[t.status].color} />
-                    </Tooltip>
+                    {(() => {
+                      const sc = (statusConfig as any)[t.status] || {
+                        label: t.status,
+                        color: "default",
+                      };
+                      return (
+                        <Tooltip title={sc.label}>
+                          <Chip label={sc.label} color={sc.color as any} />
+                        </Tooltip>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}
@@ -105,7 +140,7 @@ export default function TestTable({ title, items, page, rowsPerPage, setPage, se
 
         <TablePagination
           component="div"
-          count={items.length}
+          count={typeof count === "number" ? count : items.length}
           page={page}
           onPageChange={(_, newPage) => setPage(newPage)}
           rowsPerPage={rowsPerPage}
