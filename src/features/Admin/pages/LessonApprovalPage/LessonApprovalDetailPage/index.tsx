@@ -10,6 +10,14 @@ import {
   useTheme,
 } from "@mui/material";
 import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+} from "@mui/material";
+
+import {
   ArrowBack,
   CheckCircle,
   Close,
@@ -46,6 +54,9 @@ export default function LessonApprovalDetailPage(): JSX.Element {
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingTab, setLoadingTab] = useState(false);
+  // 🧩 State modal từ chối
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   // 🧩 Fetch data
   const fetchLessonManager = async () => {
@@ -86,17 +97,6 @@ export default function LessonApprovalDetailPage(): JSX.Element {
         navigate("/admin/lessons");
       } catch {
         toast.error("Duyệt thất bại");
-      }
-    })();
-  };
-  const handleReject = () => {
-    (async () => {
-      try {
-        await adminLessonService.reject(lessonManagerId);
-        toast.error("❌ Đã từ chối bài học!");
-        navigate("/admin/lessons");
-      } catch {
-        toast.error("Từ chối thất bại");
       }
     })();
   };
@@ -265,7 +265,7 @@ export default function LessonApprovalDetailPage(): JSX.Element {
                   color="error"
                   variant="contained"
                   size="small"
-                  onClick={handleReject}
+                  onClick={() => setRejectModalOpen(true)}
                 >
                   Từ chối
                 </Button>
@@ -363,6 +363,51 @@ export default function LessonApprovalDetailPage(): JSX.Element {
           mode="empty"
         />
       )}
+
+      {/* 🟥 Modal từ chối bài học */}
+      <Dialog
+        open={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Từ chối bài học</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Vui lòng nhập lý do từ chối (không bắt buộc):
+          </Typography>
+          <TextField
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            multiline
+            rows={3}
+            fullWidth
+            placeholder="Nhập lý do..."
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setRejectModalOpen(false)} color="inherit">
+            Hủy
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={async () => {
+              try {
+                await adminLessonService.reject(lessonManagerId, rejectReason);
+                toast.error("❌ Đã từ chối bài học!");
+                setRejectModalOpen(false);
+                navigate("/admin/lessons");
+              } catch {
+                toast.error("Từ chối thất bại");
+              }
+            }}
+          >
+            Xác nhận từ chối
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -15,6 +15,7 @@ import {
   TextField,
   useTheme,
   Tooltip,
+  Link,
 } from "@mui/material";
 import {
   WorkspacePremium,
@@ -24,23 +25,29 @@ import {
   DoneAll,
   Person,
   Block,
+  Description,
+  AccessTime,
+  WorkOutline,
+  Translate,
+  Psychology,
+  Assignment,
 } from "@mui/icons-material";
 import { useState } from "react";
-import { UserDetail } from "../types";
+import { CollaboratorRequest } from "../types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  user: UserDetail | null;
+  collaborator: CollaboratorRequest | null;
   loading: boolean;
   onApprove: (id: string) => void;
-  onReject: (id: string, reason?: string) => void;
+  onReject: (id: string, reason: string) => void;
 }
 
 export default function CollaboratorDetailDrawer({
   open,
   onClose,
-  user,
+  collaborator,
   loading,
   onApprove,
   onReject,
@@ -50,7 +57,7 @@ export default function CollaboratorDetailDrawer({
   const [reason, setReason] = useState("");
 
   const handleConfirmReject = () => {
-    if (user) onReject(user.id, reason);
+    if (collaborator) onReject(collaborator._id, reason);
     setRejectDialog(false);
     setReason("");
   };
@@ -59,6 +66,12 @@ export default function CollaboratorDetailDrawer({
     setRejectDialog(false);
     setReason("");
   };
+
+  const availabilityLabel = {
+    "part-time": "Bán thời gian (<20h/tuần)",
+    "full-time": "Toàn thời gian (>20h/tuần)",
+    flexible: "Linh hoạt",
+  }[collaborator?.availability || "part-time"];
 
   return (
     <Drawer
@@ -78,12 +91,12 @@ export default function CollaboratorDetailDrawer({
         <Typography textAlign="center" mt={10}>
           ⏳ Đang tải dữ liệu...
         </Typography>
-      ) : user ? (
+      ) : collaborator ? (
         <Box>
           {/* 👤 Thông tin cơ bản */}
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar
-              src={user.profile?.avatar}
+              src={collaborator.user_id?.profile?.avatar || ""}
               sx={{
                 width: 72,
                 height: 72,
@@ -93,15 +106,16 @@ export default function CollaboratorDetailDrawer({
             />
             <Box>
               <Typography variant="h6" fontWeight={700}>
-                {user.profile?.fullname}
+                {collaborator.user_id?.profile?.fullname ||
+                  collaborator.fullName}
               </Typography>
               <Typography color="text.secondary" fontSize="0.9rem">
-                {user.email}
+                {collaborator.email}
               </Typography>
               <Chip
                 icon={<Person />}
-                label="Cộng tác viên"
-                color="info"
+                label={collaborator.user_id ? "Học viên" : "Khách"}
+                color={collaborator.user_id ? "info" : "default"}
                 size="small"
                 sx={{ mt: 1 }}
               />
@@ -110,84 +124,137 @@ export default function CollaboratorDetailDrawer({
 
           <Divider sx={{ my: 2 }} />
 
-          {/* 🏅 Thành tựu */}
+          {/* ====================== */}
+          {/* 🧠 THÔNG TIN ĐĂNG KÝ */}
+          {/* ====================== */}
           <Typography fontWeight={700} mb={1}>
-            <EmojiEvents sx={{ mr: 1, color: "gold" }} />
-            Thành tựu đạt được
+            <Assignment
+              sx={{ mr: 1, color: theme.palette.primary.main }}
+            />
+            Thông tin biểu mẫu đăng ký
           </Typography>
-          <Stack direction="row" gap={1} flexWrap="wrap">
-            {user.badges?.length ? (
-              user.badges.map((b, i) => (
-                <Chip
-                  key={i}
-                  label={b.title}
-                  color="secondary"
-                  variant="filled"
-                  icon={<WorkspacePremium />}
-                />
-              ))
-            ) : (
-              <Typography color="text.secondary" fontSize="0.9rem">
-                Chưa có thành tựu nào
+
+          <Stack spacing={1.2} ml={0.5} mt={1}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <WorkOutline color="action" fontSize="small" />
+              <Typography variant="body2">
+                <strong>Kinh nghiệm:</strong> {collaborator.experience || "—"}
               </Typography>
-            )}
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Translate color="action" fontSize="small" />
+              <Typography variant="body2">
+                <strong>Chuyên môn:</strong>{" "}
+                {collaborator.expertise.length
+                  ? collaborator.expertise.join(", ")
+                  : "—"}
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <AccessTime color="action" fontSize="small" />
+              <Typography variant="body2">
+                <strong>Thời gian làm việc:</strong> {availabilityLabel}
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" alignItems="flex-start" spacing={1}>
+              <Psychology color="action" fontSize="small" />
+              <Typography variant="body2">
+                <strong>Động lực:</strong> {collaborator.motivation || "—"}
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Description color="action" fontSize="small" />
+              <Typography variant="body2">
+                <strong>CV:</strong>{" "}
+                <Link
+                  href={collaborator.cv_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  underline="hover"
+                  color="primary"
+                >
+                  Xem CV
+                </Link>
+              </Typography>
+            </Stack>
           </Stack>
 
           <Divider sx={{ my: 2 }} />
 
-          {/* 📊 Độ thành thạo */}
-          <Typography fontWeight={700} mb={1}>
-            <School sx={{ mr: 1, color: theme.palette.primary.main }} />
-            Độ thành thạo từng Part
-          </Typography>
-          {user.master_parts?.length ? (
-            user.master_parts.map((p, i) => (
-              <Box key={i} mb={1}>
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography fontSize="0.9rem">{p.part_name}</Typography>
-                  <Typography fontSize="0.9rem" fontWeight={600}>
-                    {p.accuracy}%
+          {/* ====================== */}
+          {/* 🏅 THÀNH TỰU HỌC VIÊN */}
+          {/* ====================== */}
+          {collaborator.user_id && (
+            <>
+              <Typography fontWeight={700} mb={1}>
+                <EmojiEvents sx={{ mr: 1, color: "gold" }} />
+                Thành tựu đạt được
+              </Typography>
+              <Stack direction="row" gap={1} flexWrap="wrap">
+                {collaborator.user_id.badges?.length ? (
+                  collaborator.user_id.badges.map((b, i) => (
+                    <Chip
+                      key={i}
+                      label={b.name}
+                      color="secondary"
+                      variant="filled"
+                      icon={<WorkspacePremium />}
+                    />
+                  ))
+                ) : (
+                  <Typography
+                    color="text.secondary"
+                    fontSize="0.9rem"
+                    sx={{ ml: 1 }}
+                  >
+                    Chưa có thành tựu nào
                   </Typography>
-                </Stack>
-                <LinearProgress
-                  value={p.accuracy}
-                  variant="determinate"
-                  sx={{
-                    height: 6,
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.action.hover,
-                  }}
-                />
-              </Box>
-            ))
-          ) : (
-            <Typography color="text.secondary" fontSize="0.9rem">
-              Chưa có dữ liệu đánh giá
-            </Typography>
+                )}
+              </Stack>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Typography fontWeight={700} mb={1}>
+                <School sx={{ mr: 1, color: theme.palette.primary.main }} />
+                Độ thành thạo từng Part
+              </Typography>
+              {collaborator.user_id.master_parts?.length ? (
+                collaborator.user_id.master_parts.map((p, i) => (
+                  <Box key={i} mb={1}>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography fontSize="0.9rem">{p.part_name}</Typography>
+                      <Typography fontSize="0.9rem" fontWeight={600}>
+                        {p.accuracy}%
+                      </Typography>
+                    </Stack>
+                    <LinearProgress
+                      value={p.accuracy}
+                      variant="determinate"
+                      sx={{
+                        height: 6,
+                        borderRadius: 2,
+                        backgroundColor: theme.palette.action.hover,
+                      }}
+                    />
+                  </Box>
+                ))
+              ) : (
+                <Typography color="text.secondary" fontSize="0.9rem" sx={{ ml: 1 }}>
+                  Chưa có dữ liệu đánh giá
+                </Typography>
+              )}
+              <Divider sx={{ my: 2 }} />
+            </>
           )}
 
-          <Divider sx={{ my: 2 }} />
-
-          {/* 📚 Chủ đề từ vựng */}
-          <Typography fontWeight={700} mb={1}>
-            <School sx={{ mr: 1, color: "#0284C7" }} />
-            Từ vựng chuyên sâu
-          </Typography>
-          <Stack direction="row" gap={1} flexWrap="wrap">
-            {user.topic_vocabularies?.length ? (
-              user.topic_vocabularies.map((t, i) => (
-                <Chip key={i} label={t.title} color="info" size="small" />
-              ))
-            ) : (
-              <Typography color="text.secondary" fontSize="0.9rem">
-                Chưa có chủ đề nổi bật
-              </Typography>
-            )}
-          </Stack>
-
-          {/* ⚙️ Hành động */}
-          <Divider sx={{ my: 2 }} />
-          {user.status === "pending" ? (
+          {/* ====================== */}
+          {/* ⚙️ HÀNH ĐỘNG DUYỆT / TỪ CHỐI */}
+          {/* ====================== */}
+          {collaborator.status === "pending" ? (
             <Stack direction="row" spacing={2} mt={2}>
               <Tooltip title="Chấp thuận cộng tác viên">
                 <Button
@@ -195,7 +262,7 @@ export default function CollaboratorDetailDrawer({
                   color="success"
                   startIcon={<DoneAll />}
                   fullWidth
-                  onClick={() => onApprove(user.id)}
+                  onClick={() => onApprove(collaborator._id)}
                 >
                   Duyệt
                 </Button>
@@ -217,15 +284,27 @@ export default function CollaboratorDetailDrawer({
             <Box mt={3}>
               <Chip
                 label={
-                  user.status === "approved"
-                    ? "✅ Đã duyệt"
-                    : user.status === "rejected"
-                    ? "❌ Đã từ chối"
+                  collaborator.status === "approved"
+                    ? "Đã duyệt"
+                    : collaborator.status === "rejected"
+                    ? "Đã từ chối"
                     : "—"
                 }
-                color={user.status === "approved" ? "success" : "error"}
+                color={
+                  collaborator.status === "approved" ? "success" : "error"
+                }
                 sx={{ width: "100%", fontSize: "1rem", py: 2 }}
               />
+              {collaborator.status === "rejected" &&
+                collaborator.rejection_reason && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    📝 Lý do từ chối: {collaborator.rejection_reason}
+                  </Typography>
+                )}
             </Box>
           )}
         </Box>
@@ -236,7 +315,12 @@ export default function CollaboratorDetailDrawer({
       )}
 
       {/* 🧾 Modal nhập lý do từ chối */}
-      <Dialog open={rejectDialog} onClose={handleCancelReject} maxWidth="xs" fullWidth>
+      <Dialog
+        open={rejectDialog}
+        onClose={handleCancelReject}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>
           <Cancel sx={{ mr: 1, color: "error.main" }} />
           Từ chối yêu cầu cộng tác viên
@@ -244,7 +328,12 @@ export default function CollaboratorDetailDrawer({
         <DialogContent>
           <Typography variant="body2" mb={1.5}>
             Nhập lý do từ chối cộng tác viên{" "}
-            <strong>{user?.profile?.fullname}</strong>:
+            {collaborator && (
+              <strong>
+                {collaborator.user_id?.profile?.fullname ||
+                  collaborator.fullName}
+              </strong>
+            )}
           </Typography>
           <TextField
             multiline

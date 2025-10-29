@@ -22,7 +22,7 @@ export default function CollaboratorManagementPage() {
 
   const filtered = vm.collaborators.filter(
     (c) =>
-      (c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.fullName.toLowerCase().includes(search.toLowerCase()) ||
         c.email.toLowerCase().includes(search.toLowerCase())) &&
       (status ? c.status === status : true)
   );
@@ -30,7 +30,7 @@ export default function CollaboratorManagementPage() {
   const pendingList = vm.collaborators.filter(
     (c) =>
       c.status === "pending" &&
-      (c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.fullName.toLowerCase().includes(search.toLowerCase()) ||
         c.email.toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -94,12 +94,22 @@ export default function CollaboratorManagementPage() {
           <CollaboratorTable
             title="Cần duyệt"
             items={pendingList}
+            total={vm.total}
+            page={vm.page}
+            rowsPerPage={vm.limit}
+            onPageChange={vm.handleChangePage}
+            onRowsPerPageChange={vm.handleChangeRowsPerPage}
             onSelect={vm.handleViewDetail}
           />
         )}
         <CollaboratorTable
           title="Tất cả cộng tác viên"
-          items={filtered}
+          items={vm.collaborators.filter((c) => c.status !== "pending")}
+          total={vm.total}
+          page={vm.page}
+          rowsPerPage={vm.limit}
+          onPageChange={vm.handleChangePage}
+          onRowsPerPageChange={vm.handleChangeRowsPerPage}
           onSelect={vm.handleViewDetail}
         />
       </motion.div>
@@ -108,7 +118,7 @@ export default function CollaboratorManagementPage() {
       <CollaboratorDetailDrawer
         open={vm.openDrawer}
         onClose={vm.handleCloseDrawer}
-        user={vm.selectedUser}
+        collaborator={vm.selectedUser}
         loading={vm.loading}
         onApprove={vm.handleApprove}
         onReject={vm.handleReject}

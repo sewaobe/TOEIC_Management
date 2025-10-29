@@ -43,9 +43,18 @@ axiosClient.interceptors.response.use(
         return axiosClient(originalRequest); // retry request gốc
       } catch (refreshError) {
         console.error('Refresh token failed', refreshError);
-        triggerLogout(); // → component lắng nghe để dispatch + redirect
+        try {
+          await axiosClient.post('/auth/logout').catch(() => { });
+        } finally {
+          triggerLogout(); // → component lắng nghe để dispatch + redirect
+        }
         return Promise.reject(refreshError);
       }
+    }
+    // Nếu token đã retry mà vẫn 401 → logout luôn
+    if (error.response?.status === 401 && originalRequest._retry) {
+      console.warn("Repeated 401 → force logout");
+      triggerLogout();
     }
 
     return Promise.reject(error);

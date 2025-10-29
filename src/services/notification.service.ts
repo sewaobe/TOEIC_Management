@@ -30,6 +30,7 @@ export const notificationService = {
       senderId: n.senderId,
       recipientId: n.recipientId,
       message: n.message,
+      description: n.description,
       type: n.type,
       isRead: n.isRead,
       createdAt: n.createdAt,

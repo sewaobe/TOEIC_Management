@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import adminLessonService from "./services/adminLesson.service";
+import { STATUS_COLOR_MAP, TestStatusLabel } from "../../../../types/LessonManager";
 
 interface LessonManager {
   _id: string;
@@ -300,9 +301,9 @@ function SectionTable({
   const paginated = serverMode
     ? items
     : items.slice(
-        localPage * localRowsPerPage,
-        localPage * localRowsPerPage + localRowsPerPage
-      );
+      localPage * localRowsPerPage,
+      localPage * localRowsPerPage + localRowsPerPage
+    );
 
   return (
     <motion.div
@@ -360,32 +361,8 @@ function SectionTable({
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={
-                        l.status === "draft"
-                          ? "Bản nháp"
-                          : l.status === "pending"
-                          ? "Chờ duyệt"
-                          : l.status === "approved"
-                          ? "Đã duyệt"
-                          : l.status === "open"
-                          ? "Đang mở"
-                          : l.status === "closed"
-                          ? "Đã đóng"
-                          : "-"
-                      }
-                      color={
-                        l.status === "draft"
-                          ? "default"
-                          : l.status === "pending"
-                          ? "warning"
-                          : l.status === "approved"
-                          ? "success"
-                          : l.status === "open"
-                          ? "info"
-                          : l.status === "closed"
-                          ? "error"
-                          : "default"
-                      }
+                      label={l.status ? TestStatusLabel[l.status as keyof typeof TestStatusLabel] : "Unknown"}
+                      color={STATUS_COLOR_MAP[l.status as keyof typeof STATUS_COLOR_MAP] || "default"}
                     />
                   </TableCell>
                 </TableRow>

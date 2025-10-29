@@ -17,6 +17,7 @@ import {
   Comment,
   BugReport,
   WarningAmber,
+  LibraryBooks,
 } from "@mui/icons-material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
@@ -46,6 +47,8 @@ export default function NotificationDetailDialog({
         return <ErrorOutline color="error" sx={iconStyle} />;
       case "test":
         return <BugReport color="warning" sx={iconStyle} />;
+      case "lesson":
+        return <LibraryBooks color="info" sx={iconStyle} />;
       default:
         return <Info color="action" sx={iconStyle} />;
     }
@@ -105,9 +108,39 @@ export default function NotificationDetailDialog({
         );
       case "test":
         return (
-          <Typography mt={2} variant="body2" color="text.disabled">
-            Đây là thông báo thử nghiệm. Bạn có thể bỏ qua.
-          </Typography>
+          <Box mt={2}>
+            <Typography variant="body2" color="text.disabled">
+              Thông báo liên quan đến bài thi.
+              Vui lòng kiểm tra trang quản lý bài thi để biết thêm chi tiết.
+            </Typography>
+            {notification.description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, whiteSpace: "pre-line" }}
+              >
+                Chi tiết: {notification.description}
+              </Typography>
+            )}
+          </Box>
+        );
+      case "lesson":
+        return (
+          <Box mt={2}>
+            <Typography variant="body2" color="text.disabled">
+              Thông báo liên quan đến quản lý bài học.
+              Vui lòng kiểm tra trang quản lý bài học để biết thêm chi tiết.
+            </Typography>
+            {notification.description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, whiteSpace: "pre-line" }}
+              >
+                Chi tiết: {notification.description}
+              </Typography>
+            )}
+          </Box>
         );
       default:
         return null;

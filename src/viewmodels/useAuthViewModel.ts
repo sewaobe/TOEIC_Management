@@ -23,8 +23,12 @@ export const useAuthViewModel = () => {
           // Cập nhật redux & load user
           dispatch(setAuth(true));
           await dispatch(getUserThunk());
-          // Điều hướng sau khi login thành công
-          navigate('/ctv/dashboard');
+          // Điều hướng sau khi login thành 
+          if(res.meta.role_name === "admin") {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/ctv/dashboard');
+          }
         } catch (error: any) {
           console.error("Login error:", error);
           // Logout local nếu xảy ra lỗi

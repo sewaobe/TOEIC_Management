@@ -3,7 +3,8 @@ export interface Notification {
   senderId?: string;
   recipientId?: string;
   message: string;
-  type: "system" | "comment" | "error" | "chat" | "test";
+  description?: string;
+  type: "system" | "comment" | "error" | "chat" | "test" | "lesson";
   isRead?: boolean;
   createdAt: string;
 }
