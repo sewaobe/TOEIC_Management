@@ -54,9 +54,6 @@ export default function HeaderSection({
         >
           Xem trước
         </Button>
-        <Button variant="contained" color="success" startIcon={<CheckCircle />}>
-          Duyệt
-        </Button>
         <Button
           variant="contained"
           color="error"
