@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const steps = [
-  "Đăng ký tài khoản cộng tác viên TOEIC Master.",
+  "Đăng ký tài khoản cộng tác viên TOEIC Smart.",
   "Hoàn thiện hồ sơ và xác nhận thông tin cá nhân.",
   "Bắt đầu chia sẻ và nhận hoa hồng cho mỗi hoạt động.",
 ];
@@ -31,7 +31,7 @@ const SectionGuide = forwardRef<HTMLElement, SectionGuideProps>(
 
         <Typography variant="body1" className="max-w-2xl text-gray-700 !mb-8 mx-auto">
           Chỉ với vài bước đơn giản, bạn đã có thể trở thành một phần của cộng đồng
-          cộng tác viên TOEIC Master chuyên nghiệp.
+          cộng tác viên TOEIC Smart chuyên nghiệp.
         </Typography>
 
         <div className="flex flex-col items-center gap-5 max-w-md mx-auto">

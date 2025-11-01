@@ -145,7 +145,7 @@ const Sidebar: React.FC = () => {
                 variant="h6"
                 sx={{ fontWeight: 700, letterSpacing: "-0.5px" }}
               >
-                TOEIC Pro
+                TOEIC Smart
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Cộng tác viên

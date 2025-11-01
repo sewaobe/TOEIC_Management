@@ -154,7 +154,7 @@ export default function RegisterCollaboratorModal({
             {/* Header */}
             <div className="bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 px-8 py-5 flex items-center justify-between shadow-md">
               <h2 className="text-xl font-semibold text-white tracking-wide">
-                Đăng ký Cộng Tác Viên TOEIC Master
+                Đăng ký Cộng Tác Viên TOEIC Smart
               </h2>
               <button
                 onClick={onClose}
