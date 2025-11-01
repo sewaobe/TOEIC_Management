@@ -15,9 +15,8 @@ import {
   Chat,
   ErrorOutline,
   Comment,
-  BugReport,
   WarningAmber,
-  LibraryBooks,
+  NotificationsNone,
 } from "@mui/icons-material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
@@ -36,21 +35,27 @@ export default function NotificationDetailDialog({
 }: NotificationDetailDialogProps) {
   const theme = useTheme();
 
-  const renderIcon = (type: string) => {
-    const iconStyle = { fontSize: 30 };
+  const renderIcon = (type: Notification["type"]) => {
     switch (type) {
       case "chat":
-        return <Chat color="primary" sx={iconStyle} />;
+        return <Chat sx={{ color: theme.palette.primary.main }} fontSize="small" />;
       case "comment":
-        return <Comment color="success" sx={iconStyle} />;
+        return <Comment sx={{ color: theme.palette.success.main }} fontSize="small" />;
       case "error":
-        return <ErrorOutline color="error" sx={iconStyle} />;
+        return <ErrorOutline sx={{ color: theme.palette.error.main }} fontSize="small" />;
       case "test":
-        return <BugReport color="warning" sx={iconStyle} />;
+        return <Info sx={{ color: theme.palette.warning.main }} fontSize="small" />; // icon cảnh báo nhẹ
       case "lesson":
-        return <LibraryBooks color="info" sx={iconStyle} />;
+        return <Info sx={{ color: theme.palette.info.main }} fontSize="small" />;
+      case "flashcard":
+        return <Info sx={{ color: theme.palette.secondary.main }} fontSize="small" />;
+      case "chatbot":
+        return <Chat sx={{ color: theme.palette.info.main }} fontSize="small" />;
+      case "other":
+        return <Info sx={{ color: theme.palette.text.secondary }} fontSize="small" />;
+      case "system":
       default:
-        return <Info color="action" sx={iconStyle} />;
+        return <NotificationsNone sx={{ color: theme.palette.text.primary }} fontSize="small" />;
     }
   };
 
@@ -104,6 +109,33 @@ export default function NotificationDetailDialog({
             <Typography variant="body2" color="text.secondary">
               Thông báo từ hệ thống – không yêu cầu phản hồi.
             </Typography>
+            {notification.description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, whiteSpace: "pre-line" }}
+              >
+                Chi tiết: {notification.description}
+              </Typography>
+            )}
+          </Box>
+        );
+      case "test":
+        return (
+          <Box mt={2}>
+            <Typography variant="body2" color="text.disabled">
+              Thông báo liên quan đến bài kiểm tra.
+              Vui lòng kiểm tra trang quản lý bài kiểm tra để biết thêm chi tiết.
+            </Typography>
+            {notification.description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, whiteSpace: "pre-line" }}
+              >
+                Chi tiết: {notification.description}
+              </Typography>
+            )}
           </Box>
         );
       case "test":
@@ -140,6 +172,48 @@ export default function NotificationDetailDialog({
                 Chi tiết: {notification.description}
               </Typography>
             )}
+          </Box>
+        );
+      case "flashcard":
+        return (
+          <Box mt={2}>
+            <Typography variant="body2" color="text.secondary">
+              Liên quan đến thẻ ghi nhớ (Flashcard). Vui lòng kiểm tra tiến độ ôn tập của bạn.
+            </Typography>
+            {notification.description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, whiteSpace: "pre-line" }}
+              >
+                Chi tiết: {notification.description}
+              </Typography>
+            )}
+          </Box>
+        );
+      case "chatbot":
+        return (
+          <Box mt={2}>
+            <Typography variant="body2" color="text.secondary">
+              Chatbot TOEIC Smart gửi thông báo hỗ trợ học tập tự động.
+            </Typography>
+            {notification.description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5, whiteSpace: "pre-line" }}
+              >
+                Chi tiết: {notification.description}
+              </Typography>
+            )}
+          </Box>
+        );
+      case "other":
+        return (
+          <Box mt={2}>
+            <Typography variant="body2" color="text.secondary">
+              Thông báo khác hoặc không xác định.
+            </Typography>
           </Box>
         );
       default:
