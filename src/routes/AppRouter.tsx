@@ -48,6 +48,7 @@ import TestApprovalDetailPage from "../features/Admin/pages/TestApprovalPage/Tes
 
 import LessonApprovalPage from "../features/Admin/pages/LessonApprovalPage/index.tsx";
 import LessonApprovalDetailPage from "../features/Admin/pages/LessonApprovalPage/LessonApprovalDetailPage/index.tsx";
+import AdminReportPage from "../features/Admin/pages/ReportManagementPage";
 
 // Error pages
 import NotFound from "../components/NotFound";
@@ -185,6 +186,7 @@ export const AppRouter = () => {
             <Route path="tests/:id" element={<TestApprovalDetailPage />} />
             <Route path="lessons" element={<LessonApprovalPage />} />
             <Route path="lessons/:id" element={<LessonApprovalDetailPage />} />
+            <Route path="reports" element={<AdminReportPage />} />
             <Route path="roles" element={<RBACRolesPage />} />
           </Route>
 

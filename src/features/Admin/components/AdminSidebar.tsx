@@ -1,5 +1,5 @@
-import type React from "react"
-import { useTheme } from "@mui/material/styles"
+import type React from "react";
+import { useTheme } from "@mui/material/styles";
 import {
   Box,
   Typography,
@@ -9,54 +9,87 @@ import {
   ListItemText,
   Chip,
   Divider,
-} from "@mui/material"
+} from "@mui/material";
 import {
   DashboardOutlined,
   PeopleAltOutlined,
   SchoolOutlined,
   ArticleOutlined,
   BarChartOutlined,
-} from "@mui/icons-material"
-import { motion, AnimatePresence } from "framer-motion"
-import { Link, useLocation } from "react-router-dom"
+  BugReportOutlined,
+} from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
 import { VpnKeyOutlined } from "@mui/icons-material";
 
 export interface AdminSidebarItem {
   main: {
-    text: string
-    icon: React.ReactNode
-    to: string
-    badge?: number
-  }
+    text: string;
+    icon: React.ReactNode;
+    to: string;
+    badge?: number;
+  };
 }
 
 export const adminSidebarStructure: AdminSidebarItem[] = [
   {
-    main: { text: "Tổng quan", icon: <DashboardOutlined />, to: "/admin/dashboard" },
+    main: {
+      text: "Tổng quan",
+      icon: <DashboardOutlined />,
+      to: "/admin/dashboard",
+    },
   },
   {
-    main: { text: "Quản lý tài khoản", icon: <PeopleAltOutlined />, to: "/admin/users", badge: 18 },
+    main: {
+      text: "Quản lý tài khoản",
+      icon: <PeopleAltOutlined />,
+      to: "/admin/users",
+      badge: 18,
+    },
   },
   {
-    main: { text: "Quản lý cộng tác viên", icon: <SchoolOutlined />, to: "/admin/collaborators", badge: 6 },
+    main: {
+      text: "Quản lý cộng tác viên",
+      icon: <SchoolOutlined />,
+      to: "/admin/collaborators",
+      badge: 6,
+    },
   },
   {
-    main: { text: "Duyệt đề thi", icon: <ArticleOutlined />, to: "/admin/tests", badge: 5 },
+    main: {
+      text: "Duyệt đề thi",
+      icon: <ArticleOutlined />,
+      to: "/admin/tests",
+      badge: 5,
+    },
   },
   {
-    main: { text: "Duyệt bài học tổng hợp", icon: <BarChartOutlined />, to: "/admin/lessons", badge: 3 },
+    main: {
+      text: "Duyệt bài học tổng hợp",
+      icon: <BarChartOutlined />,
+      to: "/admin/lessons",
+      badge: 3,
+    },
   },
   {
-    main: { text: "Phân quyền (Coming soon)", icon: <VpnKeyOutlined />, to: "/admin/roles" }
-  }
-]
+    main: {
+      text: "Báo lỗi học viên",
+      icon: <BugReportOutlined />,
+      to: "/admin/reports",
+    },
+  },
+  {
+    main: {
+      text: "Phân quyền (Coming soon)",
+      icon: <VpnKeyOutlined />,
+      to: "/admin/roles",
+    },
+  },
+];
 
 const AdminSidebar: React.FC = () => {
-  const theme = useTheme()
-  const location = useLocation()
-
-  const matchPath = (to?: string) =>
-    !!to && (location.pathname === to || location.pathname.startsWith(to + "/"))
+  const theme = useTheme();
+  const location = useLocation();
 
   return (
     <Box
@@ -127,7 +160,9 @@ const AdminSidebar: React.FC = () => {
         <List sx={{ py: 0 }}>
           {adminSidebarStructure.map((item, index) => {
             const active =
-              item.main.to && (location.pathname === item.main.to || location.pathname.startsWith(item.main.to))
+              item.main.to &&
+              (location.pathname === item.main.to ||
+                location.pathname.startsWith(item.main.to));
             return (
               <motion.div
                 key={index}
@@ -207,19 +242,21 @@ const AdminSidebar: React.FC = () => {
                           bgcolor: active
                             ? theme.palette.primary.main
                             : theme.palette.action.selected,
-                          color: active ? "white" : theme.palette.text.secondary,
+                          color: active
+                            ? "white"
+                            : theme.palette.text.secondary,
                         }}
                       />
                     )}
                   </ListItemButton>
                 </Box>
               </motion.div>
-            )
+            );
           })}
         </List>
       </Box>
     </Box>
-  )
-}
+  );
+};
 
-export default AdminSidebar
+export default AdminSidebar;
