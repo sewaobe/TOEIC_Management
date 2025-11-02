@@ -13,6 +13,7 @@ import {
   Button,
   ToggleButtonGroup,
   ToggleButton,
+  Tooltip,
 } from "@mui/material"
 import {
   AccessTime,
@@ -29,17 +30,20 @@ import {
 import { motion, AnimatePresence } from "framer-motion"
 import { useTablePagination } from "../../../hooks/useTablePagination"
 import TablePaginationContainer from "../../../components/TablePaginationContainer"
-import { commentService } from "../../../services/comment.service"
+import { reportService } from "../../../services/report.service"
+import { useNavigate } from "react-router-dom"
 
 // ===================== TYPES =====================
 export interface CommentItem {
-  id: string
-  user: string
-  content: string
-  time: string
-  avatar: string
-  type: "test" | "lesson"
-  flagged?: boolean
+  id: string;
+  user: string;
+  avatar: string;
+  content: string;
+  time: string;
+  type: "test" | "lesson";
+  flagged?: boolean;
+  activityId?: string;
+  activityTitle?: string;
 }
 
 interface Props {
@@ -65,7 +69,8 @@ export default function RecentCommentDashboard({ isDemo = false }: Props) {
   // ===================== FETCH DATA =====================
   useEffect(() => {
     async function fetchData() {
-      const res = await commentService.getRecentCommentDashboard(page + 1, rowsPerPage)
+      const res = await reportService.fetchReportComment(page + 1, rowsPerPage)
+      console.log(res)
       setComments(res.items)
       setTotal(res.total)
     }
@@ -279,7 +284,6 @@ function RecentCommentItem({
   const open = Boolean(anchorEl)
   const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget)
   const handleMenuClose = () => setAnchorEl(null)
-
   const styleByType = {
     test: {
       gradient: "linear-gradient(90deg, #EFF6FF, #DBEAFE)",
@@ -321,8 +325,9 @@ function RecentCommentItem({
             fontWeight: 600,
             color: "#fff",
           }}
+          src={comment.avatar}
         >
-          {comment.avatar}
+
         </Avatar>
 
         <Box flex={1}>
@@ -331,26 +336,29 @@ function RecentCommentItem({
               {comment.user}
             </Typography>
 
-            <Chip
-              icon={
-                comment.type === "test" ? (
-                  <FeedbackOutlined sx={{ fontSize: 14 }} />
-                ) : (
-                  <CommentOutlined sx={{ fontSize: 14 }} />
-                )
-              }
-              label={
-                comment.type === "test"
-                  ? "Đề thi"
-                  : "Bài học"
-              }
-              size="small"
-              sx={{
-                backgroundColor: styleByType.chipBg,
-                color: styleByType.chipText,
-                fontWeight: 600,
-              }}
-            />
+            <Tooltip title={comment.activityTitle} arrow>
+              <Chip
+                icon={
+                  comment.type === "test" ? (
+                    <FeedbackOutlined sx={{ fontSize: 14 }} />
+                  ) : (
+                    <CommentOutlined sx={{ fontSize: 14 }} />
+                  )
+                }
+                label={
+                  comment.type === "test"
+                    ? "Đề thi"
+                    : "Bài học"
+                }
+                size="small"
+                sx={{
+                  backgroundColor: styleByType.chipBg,
+                  color: styleByType.chipText,
+                  fontWeight: 600,
+                }}
+              />
+            </Tooltip>
+
 
             <Box className="flex items-center gap-1 ml-auto text-gray-500">
               <AccessTime sx={{ fontSize: 14, color: "#6B7280" }} />
@@ -392,6 +400,11 @@ function RecentCommentItem({
           onClick={() => {
             handleMenuClose()
             onAccess()
+            if (comment.type === "test" && comment.activityId) {
+              window.open(`http://localhost:5173/tests/${comment.activityId}`, "_blank");
+            } else if (comment.type === "lesson" && comment.activityId) {
+              window.open(`http://localhost:5173/lessons/${comment.activityId}`, "_blank");
+            }
           }}
         >
           <OpenInNew sx={{ fontSize: 18, mr: 1, color: "#2563EB" }} />
