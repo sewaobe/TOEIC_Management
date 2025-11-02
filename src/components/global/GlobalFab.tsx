@@ -136,7 +136,7 @@ export default function GlobalFab() {
       ),
       onClick: () => {
         setOpen(false);
-        navigate("/dictation/new");
+        navigate("/ctv/dictation");
       },
     },
     {
