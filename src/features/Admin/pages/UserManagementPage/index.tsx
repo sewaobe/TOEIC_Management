@@ -125,7 +125,8 @@ export default function UserManagementPage() {
           <MenuItem value="">Tất cả</MenuItem>
           <MenuItem value="active">Hoạt động</MenuItem>
           <MenuItem value="inactive">Ngưng hoạt động</MenuItem>
-          <MenuItem value="suspended">Tạm khóa</MenuItem>
+          <MenuItem value="banned">Bị khóa (tạm)</MenuItem>
+          <MenuItem value="banned_permanent">Bị ban vĩnh viễn</MenuItem>
         </TextField>
       </Paper>
 

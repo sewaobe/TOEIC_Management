@@ -71,6 +71,13 @@ export default function UserDetailDrawer({
     typeof user.role_id === "string" ? user.role_id : user.role_id?.name;
   const isAdmin = roleName === "admin";
 
+  const statusLabel: Record<string, string> = {
+    active: "Hoạt động",
+    inactive: "Ngưng hoạt động",
+    banned: "Bị khóa (tạm)",
+    banned_permanent: "Bị ban vĩnh viễn",
+  };
+
   const handleSubmitBan = async () => {
     if (!user || !banType) return;
 
@@ -161,8 +168,8 @@ export default function UserDetailDrawer({
             <Grid size={{ xs: 6 }}>
               <Typography fontWeight={600}>Trạng thái:</Typography>
               <Chip
-                label={user.status}
-                color={statusColor[user.status]}
+                label={statusLabel[user.status] || user.status}
+                color={statusColor[user.status] as any}
                 size="small"
                 icon={
                   user.status === "active" ? (
@@ -194,17 +201,13 @@ export default function UserDetailDrawer({
           <Divider sx={{ my: 2 }} />
 
           {/* Nếu đang bị ban, hiển thị chi tiết ban */}
-          {user.status === "suspended" && (
+          {(user.status === "banned" || user.status === "banned_permanent") && (
             <Box mb={2}>
               <Typography fontWeight={600}>Tình trạng ban:</Typography>
               <Typography variant="body2" color="error">
-                {user.banned_type === "perm"
+                {user.status === "banned_permanent"
                   ? "Bị ban vĩnh viễn"
-                  : user.banned_until
-                  ? `Bị tạm khóa — đến ${new Date(
-                      user.banned_until
-                    ).toLocaleString("vi-VN")}`
-                  : "Bị tạm khóa"}
+                  : "Bị khóa"}
               </Typography>
               {user.banned_reason && (
                 <Typography variant="body2" sx={{ mt: 1 }}>
@@ -309,7 +312,7 @@ export default function UserDetailDrawer({
           {/* Hành động */}
           {!isAdmin && (
             <Stack direction="row" spacing={2} justifyContent="center" mt={4}>
-              {user.status === "suspended" ? (
+              {user.status === "banned" ? (
                 <Tooltip title="Mở khóa tài khoản">
                   <Button
                     variant="contained"
@@ -329,6 +332,15 @@ export default function UserDetailDrawer({
                     Mở khóa
                   </Button>
                 </Tooltip>
+              ) : user.status === "banned_permanent" ? (
+                <Typography
+                  variant="body2"
+                  color="error"
+                  align="center"
+                  sx={{ mt: 1 }}
+                >
+                  🚫 Tài khoản đã bị ban vĩnh viễn, không thể mở khóa
+                </Typography>
               ) : (
                 <>
                   <Tooltip title="Tạm khóa tài khoản (có thể mở lại sau)">

@@ -1,4 +1,4 @@
-export type UserStatus = "active" | "inactive" | "suspended";
+export type UserStatus = "active" | "inactive" | "banned" | "banned_permanent";
 export type UserRole = "admin" | "collaborator" | "student";
 
 export interface User {
@@ -23,7 +23,6 @@ export interface User {
   // Thông tin ban (có thể không có nếu user không bị ban)
   banned_at?: string | null;
   banned_by?: string | null;
-  banned_type?: "temp" | "perm" | null;
-  banned_until?: string | null;
+  // removed banned_type and banned_until per backend schema
   banned_reason?: string | null;
 }

@@ -5,7 +5,8 @@ import adminUserService from "../services/adminUser.service";
 export const statusColor = {
   active: "success",
   inactive: "default",
-  suspended: "warning",
+  banned: "warning",
+  banned_permanent: "error",
 } as const;
 
 // ViewModel dùng server-side list API. Trả về list, total và các state + handlers.

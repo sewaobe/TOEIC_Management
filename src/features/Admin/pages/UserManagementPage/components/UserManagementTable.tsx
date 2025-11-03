@@ -36,6 +36,13 @@ const roleLabel = {
   student: "Học viên",
 } as const;
 
+const statusLabel: Record<string, string> = {
+  active: "Hoạt động",
+  inactive: "Ngưng hoạt động",
+  banned: "Bị khóa",
+  banned_permanent: "Bị ban vĩnh viễn",
+};
+
 export default function UserManagementTable({
   users,
   page,
@@ -90,7 +97,7 @@ export default function UserManagementTable({
                   </TableCell>
                   <TableCell>{u.created_at}</TableCell>
                   <TableCell>
-                    <Chip label={u.status} color={statusColor[u.status]} />
+                    <Chip label={statusLabel[u.status] || u.status} color={statusColor[u.status] as any} />
                   </TableCell>
                 </TableRow>
               ))}
