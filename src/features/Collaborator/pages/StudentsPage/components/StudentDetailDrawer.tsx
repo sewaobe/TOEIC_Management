@@ -25,7 +25,11 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import type { StudentDetail } from "../../../../../types/student";
 import studentService from "../services/studentService"; // ✅ Dùng service thật
-import { formatDate, formatDuration, getLearningPathLabel } from "../utils/formatters";
+import {
+  formatDate,
+  formatDuration,
+  getLearningPathLabel,
+} from "../utils/formatters";
 import { ProgressCharts } from "./ProgressCharts";
 import { ActivityList } from "./ActivityList";
 
@@ -33,7 +37,10 @@ import { ActivityList } from "./ActivityList";
 // 🧩 Chip trạng thái
 // ====================
 function StatusChip({ status }: { status: string }) {
-  const colorMap: Record<string, "default" | "success" | "warning" | "info" | "error"> = {
+  const colorMap: Record<
+    string,
+    "default" | "success" | "warning" | "info" | "error"
+  > = {
     active: "success",
     inactive: "default",
     paused: "warning",
@@ -99,7 +106,12 @@ export function StudentDetailDrawer({
       sx={{ "& .MuiDrawer-paper": { width: "600px", p: 3 } }}
     >
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="100%"
+        >
           <CircularProgress />
         </Box>
       ) : student ? (
@@ -143,7 +155,12 @@ export function StudentDetailDrawer({
           <Grid container spacing={1} mt={2}>
             <Grid size={{ xs: 6, sm: 3 }}>
               <Paper sx={{ p: 1.5, borderRadius: 2 }}>
-                <Box display="flex" alignItems="center" gap={1} color="text.secondary">
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  color="text.secondary"
+                >
                   <TrackChangesIcon fontSize="small" />
                   <Typography variant="caption">Điểm</Typography>
                 </Box>
@@ -158,12 +175,20 @@ export function StudentDetailDrawer({
 
             <Grid size={{ xs: 6, sm: 3 }}>
               <Paper sx={{ p: 1.5, borderRadius: 2 }}>
-                <Box display="flex" alignItems="center" gap={1} color="text.secondary">
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  color="text.secondary"
+                >
                   <TrendingUpIcon fontSize="small" />
                   <Typography variant="caption">Tiến độ</Typography>
                 </Box>
                 <Typography variant="h6" fontWeight={600}>
-                  {Math.round((student.completedLessons / student.totalLessons) * 100)}%
+                  {Math.round(
+                    (student.completedLessons / student.totalLessons) * 100
+                  )}
+                  %
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {student.completedLessons}/{student.totalLessons}
@@ -173,8 +198,16 @@ export function StudentDetailDrawer({
 
             <Grid size={{ xs: 6, sm: 3 }}>
               <Paper sx={{ p: 1.5, borderRadius: 2 }}>
-                <Box display="flex" alignItems="center" gap={1} color="text.secondary">
-                  <LocalFireDepartmentIcon sx={{ color: "orange" }} fontSize="small" />
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  color="text.secondary"
+                >
+                  <LocalFireDepartmentIcon
+                    sx={{ color: "orange" }}
+                    fontSize="small"
+                  />
                   <Typography variant="caption">Streak</Typography>
                 </Box>
                 <Typography variant="h6" fontWeight={600}>
@@ -188,7 +221,12 @@ export function StudentDetailDrawer({
 
             <Grid size={{ xs: 6, sm: 3 }}>
               <Paper sx={{ p: 1.5, borderRadius: 2 }}>
-                <Box display="flex" alignItems="center" gap={1} color="text.secondary">
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                  color="text.secondary"
+                >
                   <AccessTimeIcon fontSize="small" />
                   <Typography variant="caption">Thời gian</Typography>
                 </Box>
@@ -238,13 +276,6 @@ export function StudentDetailDrawer({
               </Paper>
 
               <Paper sx={{ p: 2 }}>
-                <Typography fontWeight={600}>Mentor phụ trách</Typography>
-                <Typography variant="body2" mt={0.5}>
-                  {student.assignedMentor || "Chưa phân công"}
-                </Typography>
-              </Paper>
-
-              <Paper sx={{ p: 2 }}>
                 <Typography fontWeight={600}>Ghi chú</Typography>
                 <Typography variant="body2" color="text.secondary" mt={0.5}>
                   {student.notes || "Không có ghi chú"}
@@ -256,7 +287,12 @@ export function StudentDetailDrawer({
                   <Typography fontWeight={600}>Tags</Typography>
                   <Box display="flex" flexWrap="wrap" gap={0.5} mt={1}>
                     {student.tags.map((tag, i) => (
-                      <Chip key={i} label={tag} size="small" variant="outlined" />
+                      <Chip
+                        key={i}
+                        label={tag}
+                        size="small"
+                        variant="outlined"
+                      />
                     ))}
                   </Box>
                 </Paper>
@@ -267,24 +303,34 @@ export function StudentDetailDrawer({
           {tab === "learning-path" && student.learningPathConfig && (
             <Box mt={2} display="flex" flexDirection="column" gap={2}>
               <Paper sx={{ p: 2 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
                   <Typography fontWeight={600}>Cấu hình lộ trình</Typography>
-                  <Button size="small" onClick={() => onAdjustLearningPath?.(student.id)}>
+                  <Button
+                    size="small"
+                    onClick={() => onAdjustLearningPath?.(student.id)}
+                  >
                     Điều chỉnh
                   </Button>
                 </Box>
                 <Box mt={1.5} display="flex" flexDirection="column" gap={0.5}>
                   <Typography variant="body2">
-                    <b>Số buổi/tuần:</b> {student.learningPathConfig.lessonsPerWeek}
+                    <b>Số buổi/tuần:</b>{" "}
+                    {student.learningPathConfig.lessonsPerWeek}
                   </Typography>
                   <Typography variant="body2">
                     <b>Số giờ/ngày:</b> {student.learningPathConfig.hoursPerDay}
                   </Typography>
                   <Typography variant="body2">
-                    <b>Ngày bắt đầu:</b> {formatDate(student.learningPathConfig.startDate)}
+                    <b>Ngày bắt đầu:</b>{" "}
+                    {formatDate(student.learningPathConfig.startDate)}
                   </Typography>
                   <Typography variant="body2">
-                    <b>Ngày mục tiêu:</b> {formatDate(student.learningPathConfig.targetDate)}
+                    <b>Ngày mục tiêu:</b>{" "}
+                    {formatDate(student.learningPathConfig.targetDate)}
                   </Typography>
                 </Box>
               </Paper>
@@ -293,7 +339,12 @@ export function StudentDetailDrawer({
                 <Typography fontWeight={600}>Lĩnh vực tập trung</Typography>
                 <Box display="flex" flexWrap="wrap" gap={0.5} mt={1}>
                   {student.learningPathConfig.focusAreas.map((area, i) => (
-                    <Chip key={i} label={area} size="small" variant="outlined" />
+                    <Chip
+                      key={i}
+                      label={area}
+                      size="small"
+                      variant="outlined"
+                    />
                   ))}
                 </Box>
               </Paper>
@@ -313,8 +364,15 @@ export function StudentDetailDrawer({
           )}
         </Box>
       ) : (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-          <Typography color="text.secondary">Không tìm thấy thông tin học viên</Typography>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="100%"
+        >
+          <Typography color="text.secondary">
+            Không tìm thấy thông tin học viên
+          </Typography>
         </Box>
       )}
     </Drawer>
