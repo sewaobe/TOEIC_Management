@@ -10,6 +10,7 @@ export type Dictation = {
     topic?: string[];
     title: string;
     part_type?: number;
+    tags?: string[];
     level: string;
     transcript: string;
     audio_url?: string;
