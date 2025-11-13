@@ -154,6 +154,10 @@ export const useFullTestStep2ViewModel = (
   // ✅ Hàm chính
   const handleImportGroupsFromBank = useCallback(
     (part: number, selectedGroups: any[]) => {
+      console.log(
+        `🎯 handleImportGroupsFromBank - Part ${part}:`,
+        selectedGroups
+      );
       const newValue = cloneDeep(value);
       const partKey = `Part ${part}`;
       const destGroups = newValue[partKey]?.groups || [];
@@ -169,16 +173,71 @@ export const useFullTestStep2ViewModel = (
           .filter((e: any) => e.part === part && e.group !== null)
           .map((e: any) => e.group) || [];
 
-      // ---- 🧠 Part 1–6: fill vào group trống (group có lỗi) theo thứ tự ----
+      // ---- 🧠 Part 1–6: fill vào group trống (ưu tiên group có lỗi),
+      // nếu không có group lỗi thì tìm group "trống" (không media && không question),
+      // nếu vẫn không có thì tạo mới group và push vào destGroups
       if (part >= 1 && part <= 6) {
+        let filled = 0;
+        let skipped = 0;
+
+        // helper: check required presence per part
+        const isGroupFullForPart = (g: any) => {
+          const hasAudio = !!g.audioUrl;
+          const hasImages = !!g.imagesUrl && g.imagesUrl.length > 0;
+          const hasQuestions = !!g.questions && g.questions.length > 0;
+
+          // Part requirements (same as PartRenderer rules)
+          if (part === 1) return hasAudio && hasImages && hasQuestions;
+          if ([2, 3, 4].includes(part)) return hasAudio && hasQuestions;
+          if ([6].includes(part)) return hasImages && hasQuestions;
+          // Part 5 default: needs questions
+          return hasQuestions;
+        };
+
         for (const src of selectedGroups) {
-          // 🔍 tìm group trống (có lỗi)
-          const targetIdx = destGroups.findIndex((_: any, i: number) =>
+          // 🔍 ưu tiên: 1) group có lỗi (errorGroupIndexes), 2) hoàn toàn trống, 3) thiếu trường (partial), 4) tạo mới
+
+          // 1) tìm group index trong danh sách lỗi
+          let targetIdx = destGroups.findIndex((_: any, i: number) =>
             errorGroupIndexes.includes(i)
           );
-          if (targetIdx === -1) break;
+
+          // 2) nếu không tìm thấy, tìm group hoàn toàn trống
+          if (targetIdx === -1) {
+            targetIdx = destGroups.findIndex((g: any) => {
+              const noAudio = !g.audioUrl;
+              const noImages = !g.imagesUrl || g.imagesUrl.length === 0;
+              const noQuestions = !g.questions || g.questions.length === 0;
+              return noAudio && noImages && noQuestions;
+            });
+          }
+
+          // 3) nếu vẫn không có, tìm group partial (không full theo yêu cầu phần)
+          if (targetIdx === -1) {
+            targetIdx = destGroups.findIndex(
+              (g: any) => !isGroupFullForPart(g)
+            );
+          }
+
+          // 4) nếu vẫn không có, tạo mới group
+          if (targetIdx === -1) {
+            const qLen = Array.isArray(src.questions)
+              ? src.questions.length
+              : 0;
+            const newG = makeEmptyGroup(part, Math.max(qLen, 1));
+            destGroups.push(newG);
+            targetIdx = destGroups.length - 1;
+          }
 
           const dest = destGroups[targetIdx];
+
+          // Nếu target đã đầy đủ theo yêu cầu thì bỏ qua
+          if (isGroupFullForPart(dest)) {
+            skipped++;
+            continue;
+          }
+
+          // Ghi đè/fill các trường từ source
           dest.audioUrl = cloneMedia(src.audioUrl);
           dest.imagesUrl = cloneImageArr(src.imagesUrl);
           dest.transcriptEnglish = src.transcriptEnglish || "";
@@ -187,13 +246,22 @@ export const useFullTestStep2ViewModel = (
             ? src.questions.map(cloneQuestion)
             : [];
 
-          // ✅ sau khi fill, loại bỏ index này khỏi danh sách lỗi để tránh ghi đè group khác
-          errorGroupIndexes.splice(errorGroupIndexes.indexOf(targetIdx), 1);
+          // xóa khỏi danh sách lỗi nếu có
+          const errPos = errorGroupIndexes.indexOf(targetIdx);
+          if (errPos !== -1) errorGroupIndexes.splice(errPos, 1);
+
+          filled++;
         }
 
         newValue[partKey].groups = destGroups;
         onChange({ ...newValue });
-        alert(`✅ Đã fill ${selectedGroups.length} group vào Part ${part}.`);
+        if (skipped === 0) {
+          alert(`✅ Đã fill ${filled} group vào Part ${part}.`);
+        } else {
+          alert(
+            `✅ Đã fill ${filled} group vào Part ${part}. Bỏ qua ${skipped} group vì group đích đã đầy đủ.`
+          );
+        }
         return;
       }
 
