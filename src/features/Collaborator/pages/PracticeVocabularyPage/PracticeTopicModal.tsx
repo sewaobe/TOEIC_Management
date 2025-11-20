@@ -8,9 +8,12 @@ import {
   MenuItem,
   Box,
   IconButton,
+  Autocomplete,
+  Chip,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { PracticeTopicVocabulary } from "../../../../types/PracticeVocabulary";
+import { toeicPartsArray } from "../../../../utils/toeicPart";
 
 interface PracticeTopicModalProps {
   open: boolean;
@@ -22,6 +25,9 @@ interface PracticeTopicModalProps {
 }
 
 const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+// Tổng hợp tất cả tags từ toeicPart
+const allTags = [...new Set(toeicPartsArray.flatMap((part) => part.tags))];
 
 export default function PracticeTopicModal({
   open,
@@ -66,16 +72,22 @@ export default function PracticeTopicModal({
             fullWidth
           />
 
-          <TextField
-            label="Tags (phân cách bằng dấu phẩy)"
-            value={formData.tags?.join(", ") || ""}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                tags: e.target.value.split(",").map((t) => t.trim()),
-              })
+          {/* Tags từ toeicPart */}
+          <Autocomplete
+            multiple
+            options={allTags}
+            value={formData.tags || []}
+            onChange={(_, newValue) =>
+              setFormData({ ...formData, tags: newValue })
             }
-            fullWidth
+            renderInput={(params) => (
+              <TextField {...params} label="Tags (từ TOEIC Parts)" />
+            )}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip label={option} {...getTagProps({ index })} key={index} />
+              ))
+            }
           />
 
           <TextField
@@ -93,25 +105,6 @@ export default function PracticeTopicModal({
               </MenuItem>
             ))}
           </TextField>
-
-          <TextField
-            label="Tên icon"
-            value={formData.iconName || "📚"}
-            onChange={(e) =>
-              setFormData({ ...formData, iconName: e.target.value })
-            }
-            fullWidth
-          />
-
-          <TextField
-            label="Màu nền (hex)"
-            value={formData.bgColor || "#3b82f6"}
-            onChange={(e) =>
-              setFormData({ ...formData, bgColor: e.target.value })
-            }
-            fullWidth
-            type="color"
-          />
         </Box>
       </DialogContent>
 

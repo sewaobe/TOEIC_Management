@@ -14,9 +14,6 @@ const getDefaultFormData = (): Partial<PracticeTopicVocabulary> => ({
   description: "",
   tags: [],
   level: "A1",
-  iconName: "📚",
-  bgColor: "#3b82f6",
-  gradient: "",
   vocabulary_words: [],
   isPublic: false,
 });

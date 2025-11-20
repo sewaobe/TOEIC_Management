@@ -12,14 +12,9 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Chip,
 } from "@mui/material";
-import { ArrowBack, Add, Delete } from "@mui/icons-material";
+import { ArrowBack, Add, Delete, Edit } from "@mui/icons-material";
 import {
   practiceTopicVocabularyService,
   vocabularyWordService,
@@ -29,6 +24,8 @@ import {
   VocabularyWord,
 } from "../../../../types/PracticeVocabulary";
 import { EmptyState } from "../../../../components/EmptyState";
+import VocabularyWordModal from "./VocabularyWordModal";
+import VocabularyWordDetailModal from "./VocabularyWordDetailModal";
 
 export default function PracticeVocabularyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,13 +34,15 @@ export default function PracticeVocabularyDetailPage() {
   const [topic, setTopic] = useState<PracticeTopicVocabulary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedWord, setSelectedWord] = useState<VocabularyWord | null>(null);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [formData, setFormData] = useState<Partial<VocabularyWord>>({
     word: "",
     phonetic: "",
     type: "",
-    definition_vi: "",
-    definition_en: "",
+    definitions: [],
+    hints: [],
     examples: [],
   });
 
@@ -72,8 +71,8 @@ export default function PracticeVocabularyDetailPage() {
       word: "",
       phonetic: "",
       type: "",
-      definition_vi: "",
-      definition_en: "",
+      definitions: [],
+      hints: [],
       examples: [],
     });
     setModalMode("add");
@@ -89,6 +88,12 @@ export default function PracticeVocabularyDetailPage() {
         await practiceTopicVocabularyService.addVocabularyWordToTopic(
           id!,
           newWord._id!
+        );
+      } else if (modalMode === "edit") {
+        if (!formData._id) throw new Error("Missing word id for update");
+        await vocabularyWordService.updateVocabularyWord(
+          formData._id!,
+          formData
         );
       }
       await loadTopic();
@@ -111,6 +116,11 @@ export default function PracticeVocabularyDetailPage() {
       console.error("Lỗi khi xóa từ vựng:", error);
       alert("Có lỗi xảy ra khi xóa từ vựng");
     }
+  };
+
+  const handleViewDetail = (word: VocabularyWord) => {
+    setSelectedWord(word);
+    setDetailModalOpen(true);
   };
 
   if (isLoading) return <EmptyState mode="loading" />;
@@ -152,8 +162,8 @@ export default function PracticeVocabularyDetailPage() {
                 <TableCell>Từ vựng</TableCell>
                 <TableCell>Phiên âm</TableCell>
                 <TableCell>Loại từ</TableCell>
-                <TableCell>Định nghĩa (VI)</TableCell>
-                <TableCell>Định nghĩa (EN)</TableCell>
+                <TableCell>Định nghĩa đầu tiên</TableCell>
+                <TableCell>Tags</TableCell>
                 <TableCell align="right">Thao tác</TableCell>
               </TableRow>
             </TableHead>
@@ -166,17 +176,74 @@ export default function PracticeVocabularyDetailPage() {
                 </TableRow>
               ) : (
                 vocabularyWords.map((word) => (
-                  <TableRow key={word._id}>
-                    <TableCell>{word.word}</TableCell>
-                    <TableCell>{word.phonetic}</TableCell>
-                    <TableCell>{word.type}</TableCell>
-                    <TableCell>{word.definition_vi}</TableCell>
-                    <TableCell>{word.definition_en}</TableCell>
+                  <TableRow
+                    key={word._id}
+                    hover
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => handleViewDetail(word)}
+                  >
+                    <TableCell>
+                      <Typography variant="body2" fontWeight="bold">
+                        {word.word}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{word.phonetic || "-"}</TableCell>
+                    <TableCell>
+                      {word.type ? (
+                        <Chip
+                          label={word.type}
+                          size="small"
+                          variant="outlined"
+                        />
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 300 }}>
+                      {word.definitions && word.definitions.length > 0 ? (
+                        <Typography variant="body2" noWrap>
+                          {word.definitions[0]}
+                        </Typography>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {word.tags?.slice(0, 2).map((tag, i) => (
+                          <Chip key={i} label={tag} size="small" />
+                        ))}
+                        {word.tags && word.tags.length > 2 && (
+                          <Chip
+                            label={`+${word.tags.length - 2}`}
+                            size="small"
+                          />
+                        )}
+                      </Box>
+                    </TableCell>
                     <TableCell align="right">
                       <IconButton
                         size="small"
+                        color="info"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // open modal in edit mode
+                          setFormData(word);
+                          setModalMode("edit");
+                          setModalOpen(true);
+                        }}
+                        title="Chỉnh sửa"
+                      >
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        size="small"
                         color="error"
-                        onClick={() => handleDeleteWord(word._id!)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteWord(word._id!);
+                        }}
+                        title="Xóa"
                       >
                         <Delete />
                       </IconButton>
@@ -189,68 +256,20 @@ export default function PracticeVocabularyDetailPage() {
         </TableContainer>
       </Paper>
 
-      <Dialog
+      <VocabularyWordModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          {modalMode === "add" ? "Thêm từ vựng mới" : "Chỉnh sửa từ vựng"}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
-            <TextField
-              label="Từ vựng"
-              value={formData.word || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, word: e.target.value })
-              }
-              required
-            />
-            <TextField
-              label="Phiên âm"
-              value={formData.phonetic || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, phonetic: e.target.value })
-              }
-            />
-            <TextField
-              label="Loại từ"
-              value={formData.type || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
-              }
-            />
-            <TextField
-              label="Định nghĩa tiếng Việt"
-              value={formData.definition_vi || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, definition_vi: e.target.value })
-              }
-              multiline
-              rows={2}
-              required
-            />
-            <TextField
-              label="Định nghĩa tiếng Anh"
-              value={formData.definition_en || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, definition_en: e.target.value })
-              }
-              multiline
-              rows={2}
-              required
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setModalOpen(false)}>Hủy</Button>
-          <Button variant="contained" onClick={handleSaveWord}>
-            Lưu
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSave={handleSaveWord}
+        formData={formData}
+        setFormData={setFormData}
+        title={modalMode === "add" ? "Thêm từ vựng mới" : "Chỉnh sửa từ vựng"}
+      />
+
+      <VocabularyWordDetailModal
+        open={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        word={selectedWord}
+      />
     </Box>
   );
 }
