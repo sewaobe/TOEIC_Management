@@ -66,6 +66,8 @@ import ShadowingPage from "../features/Shadowing/ShadowingPage";
 import LessonManagerPage from "../features/LessonManager/LessonManagerPage";
 import LessonManagerDetailPage from "../features/LessonManager/LessonManagerDetailPage";
 import RBACRolesPage from "../features/Admin/pages/RBAC/RBACRolesPage.tsx";
+import PracticeVocabularyPage from "../features/Collaborator/pages/PracticeVocabularyPage/PracticeVocabularyPage";
+import PracticeVocabularyDetailPage from "../features/Collaborator/pages/PracticeVocabularyPage/PracticeVocabularyDetailPage";
 
 export const AppRouter = () => {
   return (
@@ -148,6 +150,14 @@ export const AppRouter = () => {
 
             {/* ===== Practice ===== */}
             <Route path="practice" element={<QuizListPage />} />
+            <Route
+              path="practice-vocabulary"
+              element={<PracticeVocabularyPage />}
+            />
+            <Route
+              path="practice-vocabulary/:id"
+              element={<PracticeVocabularyDetailPage />}
+            />
             <Route path="quiz" element={<QuizListPage />} />
             <Route path="quiz/create" element={<CreateQuizPage />} />
             <Route path="quiz/edit/:id" element={<EditQuizPage />} />
