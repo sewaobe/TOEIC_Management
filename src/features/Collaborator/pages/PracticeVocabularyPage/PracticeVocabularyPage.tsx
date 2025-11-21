@@ -15,7 +15,6 @@ const getDefaultFormData = (): Partial<PracticeTopicVocabulary> => ({
   tags: [],
   level: "A1",
   vocabulary_words: [],
-  isPublic: false,
 });
 
 export default function PracticeVocabularyPage() {

@@ -24,7 +24,6 @@ export interface PracticeTopicVocabulary {
   tags?: string[];
   level?: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
   vocabulary_words: VocabularyWord[] | string[];
-  isPublic: boolean;
   created_at?: string;
   created_by?: {
     _id: string;
