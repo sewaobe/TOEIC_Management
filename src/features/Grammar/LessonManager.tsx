@@ -110,17 +110,9 @@ interface SortableLessonSectionProps {
   onDeleteTableCol: (id: string, colIndex: number) => void;
   // Marker handlers for media sections
   onAddMarker: (id: string) => void;
-  onUpdateMarker: (
-    id: string,
-    markerIndex: number,
-    marker: QuestionMarker
-  ) => void;
+  onUpdateMarker: (id: string, markerIndex: number, marker: QuestionMarker) => void;
   onDeleteMarker: (id: string, markerIndex: number) => void;
-  onOpenPreview: (
-    url: string,
-    markers?: QuestionMarker[],
-    startTime?: number
-  ) => void;
+  onOpenPreview: (url: string, markers?: QuestionMarker[], startTime?: number) => void;
 }
 
 // --- COMPONENT XEM TRƯỚC BÀI HỌC ---
@@ -255,14 +247,13 @@ function LessonPreview({ open, onClose, lesson }: LessonPreviewProps) {
           {lesson.summary}
         </Typography>
         <Stack spacing={3} mt={2}>
-          {lesson.sections.length === 0 && (
+          {lesson.sections.length === 0 &&
             <EmptyState
               mode="empty"
               title="Chưa có section nào"
               description="Hãy thêm section mới để bắt đầu."
-            />
-          )}
-          {lesson.sections.map((section) => (
+            />}
+          {lesson.sections.map(section => (
             <Box key={section.id}>
               <Typography variant="h6" gutterBottom>
                 {section.title}
@@ -420,11 +411,10 @@ function SortableLessonSection({
                 {section.mediaUrl.includes("youtu") ? (
                   <Box
                     component="iframe"
-                    src={`https://www.youtube.com/embed/${
-                      section.mediaUrl.match(
-                        /(?:v=|\/|watch\?v=|embed\/)([A-Za-z0-9_-]{11})/
-                      )?.[1]
-                    }`}
+                    src={`https://www.youtube.com/embed/${section.mediaUrl.match(
+                      /(?:v=|\/|watch\?v=|embed\/)([A-Za-z0-9_-]{11})/
+                    )?.[1]
+                      }`}
                     frameBorder="0"
                     allowFullScreen
                     sx={{
@@ -435,79 +425,60 @@ function SortableLessonSection({
                     }}
                   />
                 ) : /* ☁️ Cloudinary video */
-                section.mediaUrl.match(/\.(mp4|webm|mov|avi|mkv)$/i) ? (
-                  <Box
-                    component="video"
-                    src={section.mediaUrl}
-                    controls
-                    sx={{
-                      width: "100%",
-                      aspectRatio: "16/9",
-                      borderRadius: 2,
-                      boxShadow: 3,
-                      objectFit: "contain",
-                      backgroundColor: "#000",
-                    }}
-                  />
-                ) : /* 🖼️ Cloudinary image */
-                section.mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                  <Box
-                    component="img"
-                    src={section.mediaUrl}
-                    sx={{
-                      width: "100%",
-                      maxHeight: 600,
-                      borderRadius: 2,
-                      objectFit: "contain",
-                      boxShadow: 3,
-                    }}
-                  />
-                ) : /* ❌ Không nhận dạng được */
-                section.mediaUrl.includes("cloudinary.com") ? (
-                  <Box
-                    component="img"
-                    src={section.mediaUrl.replace("/upload/", "/upload/w_800/")}
-                    sx={{
-                      width: "100%",
-                      aspectRatio: "16/9",
-                      borderRadius: 2,
-                      objectFit: "cover",
-                      boxShadow: 3,
-                    }}
-                  />
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Không thể hiển thị media này
-                  </Typography>
-                )}
+                  section.mediaUrl.match(/\.(mp4|webm|mov|avi|mkv)$/i) ? (
+                    <Box
+                      component="video"
+                      src={section.mediaUrl}
+                      controls
+                      sx={{
+                        width: "100%",
+                        aspectRatio: "16/9",
+                        borderRadius: 2,
+                        boxShadow: 3,
+                        objectFit: "contain",
+                        backgroundColor: "#000",
+                      }}
+                    />
+                  ) : /* 🖼️ Cloudinary image */
+                    section.mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <Box
+                        component="img"
+                        src={section.mediaUrl}
+                        sx={{
+                          width: "100%",
+                          maxHeight: 600,
+                          borderRadius: 2,
+                          objectFit: "contain",
+                          boxShadow: 3,
+                        }}
+                      />
+                    ) : /* ❌ Không nhận dạng được */
+                      section.mediaUrl.includes("cloudinary.com") ? (
+                        <Box
+                          component="img"
+                          src={section.mediaUrl.replace("/upload/", "/upload/w_800/")}
+                          sx={{
+                            width: "100%",
+                            aspectRatio: "16/9",
+                            borderRadius: 2,
+                            objectFit: "cover",
+                            boxShadow: 3,
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          Không thể hiển thị media này
+                        </Typography>
+                      )}
                 {/* --- Marker list + add button for media questions --- */}
                 <Box mt={2}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography variant="subtitle2">
-                      Câu hỏi tương tác
-                    </Typography>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="subtitle2">Câu hỏi tương tác</Typography>
                     <Stack direction="row" spacing={1}>
-                      <Button
-                        size="small"
-                        onClick={() => props.onAddMarker(section.id)}
-                      >
+                      <Button size="small" onClick={() => props.onAddMarker(section.id)}>
                         + Thêm câu hỏi
                       </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() =>
-                          props.onOpenPreview(
-                            section.mediaUrl || "",
-                            section.markers,
-                            0
-                          )
-                        }
-                      >
+                      <Button size="small" variant="outlined" onClick={() => props.onOpenPreview(section.mediaUrl || "", section.markers, 0)}>
                         Xem trước
                       </Button>
                     </Stack>
@@ -522,42 +493,20 @@ function SortableLessonSection({
                             size="small"
                             type="number"
                             value={m.time}
-                            onChange={(e) =>
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                time: Number(e.target.value),
-                              })
-                            }
+                            onChange={(e) => props.onUpdateMarker(section.id, mi, { ...m, time: Number(e.target.value) })}
                             sx={{ width: 120 }}
                           />
                           <TextField
                             label="Câu hỏi"
                             size="small"
                             value={m.question}
-                            onChange={(e) =>
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                question: e.target.value,
-                              })
-                            }
+                            onChange={(e) => props.onUpdateMarker(section.id, mi, { ...m, question: e.target.value })}
                             sx={{ flex: 1 }}
                           />
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              props.onOpenPreview(
-                                section.mediaUrl || "",
-                                section.markers,
-                                m.time
-                              )
-                            }
-                          >
+                          <IconButton size="small" onClick={() => props.onOpenPreview(section.mediaUrl || "", section.markers, m.time)}>
                             <Visibility />
                           </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => props.onDeleteMarker(section.id, mi)}
-                          >
+                          <IconButton size="small" onClick={() => props.onDeleteMarker(section.id, mi)}>
                             <Delete />
                           </IconButton>
                         </Stack>
@@ -569,10 +518,7 @@ function SortableLessonSection({
                             onChange={(e) => {
                               const opts = [...(m.options || [])];
                               opts[0] = e.target.value;
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                options: opts,
-                              });
+                              props.onUpdateMarker(section.id, mi, { ...m, options: opts });
                             }}
                             sx={{ flex: 1 }}
                           />
@@ -583,10 +529,7 @@ function SortableLessonSection({
                             onChange={(e) => {
                               const opts = [...(m.options || [])];
                               opts[1] = e.target.value;
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                options: opts,
-                              });
+                              props.onUpdateMarker(section.id, mi, { ...m, options: opts });
                             }}
                             sx={{ flex: 1 }}
                           />
@@ -599,10 +542,7 @@ function SortableLessonSection({
                             onChange={(e) => {
                               const opts = [...(m.options || [])];
                               opts[2] = e.target.value;
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                options: opts,
-                              });
+                              props.onUpdateMarker(section.id, mi, { ...m, options: opts });
                             }}
                             sx={{ flex: 1 }}
                           />
@@ -613,43 +553,25 @@ function SortableLessonSection({
                             onChange={(e) => {
                               const opts = [...(m.options || [])];
                               opts[3] = e.target.value;
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                options: opts,
-                              });
+                              props.onUpdateMarker(section.id, mi, { ...m, options: opts });
                             }}
                             sx={{ flex: 1 }}
                           />
                         </Stack>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          mt={1}
-                          alignItems="center"
-                        >
+                        <Stack direction="row" spacing={1} mt={1} alignItems="center">
                           <TextField
                             label="Index đáp án đúng"
                             size="small"
                             type="number"
                             value={m.correctAnswer}
-                            onChange={(e) =>
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                correctAnswer: Number(e.target.value),
-                              })
-                            }
+                            onChange={(e) => props.onUpdateMarker(section.id, mi, { ...m, correctAnswer: Number(e.target.value) })}
                             sx={{ width: 160 }}
                           />
                           <TextField
                             label="Giải thích (tùy chọn)"
                             size="small"
                             value={m.explanation ?? ""}
-                            onChange={(e) =>
-                              props.onUpdateMarker(section.id, mi, {
-                                ...m,
-                                explanation: e.target.value,
-                              })
-                            }
+                            onChange={(e) => props.onUpdateMarker(section.id, mi, { ...m, explanation: e.target.value })}
                             sx={{ flex: 1 }}
                           />
                         </Stack>
@@ -890,18 +812,15 @@ export default function LessonManager() {
                     ? s.medias_id[0]._id
                     : s.mediaId || "",
                 tableData: s.tableData,
-                // ✅ Lấy markers (câu hỏi tương tác) nếu backend trả về
-                markers: Array.isArray(s.markers)
-                  ? s.markers.map((m: any) => ({
-                      time: Number(m.time) || 0,
-                      question: String(m.question || ""),
-                      options: Array.isArray(m.options)
-                        ? m.options.map(String)
-                        : ["", "", "", ""],
-                      correctAnswer: Number(m.correctAnswer) || 0,
-                      explanation: m.explanation || "",
-                    }))
-                  : [],
+                // ✅ Lấy markers từ backend nếu có
+                markers: Array.isArray(s.markers) ? s.markers.map((m: any) => ({
+                  time: m.time,
+                  question: m.question,
+                  options: m.options || [],
+                  correctAnswer: typeof m.correctAnswer === 'number' ? m.correctAnswer : 0,
+                  explanation: m.explanation || undefined,
+                  _id: m._id,
+                })) : [],
               })) || [],
           });
         }
@@ -937,7 +856,7 @@ export default function LessonManager() {
     question: "",
     options: ["", "", "", ""],
     correctAnswer: 0,
-    explanation: "",
+    explanation: ""
   });
 
   const typeColors: Record<LessonSection["type"], string> = {
@@ -1087,7 +1006,7 @@ export default function LessonManager() {
         tableData: s.tableData?.map((r) => r.filter((_, i) => i !== colIndex)),
       })),
     onAddMarker: (id: string) => {
-      const section = lesson.sections.find((s) => s.id === id);
+      const section = lesson.sections.find(s => s.id === id);
       if (section?.mediaUrl) {
         setAddingMarkerFor(id);
         setPreviewUrl(section.mediaUrl);
@@ -1098,21 +1017,12 @@ export default function LessonManager() {
     },
     onUpdateMarker: (id: string, markerIndex: number, marker: QuestionMarker) =>
       updateSection(id, (s) => {
-        const m = (s.markers || []).map((mm, i) =>
-          i === markerIndex ? marker : mm
-        );
+        const m = (s.markers || []).map((mm, i) => (i === markerIndex ? marker : mm));
         return { ...s, markers: m };
       }),
     onDeleteMarker: (id: string, markerIndex: number) =>
-      updateSection(id, (s) => ({
-        ...s,
-        markers: (s.markers || []).filter((_, i) => i !== markerIndex),
-      })),
-    onOpenPreview: (
-      url: string,
-      markers?: QuestionMarker[],
-      startTime?: number
-    ) => {
+      updateSection(id, (s) => ({ ...s, markers: (s.markers || []).filter((_, i) => i !== markerIndex) })),
+    onOpenPreview: (url: string, markers?: QuestionMarker[], startTime?: number) => {
       setPreviewUrl(url);
       setPreviewMarkers(markers || []);
       setPreviewStartTime(startTime || 0);
@@ -1209,13 +1119,12 @@ export default function LessonManager() {
                 items={lesson.sections.map((s) => s.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {lesson.sections.length === 0 && (
+                {lesson.sections.length === 0 &&
                   <EmptyState
                     mode="empty"
                     title="Chưa có section nào"
                     description="Hãy thêm section mới để bắt đầu."
-                  />
-                )}
+                  />}
                 <Box mt={3} display="flex" flexDirection="column" gap={2}>
                   {lesson.sections.map((section) => (
                     <SortableLessonSection
@@ -1291,9 +1200,7 @@ export default function LessonManager() {
         fullWidth
       >
         <DialogTitle>
-          {addingMarkerFor
-            ? "Chọn thời điểm để thêm câu hỏi"
-            : "Xem trước câu hỏi"}
+          {addingMarkerFor ? "Chọn thời điểm để thêm câu hỏi" : "Xem trước câu hỏi"}
           <IconButton
             onClick={() => {
               setPreviewOpen(false);
@@ -1304,24 +1211,9 @@ export default function LessonManager() {
             <Close />
           </IconButton>
         </DialogTitle>
-        <DialogContent
-          sx={{
-            py: 2,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: 360,
-          }}
-        >
+        <DialogContent sx={{ py: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 360 }}>
           {previewUrl && (
-            <Box
-              sx={{
-                position: "relative",
-                width: "100%",
-                maxWidth: 920,
-                minHeight: 320,
-              }}
-            >
+            <Box sx={{ position: "relative", width: '100%', maxWidth: 920, minHeight: 320 }}>
               <InteractiveVideo
                 videoUrl={previewUrl}
                 markers={previewMarkers}
@@ -1330,76 +1222,31 @@ export default function LessonManager() {
               />
               {addingMarkerFor && (
                 <Box sx={{ mt: 2, textAlign: "center" }}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 1 }}
-                  >
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     Click vào nút bên dưới để chọn thời điểm hiện tại của video
                   </Typography>
                   <Button
                     variant="contained"
                     onClick={() => {
-                      // Request current time from InteractiveVideo via CustomEvent.
-                      // Use a requestId so multiple concurrent requests can be matched.
-                      const requestId = `req_${Date.now()}_${Math.random()
-                        .toString(36)
-                        .slice(2, 8)}`;
-                      const responseEvent = "iv-current-time";
-
-                      let to: number | null = null;
-                      const onResponse = (ev: Event) => {
-                        const detail = (ev as CustomEvent).detail || {};
-                        if (detail.requestId !== requestId) return; // not our response
-                        // Clear fallback timeout and remove listener
-                        if (to) {
-                          clearTimeout(to);
-                          to = null;
+                      const video = document.querySelector("video");
+                      if (video) {
+                        const currentTime = Math.floor(video.currentTime);
+                        const videoDuration = Math.floor(video.duration);
+                        
+                        if (currentTime < 0) {
+                          toast.error("Thời điểm không hợp lệ!");
+                          return;
                         }
-                        window.removeEventListener(
-                          responseEvent,
-                          onResponse as EventListener
-                        );
-
-                        const time = detail.time;
-                        if (time === null || time === undefined) {
-                          console.debug(
-                            "InteractiveVideo reported time not ready",
-                            detail
-                          );
+                        
+                        if (isNaN(videoDuration)) {
                           toast.error("Video chưa sẵn sàng, vui lòng thử lại!");
                           return;
                         }
-
-                        setPickedTime(time);
-                        setNewMarker((prev) => ({ ...prev, time }));
+                        
+                        setPickedTime(currentTime);
+                        setNewMarker(prev => ({ ...prev, time: currentTime }));
                         setMarkerDialogOpen(true);
-                      };
-
-                      // Timeout fallback in case player doesn't respond
-                      to = window.setTimeout(() => {
-                        window.removeEventListener(
-                          responseEvent,
-                          onResponse as EventListener
-                        );
-                        console.debug(
-                          "Timeout waiting for InteractiveVideo current time"
-                        );
-                        toast.error(
-                          "Không lấy được thời điểm video. Vui lòng thử lại."
-                        );
-                        to = null;
-                      }, 1500);
-
-                      window.addEventListener(
-                        responseEvent,
-                        onResponse as EventListener
-                      );
-                      window.dispatchEvent(
-                        new CustomEvent("iv-request-current-time", {
-                          detail: { requestId },
-                        })
-                      );
+                      }
                     }}
                   >
                     Chọn thời điểm hiện tại
@@ -1439,20 +1286,13 @@ export default function LessonManager() {
               label="Thời điểm (giây)"
               type="number"
               value={newMarker.time}
-              onChange={(e) =>
-                setNewMarker((prev) => ({
-                  ...prev,
-                  time: Number(e.target.value),
-                }))
-              }
+              onChange={(e) => setNewMarker(prev => ({ ...prev, time: Number(e.target.value) }))}
               fullWidth
             />
             <TextField
               label="Câu hỏi"
               value={newMarker.question}
-              onChange={(e) =>
-                setNewMarker((prev) => ({ ...prev, question: e.target.value }))
-              }
+              onChange={(e) => setNewMarker(prev => ({ ...prev, question: e.target.value }))}
               fullWidth
               multiline
               rows={2}
@@ -1463,7 +1303,7 @@ export default function LessonManager() {
               onChange={(e) => {
                 const opts = [...newMarker.options];
                 opts[0] = e.target.value;
-                setNewMarker((prev) => ({ ...prev, options: opts }));
+                setNewMarker(prev => ({ ...prev, options: opts }));
               }}
               fullWidth
             />
@@ -1473,7 +1313,7 @@ export default function LessonManager() {
               onChange={(e) => {
                 const opts = [...newMarker.options];
                 opts[1] = e.target.value;
-                setNewMarker((prev) => ({ ...prev, options: opts }));
+                setNewMarker(prev => ({ ...prev, options: opts }));
               }}
               fullWidth
             />
@@ -1483,7 +1323,7 @@ export default function LessonManager() {
               onChange={(e) => {
                 const opts = [...newMarker.options];
                 opts[2] = e.target.value;
-                setNewMarker((prev) => ({ ...prev, options: opts }));
+                setNewMarker(prev => ({ ...prev, options: opts }));
               }}
               fullWidth
             />
@@ -1493,7 +1333,7 @@ export default function LessonManager() {
               onChange={(e) => {
                 const opts = [...newMarker.options];
                 opts[3] = e.target.value;
-                setNewMarker((prev) => ({ ...prev, options: opts }));
+                setNewMarker(prev => ({ ...prev, options: opts }));
               }}
               fullWidth
             />
@@ -1501,24 +1341,14 @@ export default function LessonManager() {
               label="Đáp án đúng (0-3)"
               type="number"
               value={newMarker.correctAnswer}
-              onChange={(e) =>
-                setNewMarker((prev) => ({
-                  ...prev,
-                  correctAnswer: Number(e.target.value),
-                }))
-              }
+              onChange={(e) => setNewMarker(prev => ({ ...prev, correctAnswer: Number(e.target.value) }))}
               fullWidth
               inputProps={{ min: 0, max: 3 }}
             />
             <TextField
               label="Giải thích"
               value={newMarker.explanation}
-              onChange={(e) =>
-                setNewMarker((prev) => ({
-                  ...prev,
-                  explanation: e.target.value,
-                }))
-              }
+              onChange={(e) => setNewMarker(prev => ({ ...prev, explanation: e.target.value }))}
               fullWidth
               multiline
               rows={2}
@@ -1526,20 +1356,18 @@ export default function LessonManager() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => {
-              setMarkerDialogOpen(false);
-              setPickedTime(null);
-              // Reset new marker form
-              setNewMarker({
-                time: 0,
-                question: "",
-                options: ["", "", "", ""],
-                correctAnswer: 0,
-                explanation: "",
-              });
-            }}
-          >
+          <Button onClick={() => {
+            setMarkerDialogOpen(false);
+            setPickedTime(null);
+            // Reset new marker form
+            setNewMarker({
+              time: 0,
+              question: "",
+              options: ["", "", "", ""],
+              correctAnswer: 0,
+              explanation: ""
+            });
+          }}>
             Đóng
           </Button>
           <Button
@@ -1548,36 +1376,25 @@ export default function LessonManager() {
               // Validate
               const video = document.querySelector("video");
               const videoDuration = video ? video.duration : Infinity;
-
+              
               if (newMarker.time < 0) {
                 toast.error("Thời điểm phải lớn hơn hoặc bằng 0!");
                 return;
               }
-              if (
-                !isNaN(videoDuration) &&
-                videoDuration !== Infinity &&
-                newMarker.time >= videoDuration
-              ) {
-                toast.error(
-                  `Thời điểm phải nhỏ hơn ${Math.floor(videoDuration)}s!`
-                );
+              if (!isNaN(videoDuration) && videoDuration !== Infinity && newMarker.time >= videoDuration) {
+                toast.error(`Thời điểm phải nhỏ hơn ${Math.floor(videoDuration)}s!`);
                 return;
               }
               if (!newMarker.question.trim()) {
                 toast.error("Vui lòng nhập câu hỏi!");
                 return;
               }
-              const validOptions = newMarker.options.filter((opt) =>
-                opt.trim()
-              );
+              const validOptions = newMarker.options.filter(opt => opt.trim());
               if (validOptions.length < 2) {
                 toast.error("Cần ít nhất 2 đáp án!");
                 return;
               }
-              if (
-                newMarker.correctAnswer < 0 ||
-                newMarker.correctAnswer >= newMarker.options.length
-              ) {
+              if (newMarker.correctAnswer < 0 || newMarker.correctAnswer >= newMarker.options.length) {
                 toast.error("Index đáp án đúng không hợp lệ!");
                 return;
               }
@@ -1587,14 +1404,10 @@ export default function LessonManager() {
               }
 
               if (addingMarkerFor) {
-                const section = lesson.sections.find(
-                  (s) => s.id === addingMarkerFor
-                );
+                const section = lesson.sections.find(s => s.id === addingMarkerFor);
                 if (section) {
                   // Prevent duplicate marker times in the same section
-                  const conflict = (section.markers || []).some(
-                    (m) => m.time === newMarker.time
-                  );
+                  const conflict = (section.markers || []).some(m => m.time === newMarker.time);
                   if (conflict) {
                     toast.error("Đã có câu hỏi ở thời điểm này!");
                     return;
@@ -1604,33 +1417,31 @@ export default function LessonManager() {
                     ...s,
                     markers: [...(s.markers || []), newMarker],
                   }));
-
+                  
                   // Update preview markers to show the new question immediately
                   const updatedMarkers = [...previewMarkers, newMarker];
                   setPreviewMarkers(updatedMarkers);
-
+                  
                   // Update the start time to show the new marker immediately
                   setPreviewStartTime(newMarker.time);
-
+                  
                   // Close dialog
                   setMarkerDialogOpen(false);
                   setPickedTime(null);
-                  // Close preview modal as requested
-                  setPreviewOpen(false);
-                  setAddingMarkerFor(null);
-
+                      // Close preview modal as requested
+                      setPreviewOpen(false);
+                      setAddingMarkerFor(null);
+                  
                   // Reset form for next question
                   setNewMarker({
                     time: 0,
                     question: "",
                     options: ["", "", "", ""],
                     correctAnswer: 0,
-                    explanation: "",
+                    explanation: ""
                   });
-
-                  toast.success(
-                    "Đã thêm câu hỏi! Có thể tiếp tục thêm câu hỏi khác."
-                  );
+                  
+                  toast.success("Đã thêm câu hỏi! Có thể tiếp tục thêm câu hỏi khác.");
                 }
               }
             }}

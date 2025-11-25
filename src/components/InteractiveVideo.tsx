@@ -22,62 +22,8 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
   initialTime,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const {
-    activeQuestion,
-    resumeVideo,
-    isFullscreen,
-    player,
-    warning,
-    closeWarning,
-  } = useInteractiveVideo(videoRef, markers, videoUrl, initialTime);
-
-  // Expose currentTime via CustomEvent so parent components (outside this tree)
-  // can request the current playback time without querying DOM (works with YouTube tech).
-  React.useEffect(() => {
-    const handler = (e: Event) => {
-      try {
-        const detail = (e as CustomEvent)?.detail || {};
-        const requestId = detail.requestId;
-        const responseEventName = "iv-current-time";
-
-        let time: number | null = null;
-        if (player && typeof player.currentTime === "function") {
-          try {
-            time = Math.floor(Number(player.currentTime()) || 0);
-          } catch (err) {
-            time = null;
-          }
-        }
-
-        window.dispatchEvent(
-          new CustomEvent(responseEventName, { detail: { requestId, time } })
-        );
-      } catch (err) {
-        console.debug(
-          "InteractiveVideo: error responding to current time request",
-          err
-        );
-        window.dispatchEvent(
-          new CustomEvent("iv-current-time", {
-            detail: {
-              requestId: (e as CustomEvent).detail?.requestId,
-              time: null,
-            },
-          })
-        );
-      }
-    };
-
-    window.addEventListener(
-      "iv-request-current-time",
-      handler as EventListener
-    );
-    return () =>
-      window.removeEventListener(
-        "iv-request-current-time",
-        handler as EventListener
-      );
-  }, [player]);
+  const { activeQuestion, resumeVideo, isFullscreen, player, warning, closeWarning } =
+    useInteractiveVideo(videoRef, markers, videoUrl, initialTime);
 
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
@@ -96,9 +42,8 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className={`absolute inset-0 flex items-center justify-center backdrop-blur-md bg-white/60 dark:bg-gray-900/60 ${
-          isFullscreen ? "z-[9999]" : "z-30"
-        }`}
+        className={`absolute inset-0 flex items-center justify-center backdrop-blur-md bg-white/60 dark:bg-gray-900/60 ${isFullscreen ? "z-[9999]" : "z-30"
+          }`}
         style={{ pointerEvents: "auto" }}
       >
         <motion.div
@@ -114,10 +59,7 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
             border: "1px solid #e5e7eb",
           }}
         >
-          <Typography
-            variant="h6"
-            className="mb-5 font-semibold flex justify-center items-center gap-2"
-          >
+          <Typography variant="h6" className="mb-5 font-semibold flex justify-center items-center gap-2">
             💬 {activeQuestion.question}
           </Typography>
 
@@ -127,10 +69,7 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
               const isSelected = selectedAnswer === i;
 
               return (
-                <motion.div
-                  key={i}
-                  whileHover={!answered ? { scale: 1.03, y: -2 } : {}}
-                >
+                <motion.div key={i} whileHover={!answered ? { scale: 1.03, y: -2 } : {}}>
                   <Button
                     onClick={() => handleAnswer(i)}
                     variant="outlined"
@@ -141,8 +80,8 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
                         ? isCorrect
                           ? "linear-gradient(135deg, #22c55e, #4ade80)"
                           : isSelected
-                          ? "linear-gradient(135deg, #ef4444, #f87171)"
-                          : "#f3f4f6"
+                            ? "linear-gradient(135deg, #ef4444, #f87171)"
+                            : "#f3f4f6"
                         : "#fff",
                       color: answered
                         ? isCorrect || isSelected
@@ -154,8 +93,8 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
                         ? isCorrect
                           ? "0 4px 16px rgba(34,197,94,0.3)"
                           : isSelected
-                          ? "0 4px 16px rgba(239,68,68,0.3)"
-                          : "0 2px 8px rgba(0,0,0,0.05)"
+                            ? "0 4px 16px rgba(239,68,68,0.3)"
+                            : "0 2px 8px rgba(0,0,0,0.05)"
                         : "0 2px 10px rgba(0,0,0,0.06)",
                     }}
                     disabled={answered}
@@ -239,9 +178,8 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        className={`absolute inset-0 flex items-center justify-center backdrop-blur-md bg-white/60 dark:bg-gray-900/60 ${
-          isFullscreen ? "z-[9999]" : "z-30"
-        }`}
+        className={`absolute inset-0 flex items-center justify-center backdrop-blur-md bg-white/60 dark:bg-gray-900/60 ${isFullscreen ? "z-[9999]" : "z-30"
+          }`}
         style={{ pointerEvents: "auto" }}
       >
         <motion.div
@@ -257,15 +195,10 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
             border: "1px solid #fca5a5",
           }}
         >
-          <Typography
-            variant="h6"
-            className="mb-3 font-bold flex justify-center items-center gap-2"
-          >
+          <Typography variant="h6" className="mb-3 font-bold flex justify-center items-center gap-2">
             ⚠️ Không được tua quá nhanh
           </Typography>
-          <Typography className="text-sm opacity-90 mb-5">
-            {warning.message}
-          </Typography>
+          <Typography className="text-sm opacity-90 mb-5">{warning.message}</Typography>
 
           <motion.div whileHover={{ scale: 1.05 }}>
             <Button
@@ -300,10 +233,7 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
         </Typography>
       )}
 
-      <div
-        data-vjs-player
-        className="relative rounded-xl overflow-hidden shadow-xl"
-      >
+      <div data-vjs-player className="relative rounded-xl overflow-hidden shadow-xl">
         <video
           ref={videoRef}
           className="video-js vjs-big-play-centered rounded-xl overflow-hidden shadow-lg"
@@ -311,9 +241,7 @@ export const InteractiveVideo: React.FC<InteractiveVideoProps> = ({
       </div>
 
       {!isFullscreen && overlayNormal}
-      {isFullscreen &&
-        player &&
-        ReactDOM.createPortal(overlayNormal, player.el()!)}
+      {isFullscreen && player && ReactDOM.createPortal(overlayNormal, player.el()!)}
     </Box>
   );
 };
