@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { cloneDeep } from "lodash";
 
 // ====== SỐ LƯỢNG CÂU HỎI QUY ĐỊNH CHO TỪNG PART ======
 const PART_RULES: Record<number, { min: number; max: number }> = {
@@ -111,7 +112,11 @@ export function useMiniTestBuilderViewModel(initialData?: any) {
   };
 
   // 🗑️ Xóa câu hỏi
-  const removeQuestion = (part: number, groupIndex: number, questionIndex: number) => {
+  const removeQuestion = (
+    part: number,
+    groupIndex: number,
+    questionIndex: number
+  ) => {
     setGroupsByPart((prev) => {
       const updatedPart = [...(prev[part] || [])];
       const group = updatedPart[groupIndex];
@@ -144,19 +149,88 @@ export function useMiniTestBuilderViewModel(initialData?: any) {
     });
   };
 
+  // ==========================
+  // Import groups from question bank
+  // ==========================
+  const cloneQuestion = (q: any) => ({
+    name: q.name || "",
+    textQuestion: q.textQuestion || q.text || "",
+    choices: { ...(q.choices || {}) },
+    correctAnswer: q.correctAnswer || q.correct || "",
+    planned_time: Number(q.planned_time || q.plannedTime || 0),
+    explanation: q.explanation || q.explain || "",
+    tags: Array.isArray(q.tags) ? [...q.tags] : [],
+  });
+
+  const cloneMedia = (m?: { url: string; type?: string } | null) =>
+    m?.url ? { url: m.url, type: m.type || "AUDIO" } : null;
+
+  const cloneImageArr = (arr?: any[]) =>
+    Array.isArray(arr)
+      ? arr.map((i) => ({ url: i.url || i, type: i.type || "IMAGE" }))
+      : [];
+
+  const handleImportGroupsFromBank = (part: number, selectedGroups: any[]) => {
+    if (!Array.isArray(selectedGroups) || selectedGroups.length === 0) return;
+
+    setGroupsByPart((prev) => {
+      const dest = [...(prev[part] || [])];
+
+      for (const src of selectedGroups) {
+        const srcQs = Array.isArray(src.questions)
+          ? src.questions.map(cloneQuestion)
+          : [];
+        const rule = PART_RULES[part] || { min: 1, max: 99 };
+        // truncate to max
+        let qs = srcQs.slice(0, rule.max);
+        // pad to min if needed
+        if (qs.length < rule.min) {
+          const pad = generateDefaultQuestions(part).slice(
+            0,
+            rule.min - qs.length
+          );
+          qs = qs.concat(pad);
+        }
+
+        const newG = {
+          type: "TEST",
+          transcriptEnglish:
+            src.transcriptEnglish ||
+            src.transcript ||
+            src.group_transcript ||
+            "",
+          transcriptTranslation:
+            src.transcriptTranslation ||
+            src.transcriptTranslation ||
+            src.group_transcript_translation ||
+            "",
+          audioUrl: cloneMedia(src.audioUrl || src.group_audioUrl || null),
+          imagesUrl: cloneImageArr(
+            src.imagesUrl || src.group_imagesUrl || src.group_images || []
+          ),
+          questions: qs,
+        } as any;
+
+        dest.push(newG);
+      }
+
+      toast.success(`Đã thêm ${selectedGroups.length} group vào Part ${part}.`);
+      return { ...prev, [part]: dest };
+    });
+  };
+
   // 🧱 Build payload đúng model ITest
   const buildPayload = (form: any) => ({
     title: form.title,
     topic: form.topic,
     type: "mini-test",
     status: form.status || "draft",
-    groups: Object.entries(groupsByPart)
-      .flatMap(([part, arr]) =>
-        (arr || []).map((g) => ({
-          ...g,
-          part: Number(part),
-        }))
-      ),
+    groups: Object.entries(groupsByPart).flatMap(([part, arr]) =>
+      (arr || []).map((g) => ({
+        ...g,
+        part: Number(part),
+      }))
+    ),
   });
 
   return {
@@ -169,5 +243,6 @@ export function useMiniTestBuilderViewModel(initialData?: any) {
     updateQuestion,
     initFromMiniTest,
     buildPayload,
+    handleImportGroupsFromBank,
   };
 }

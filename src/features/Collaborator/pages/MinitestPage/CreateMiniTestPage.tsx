@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import miniTestService from "./services/miniTest.service";
 import { useMiniTestBuilderViewModel } from "./viewmodel/useMinitestBuilderViewModel";
 import GroupForm from "../../components/GroupForm";
+import SelectGroupDialog from "../../components/fulltest/SelectGroupDialog";
 
 export default function CreateMiniTestPage() {
   const vm = useMiniTestBuilderViewModel();
@@ -35,6 +36,8 @@ export default function CreateMiniTestPage() {
 
   const [activePart, setActivePart] = useState<number | null>(null);
   const [addedParts, setAddedParts] = useState<number[]>([]);
+  const [openSelectDialog, setOpenSelectDialog] = useState(false);
+  const [selectPart, setSelectPart] = useState<number | null>(null);
 
   const handleChange = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -156,6 +159,20 @@ export default function CreateMiniTestPage() {
             </MenuItem>
           ))}
         </TextField>
+        {/* Nút import từ ngân hàng câu hỏi */}
+        <Button
+          variant="outlined"
+          onClick={() => {
+            // nếu đang hiển thị part thì import vào part đó, ngược lại dùng first added part hoặc Part 1
+            const target =
+              activePart || (addedParts.length > 0 ? addedParts[0] : 1);
+            setSelectPart(target);
+            setOpenSelectDialog(true);
+          }}
+          sx={{ height: 40 }}
+        >
+          + Thêm từ ngân hàng
+        </Button>
       </Box>
 
       {addedParts.length > 0 && (
@@ -251,6 +268,25 @@ export default function CreateMiniTestPage() {
           ))}
         </>
       )}
+
+      {/* Dialog chọn group từ ngân hàng - reuse component từ FullTest */}
+      <SelectGroupDialog
+        open={openSelectDialog}
+        part={selectPart || (addedParts.length > 0 ? addedParts[0] : 1)}
+        onClose={() => setOpenSelectDialog(false)}
+        onConfirm={(groups) => {
+          // nếu người dùng chưa thêm part tương ứng, tự động thêm part
+          const targetPart =
+            selectPart || (addedParts.length > 0 ? addedParts[0] : 1);
+          if (!addedParts.includes(targetPart)) {
+            handleAddPart(targetPart);
+          }
+          // gọi viewmodel để import
+          // @ts-ignore - viewmodel sẽ cung cấp hàm import
+          vm.handleImportGroupsFromBank(targetPart, groups);
+          setOpenSelectDialog(false);
+        }}
+      />
 
       <Divider sx={{ my: 3 }} />
 
