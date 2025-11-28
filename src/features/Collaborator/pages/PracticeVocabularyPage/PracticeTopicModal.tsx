@@ -26,6 +26,16 @@ interface PracticeTopicModalProps {
 
 const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+const parts = [
+  "Part 1",
+  "Part 2",
+  "Part 3",
+  "Part 4",
+  "Part 5",
+  "Part 6",
+  "Part 7",
+];
+
 // Tổng hợp tất cả tags từ toeicPart
 const allTags = [...new Set(toeicPartsArray.flatMap((part) => part.tags))];
 
@@ -102,6 +112,23 @@ export default function PracticeTopicModal({
             {levels.map((level) => (
               <MenuItem key={level} value={level}>
                 {level}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="TOEIC Part"
+            value={formData.part_type || ""}
+            onChange={(e) =>
+              setFormData({ ...formData, part_type: e.target.value })
+            }
+            select
+            fullWidth
+          >
+            <MenuItem value="">Không chọn</MenuItem>
+            {parts.map((part) => (
+              <MenuItem key={part} value={part}>
+                {part}
               </MenuItem>
             ))}
           </TextField>
