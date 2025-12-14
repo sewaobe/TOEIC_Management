@@ -15,9 +15,11 @@ import { StudentTable } from "./components/StudentTable";
 import { StudentGrid } from "./components/StudentGrid";
 import { StudentDetailDrawer } from "./components/StudentDetailDrawer";
 import { LearningPathAdjustDialog } from "./components/LearningPathAdjustDialog";
+import { LearningPathEditorDialog } from "./components/LearningPathEditorDialog";
 import { StudentReportSection } from "./components/StudentReportSection";
 import studentService from "./services/studentService";
 import { Student, StudentDetail } from "../../../../types/student";
+import { useAdjustmentSocket } from "../../../../hooks/useAdjustmentSocket";
 
 export default function StudentsPage() {
   // =========================
@@ -29,9 +31,12 @@ export default function StudentsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [targetScoreFilter, setTargetScoreFilter] = useState<number>(0);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
+  const [editorDialogOpen, setEditorDialogOpen] = useState(false); // New state for Editor
   const [studentForAdjustment, setStudentForAdjustment] =
     useState<StudentDetail | null>(null);
   const [tabValue, setTabValue] = useState("students");
@@ -50,6 +55,11 @@ export default function StudentsPage() {
     message: string,
     severity: "success" | "error" = "success"
   ) => setToast({ open: true, message, severity });
+
+  // =========================
+  // 🔌 SOCKET LISTENER
+  // =========================
+  useAdjustmentSocket(); // Listen for REQUEST_RESPONDED event
 
   // =========================
   // 📦 LOAD DỮ LIỆU
@@ -94,7 +104,8 @@ export default function StudentsPage() {
     try {
       const detail = await studentService.getById(studentId);
       setStudentForAdjustment(detail);
-      setAdjustDialogOpen(true);
+      // setAdjustDialogOpen(true); // Old dialog
+      setEditorDialogOpen(true); // New Editor Dialog
     } catch (error) {
       console.error("Error loading student for adjustment:", error);
       showToast("Không thể tải thông tin học viên", "error");
@@ -246,6 +257,12 @@ export default function StudentsPage() {
         open={adjustDialogOpen}
         onClose={() => setAdjustDialogOpen(false)}
         onSubmit={handleSubmitAdjustment}
+      />
+
+      <LearningPathEditorDialog
+        student={studentForAdjustment}
+        open={editorDialogOpen}
+        onClose={() => setEditorDialogOpen(false)}
       />
 
       <Snackbar

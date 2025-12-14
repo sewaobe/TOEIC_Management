@@ -24,7 +24,9 @@ import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 import type { StudentDetail } from "../../../../../types/student";
+import type { IAdjustmentRequest } from "../../../../../types/adjustment";
 import studentService from "../services/studentService"; // ✅ Dùng service thật
+import { adjustmentService } from "../services/adjustmentService";
 import {
   formatDate,
   formatDuration,
@@ -32,6 +34,9 @@ import {
 } from "../utils/formatters";
 import { ProgressCharts } from "./ProgressCharts";
 import { ActivityList } from "./ActivityList";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { AdjustmentHistoryDialog } from "./AdjustmentHistoryDialog";
 
 // ====================
 // 🧩 Chip trạng thái
@@ -75,11 +80,21 @@ export function StudentDetailDrawer({
   onAdjustLearningPath,
 }: StudentDetailDrawerProps) {
   const [student, setStudent] = useState<StudentDetail | null>(null);
+  const [adjustmentHistory, setAdjustmentHistory] = useState<
+    IAdjustmentRequest[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("info");
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
-    if (studentId && open) loadStudentDetail();
+    if (studentId && open) {
+      loadStudentDetail();
+      loadAdjustmentHistory();
+    }
   }, [studentId, open]);
 
   // ======================
@@ -95,6 +110,17 @@ export function StudentDetailDrawer({
       console.error("Error loading student detail:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadAdjustmentHistory() {
+    if (!studentId) return;
+    try {
+      const history = await adjustmentService.getByStudentId(studentId);
+      setAdjustmentHistory(history);
+    } catch (error) {
+      console.error("Error loading adjustment history:", error);
+      setAdjustmentHistory([]);
     }
   }
 
@@ -348,6 +374,118 @@ export function StudentDetailDrawer({
                   ))}
                 </Box>
               </Paper>
+
+              {/* Lịch sử điều chỉnh */}
+              <Paper sx={{ p: 2 }}>
+                <Typography fontWeight={600} gutterBottom>
+                  Lịch sử điều chỉnh ({adjustmentHistory.length})
+                </Typography>
+                {adjustmentHistory.length === 0 ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ py: 2 }}
+                  >
+                    Chưa có yêu cầu điều chỉnh nào
+                  </Typography>
+                ) : (
+                  <Box sx={{ mt: 1 }}>
+                    {adjustmentHistory.map((request) => {
+                      const isApproved = request.status === "APPROVED";
+                      const isRejected = request.status === "REJECTED";
+                      const isPending = request.status === "PENDING";
+
+                      return (
+                        <Box
+                          key={request._id}
+                          sx={{
+                            p: 1.5,
+                            mb: 1,
+                            borderRadius: 1,
+                            border: "1px solid",
+                            borderColor: "divider",
+                            bgcolor: isPending
+                              ? "action.hover"
+                              : isApproved
+                              ? "success.lighter"
+                              : "error.lighter",
+                          }}
+                        >
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {request.reason}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {format(
+                                  new Date(request.createdAt),
+                                  "dd/MM/yyyy HH:mm",
+                                  { locale: vi }
+                                )}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={
+                                isPending
+                                  ? "Đang chờ"
+                                  : isApproved
+                                  ? "Đã duyệt"
+                                  : "Từ chối"
+                              }
+                              color={
+                                isPending
+                                  ? "warning"
+                                  : isApproved
+                                  ? "success"
+                                  : "error"
+                              }
+                              size="small"
+                            />
+                          </Box>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            mt={0.5}
+                          >
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {request.changes.length} thay đổi
+                            </Typography>
+                            <Button
+                              size="small"
+                              onClick={() => {
+                                setSelectedRequestId(request._id);
+                                setHistoryDialogOpen(true);
+                              }}
+                            >
+                              Xem chi tiết
+                            </Button>
+                          </Box>
+                          {isRejected && request.rejectionReason && (
+                            <Typography
+                              variant="caption"
+                              color="error.main"
+                              sx={{ mt: 0.5, display: "block" }}
+                            >
+                              Lý do từ chối: {request.rejectionReason}
+                            </Typography>
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
+              </Paper>
             </Box>
           )}
 
@@ -374,6 +512,20 @@ export function StudentDetailDrawer({
             Không tìm thấy thông tin học viên
           </Typography>
         </Box>
+      )}
+
+      {/* Dialog xem chi tiết adjustment request */}
+      {student && (
+        <AdjustmentHistoryDialog
+          open={historyDialogOpen}
+          onClose={() => {
+            setHistoryDialogOpen(false);
+            setSelectedRequestId(null);
+          }}
+          studentId={student.id}
+          studentName={student.name}
+          initialRequestId={selectedRequestId}
+        />
       )}
     </Drawer>
   );
