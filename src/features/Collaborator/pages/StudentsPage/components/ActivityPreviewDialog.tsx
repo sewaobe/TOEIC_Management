@@ -27,7 +27,13 @@ import StyleIcon from "@mui/icons-material/Style";
 import RecordVoiceOverIcon from "@mui/icons-material/RecordVoiceOver";
 import MicIcon from "@mui/icons-material/Mic";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import { Description, ErrorOutline, Chat, Image as ImageIcon, Movie } from "@mui/icons-material";
+import {
+  Description,
+  ErrorOutline,
+  Chat,
+  Image as ImageIcon,
+  Movie,
+} from "@mui/icons-material";
 import { motion } from "framer-motion";
 import {
   activityService,
@@ -137,7 +143,8 @@ export function ActivityPreviewDialog({
   };
 
   const getYouTubeEmbedUrl = (url: string) => {
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const youtubeRegex =
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(youtubeRegex);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
@@ -146,7 +153,9 @@ export function ActivityPreviewDialog({
     switch (section.type) {
       case "text":
         return (
-          <Typography sx={{ whiteSpace: "pre-wrap" }}>{section.content}</Typography>
+          <Typography sx={{ whiteSpace: "pre-wrap" }}>
+            {section.content}
+          </Typography>
         );
       case "example":
         return (
@@ -155,11 +164,18 @@ export function ActivityPreviewDialog({
             sx={{
               p: 2,
               borderRadius: 2,
-              bgcolor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : theme.palette.grey[50],
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.05)"
+                  : theme.palette.grey[50],
             }}
           >
-            <Typography><strong>EN:</strong> {section.example?.en}</Typography>
-            <Typography><strong>VI:</strong> {section.example?.vi}</Typography>
+            <Typography>
+              <strong>EN:</strong> {section.example?.en}
+            </Typography>
+            <Typography>
+              <strong>VI:</strong> {section.example?.vi}
+            </Typography>
             {section.example?.note && (
               <Typography variant="caption" color="text.secondary">
                 <em>Note: {section.example.note}</em>
@@ -177,8 +193,12 @@ export function ActivityPreviewDialog({
               borderRadius: 2,
             }}
           >
-            <Typography color="error" fontWeight={600}>Sai: {section.error?.wrong}</Typography>
-            <Typography color="success.main" fontWeight={600}>Đúng: {section.error?.correct}</Typography>
+            <Typography color="error" fontWeight={600}>
+              Sai: {section.error?.wrong}
+            </Typography>
+            <Typography color="success.main" fontWeight={600}>
+              Đúng: {section.error?.correct}
+            </Typography>
             <Divider sx={{ my: 1 }} />
             <Typography variant="body2" color="text.secondary">
               Giải thích: {section.error?.explanation || "—"}
@@ -191,55 +211,99 @@ export function ActivityPreviewDialog({
         if (medias.length === 0) {
           return <Typography color="text.secondary">Không có media</Typography>;
         }
-        
+
         return (
           <Stack spacing={2}>
             {medias.map((media: any, idx: number) => {
               const url = media.url || media.path || "";
               const type = media.type || "";
-              
+
               // YouTube embed
               const embedUrl = getYouTubeEmbedUrl(url);
               if (embedUrl) {
                 return (
-                  <Box key={idx} sx={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 2, overflow: "hidden" }}>
+                  <Box
+                    key={idx}
+                    sx={{
+                      position: "relative",
+                      paddingBottom: "56.25%",
+                      height: 0,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                    }}
+                  >
                     <iframe
                       src={embedUrl}
-                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        border: 0,
+                      }}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     />
                   </Box>
                 );
               }
-              
+
               if (type === "video/youtube") {
                 return (
                   <Typography key={idx} variant="body2" color="primary">
-                    <a href={url} target="_blank" rel="noopener noreferrer">🎥 YouTube: {url}</a>
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                      🎥 YouTube: {url}
+                    </a>
                   </Typography>
                 );
               }
-              
+
               // Image
-              if (type.startsWith("image/") || /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(url)) {
-                return <img key={idx} src={url} alt={`Media ${idx + 1}`} style={{ width: "100%", borderRadius: 8 }} />;
+              if (
+                type.startsWith("image/") ||
+                /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(url)
+              ) {
+                return (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`Media ${idx + 1}`}
+                    style={{ width: "100%", borderRadius: 8 }}
+                  />
+                );
               }
-              
+
               // Video
               if (type.startsWith("video/") || /\.(mp4|webm|ogg)$/i.test(url)) {
-                return <video key={idx} controls src={url} style={{ width: "100%", borderRadius: 8 }} />;
+                return (
+                  <video
+                    key={idx}
+                    controls
+                    src={url}
+                    style={{ width: "100%", borderRadius: 8 }}
+                  />
+                );
               }
-              
+
               // Audio
               if (type.startsWith("audio/") || /\.(mp3|wav|ogg)$/i.test(url)) {
-                return <audio key={idx} controls src={url} style={{ width: "100%" }} />;
+                return (
+                  <audio
+                    key={idx}
+                    controls
+                    src={url}
+                    style={{ width: "100%" }}
+                  />
+                );
               }
-              
+
               // Fallback link
               return (
                 <Typography key={idx} variant="body2" color="primary">
-                  <a href={url} target="_blank" rel="noopener noreferrer">🔗 {media.filename || "Media file"}</a>
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    🔗 {media.filename || "Media file"}
+                  </a>
                 </Typography>
               );
             })}
@@ -263,26 +327,57 @@ export function ActivityPreviewDialog({
           </TableContainer>
         ) : null;
       default:
-        return <Typography color="text.secondary">Không hỗ trợ loại section này</Typography>;
+        return (
+          <Typography color="text.secondary">
+            Không hỗ trợ loại section này
+          </Typography>
+        );
     }
   };
 
   const renderLessonContent = (data: any) => (
     <Stack spacing={3}>
-      <Paper sx={{ p: 3, borderRadius: 2, bgcolor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}` }}>
-        <Typography variant="body2" color="text.secondary" gutterBottom>Tóm tắt:</Typography>
-        <Typography variant="body1">{data.summary || "Không có mô tả"}</Typography>
+      <Paper
+        sx={{
+          p: 3,
+          borderRadius: 2,
+          bgcolor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Tóm tắt:
+        </Typography>
+        <Typography variant="body1">
+          {data.summary || "Không có mô tả"}
+        </Typography>
         <Divider sx={{ my: 2 }} />
         <Stack direction="row" spacing={2} flexWrap="wrap">
-          {data.part_type && <Chip label={`Part ${data.part_type}`} size="small" color="primary" />}
-          {data.planned_completion_time && <Chip label={`${data.planned_completion_time} phút`} size="small" />}
-          {data.weight && <Chip label={`Điểm: ${data.weight}`} size="small" variant="outlined" />}
+          {data.part_type && (
+            <Chip
+              label={`Part ${data.part_type}`}
+              size="small"
+              color="primary"
+            />
+          )}
+          {data.planned_completion_time && (
+            <Chip label={`${data.planned_completion_time} phút`} size="small" />
+          )}
+          {data.weight && (
+            <Chip
+              label={`Điểm: ${data.weight}`}
+              size="small"
+              variant="outlined"
+            />
+          )}
         </Stack>
       </Paper>
 
       {data.sections_id && data.sections_id.length > 0 && (
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>📚 Nội dung bài học</Typography>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            📚 Nội dung bài học
+          </Typography>
           <Stack spacing={2}>
             {data.sections_id.map((section: any, idx: number) => (
               <Paper
@@ -291,7 +386,11 @@ export function ActivityPreviewDialog({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                sx={{ p: 2, borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: `1px solid ${theme.palette.divider}`,
+                }}
               >
                 <Stack direction="row" alignItems="center" spacing={1} mb={1}>
                   {getIcon(section.type)}
@@ -310,16 +409,39 @@ export function ActivityPreviewDialog({
 
   const renderQuizContent = (data: any) => (
     <Stack spacing={3}>
-      <Paper sx={{ p: 3, borderRadius: 2, bgcolor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}` }}>
+      <Paper
+        sx={{
+          p: 3,
+          borderRadius: 2,
+          bgcolor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+        }}
+      >
         <Typography variant="h5" color="primary" fontWeight="bold" gutterBottom>
           {data.title}
         </Typography>
         <Divider sx={{ my: 2 }} />
         <Stack direction="row" spacing={2} flexWrap="wrap">
-          {data.level && <Chip label={data.level} size="small" color="primary" />}
-          {data.part_type && <Chip label={`Part ${data.part_type}`} size="small" />}
-          {data.planned_completion_time && <Chip label={`${data.planned_completion_time} phút`} size="small" variant="outlined" />}
-          {data.status && <Chip label={data.status === "draft" ? "Nháp" : "Công khai"} size="small" variant="outlined" />}
+          {data.level && (
+            <Chip label={data.level} size="small" color="primary" />
+          )}
+          {data.part_type && (
+            <Chip label={`Part ${data.part_type}`} size="small" />
+          )}
+          {data.planned_completion_time && (
+            <Chip
+              label={`${data.planned_completion_time} phút`}
+              size="small"
+              variant="outlined"
+            />
+          )}
+          {data.status && (
+            <Chip
+              label={data.status === "draft" ? "Nháp" : "Công khai"}
+              size="small"
+              variant="outlined"
+            />
+          )}
         </Stack>
       </Paper>
 
@@ -336,17 +458,34 @@ export function ActivityPreviewDialog({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                sx={{ p: 3, borderRadius: 2, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper }}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  border: `1px solid ${theme.palette.divider}`,
+                  bgcolor: theme.palette.background.paper,
+                }}
               >
-                <Typography variant="subtitle1" fontWeight={600} color="primary" gutterBottom>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  color="primary"
+                  gutterBottom
+                >
                   {question.name || `Câu ${idx + 1}`}
                 </Typography>
                 <Typography variant="body1" gutterBottom>
-                  {question.textQuestion || question.question_text || question.content || "Không có nội dung"}
+                  {question.textQuestion ||
+                    question.question_text ||
+                    question.content ||
+                    "Không có nội dung"}
                 </Typography>
                 {question.audio_url && (
                   <Box my={2}>
-                    <audio controls src={question.audio_url} style={{ width: "100%", maxWidth: 400 }} />
+                    <audio
+                      controls
+                      src={question.audio_url}
+                      style={{ width: "100%", maxWidth: 400 }}
+                    />
                   </Box>
                 )}
                 {question.image_url && (
@@ -354,44 +493,64 @@ export function ActivityPreviewDialog({
                     <img
                       src={question.image_url}
                       alt={`Câu ${idx + 1}`}
-                      style={{ maxWidth: "100%", maxHeight: 200, objectFit: "contain", borderRadius: 8 }}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: 200,
+                        objectFit: "contain",
+                        borderRadius: 8,
+                      }}
                     />
                   </Box>
                 )}
-                {question.choices && Object.keys(question.choices).length > 0 && (
-                  <Box mt={2}>
-                    <Typography variant="subtitle2" gutterBottom>Đáp án:</Typography>
-                    <Stack spacing={1}>
-                      {Object.entries(question.choices).map(([key, text]: [string, any]) => {
-                        const isCorrect = question.correctAnswer === key;
-                        return (
-                          <Box
-                            key={key}
-                            sx={{
-                              p: 1.5,
-                              borderRadius: 1,
-                              bgcolor: isCorrect ? "success.light" : "background.default",
-                              border: isCorrect ? `2px solid ${theme.palette.success.main}` : `1px solid ${theme.palette.divider}`,
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              color={isCorrect ? "success.dark" : "text.primary"}
-                              sx={{ fontWeight: isCorrect ? 600 : 400 }}
-                            >
-                              {key}. {text}
-                              {isCorrect && " ✓"}
-                            </Typography>
-                          </Box>
-                        );
-                      })}
-                    </Stack>
-                  </Box>
-                )}
+                {question.choices &&
+                  Object.keys(question.choices).length > 0 && (
+                    <Box mt={2}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Đáp án:
+                      </Typography>
+                      <Stack spacing={1}>
+                        {Object.entries(question.choices).map(
+                          ([key, text]: [string, any]) => {
+                            const isCorrect = question.correctAnswer === key;
+                            return (
+                              <Box
+                                key={key}
+                                sx={{
+                                  p: 1.5,
+                                  borderRadius: 1,
+                                  bgcolor: isCorrect
+                                    ? "success.light"
+                                    : "background.default",
+                                  border: isCorrect
+                                    ? `2px solid ${theme.palette.success.main}`
+                                    : `1px solid ${theme.palette.divider}`,
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  color={
+                                    isCorrect ? "success.dark" : "text.primary"
+                                  }
+                                  sx={{ fontWeight: isCorrect ? 600 : 400 }}
+                                >
+                                  {key}. {text}
+                                  {isCorrect && " ✓"}
+                                </Typography>
+                              </Box>
+                            );
+                          }
+                        )}
+                      </Stack>
+                    </Box>
+                  )}
                 {question.explanation && (
                   <Box mt={2} p={2} bgcolor="info.light" borderRadius={1}>
-                    <Typography variant="body2" fontWeight={600}>Giải thích:</Typography>
-                    <Typography variant="body2">{question.explanation}</Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      Giải thích:
+                    </Typography>
+                    <Typography variant="body2">
+                      {question.explanation}
+                    </Typography>
                   </Box>
                 )}
               </Paper>
@@ -408,8 +567,20 @@ export function ActivityPreviewDialog({
 
     return (
       <Stack spacing={3}>
-        <Paper sx={{ p: 3, borderRadius: 2, bgcolor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}` }}>
-          <Typography variant="h5" color="primary" fontWeight="bold" gutterBottom>
+        <Paper
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            bgcolor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Typography
+            variant="h5"
+            color="primary"
+            fontWeight="bold"
+            gutterBottom
+          >
             {data.title || "Flashcard"}
           </Typography>
           {data.description && (
@@ -419,18 +590,30 @@ export function ActivityPreviewDialog({
           )}
           <Divider sx={{ my: 2 }} />
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            {data.level && <Chip label={data.level} size="small" color="primary" />}
-            {data.part_type && <Chip label={`Part ${data.part_type}`} size="small" />}
-            <Chip label={`${vocabularies.length} từ vựng`} size="small" variant="outlined" />
-            {data.tags && data.tags.length > 0 && data.tags.map((tag: string, i: number) => (
-              <Chip key={i} label={tag} size="small" variant="outlined" />
-            ))}
+            {data.level && (
+              <Chip label={data.level} size="small" color="primary" />
+            )}
+            {data.part_type && (
+              <Chip label={`Part ${data.part_type}`} size="small" />
+            )}
+            <Chip
+              label={`${vocabularies.length} từ vựng`}
+              size="small"
+              variant="outlined"
+            />
+            {data.tags &&
+              data.tags.length > 0 &&
+              data.tags.map((tag: string, i: number) => (
+                <Chip key={i} label={tag} size="small" variant="outlined" />
+              ))}
           </Stack>
         </Paper>
 
         {vocabularies.length > 0 && (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>📚 Danh sách từ vựng</Typography>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              📚 Danh sách từ vựng
+            </Typography>
             <Stack spacing={2}>
               {vocabularies.map((vocab: any, idx: number) => (
                 <Paper
@@ -439,38 +622,82 @@ export function ActivityPreviewDialog({
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.03 }}
-                  sx={{ p: 3, borderRadius: 2, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper }}
+                  sx={{
+                    p: 3,
+                    borderRadius: 2,
+                    border: `1px solid ${theme.palette.divider}`,
+                    bgcolor: theme.palette.background.paper,
+                  }}
                 >
-                  <Stack direction="row" justifyContent="space-between" alignItems="start" spacing={2}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="start"
+                    spacing={2}
+                  >
                     <Box flex={1}>
                       <Typography variant="h6" fontWeight={700} color="primary">
                         {vocab.word}
                       </Typography>
                       {vocab.phonetic && (
-                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic", mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontStyle: "italic", mb: 1 }}
+                        >
                           /{vocab.phonetic}/
                         </Typography>
                       )}
                       <Stack direction="row" spacing={1} mb={1}>
-                        {vocab.type && <Chip label={vocab.type} size="small" variant="outlined" />}
-                        {vocab.level && <Chip label={vocab.level} size="small" color="primary" />}
+                        {vocab.type && (
+                          <Chip
+                            label={vocab.type}
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                        {vocab.level && (
+                          <Chip
+                            label={vocab.level}
+                            size="small"
+                            color="primary"
+                          />
+                        )}
                         {vocab.part && <Chip label={vocab.part} size="small" />}
                       </Stack>
                       {vocab.definitions && vocab.definitions.length > 0 && (
                         <Box mt={1}>
-                          <Typography variant="subtitle2" fontWeight={600}>Định nghĩa:</Typography>
-                          {vocab.definitions.map((def: string, dIdx: number) => (
-                            <Typography key={dIdx} variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
-                              {vocab.definitions.length > 1 && `${dIdx + 1}. `}{def}
-                            </Typography>
-                          ))}
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Định nghĩa:
+                          </Typography>
+                          {vocab.definitions.map(
+                            (def: string, dIdx: number) => (
+                              <Typography
+                                key={dIdx}
+                                variant="body2"
+                                color="text.primary"
+                                sx={{ mt: 0.5 }}
+                              >
+                                {vocab.definitions.length > 1 &&
+                                  `${dIdx + 1}. `}
+                                {def}
+                              </Typography>
+                            )
+                          )}
                         </Box>
                       )}
                       {vocab.hints && vocab.hints.length > 0 && (
                         <Box mt={1}>
-                          <Typography variant="subtitle2" fontWeight={600}>Gợi ý:</Typography>
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Gợi ý:
+                          </Typography>
                           {vocab.hints.map((hint: string, hIdx: number) => (
-                            <Typography key={hIdx} variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            <Typography
+                              key={hIdx}
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mt: 0.5 }}
+                            >
                               💡 {hint}
                             </Typography>
                           ))}
@@ -478,18 +705,33 @@ export function ActivityPreviewDialog({
                       )}
                       {vocab.examples && vocab.examples.length > 0 && (
                         <Box mt={1}>
-                          <Typography variant="subtitle2" fontWeight={600}>Ví dụ:</Typography>
-                          {vocab.examples.map((example: string, eIdx: number) => (
-                            <Box key={eIdx} mt={0.5} p={1.5} bgcolor="action.hover" borderRadius={1}>
-                              <Typography variant="body2" fontStyle="italic">
-                                "{example}"
-                              </Typography>
-                            </Box>
-                          ))}
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            Ví dụ:
+                          </Typography>
+                          {vocab.examples.map(
+                            (example: string, eIdx: number) => (
+                              <Box
+                                key={eIdx}
+                                mt={0.5}
+                                p={1.5}
+                                bgcolor="action.hover"
+                                borderRadius={1}
+                              >
+                                <Typography variant="body2" fontStyle="italic">
+                                  "{example}"
+                                </Typography>
+                              </Box>
+                            )
+                          )}
                         </Box>
                       )}
                       {vocab.notes && (
-                        <Box mt={1} p={1.5} bgcolor="info.light" borderRadius={1}>
+                        <Box
+                          mt={1}
+                          p={1.5}
+                          bgcolor="info.light"
+                          borderRadius={1}
+                        >
                           <Typography variant="body2">{vocab.notes}</Typography>
                         </Box>
                       )}
@@ -497,11 +739,24 @@ export function ActivityPreviewDialog({
                     <Box>
                       {vocab.image && (
                         <Box mb={1}>
-                          <img src={vocab.image} alt={vocab.word} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8 }} />
+                          <img
+                            src={vocab.image}
+                            alt={vocab.word}
+                            style={{
+                              width: 120,
+                              height: 120,
+                              objectFit: "cover",
+                              borderRadius: 8,
+                            }}
+                          />
                         </Box>
                       )}
                       {vocab.audio && (
-                        <audio controls src={vocab.audio} style={{ width: 120 }} />
+                        <audio
+                          controls
+                          src={vocab.audio}
+                          style={{ width: 120 }}
+                        />
                       )}
                     </Box>
                   </Stack>
@@ -516,12 +771,38 @@ export function ActivityPreviewDialog({
 
   const renderDictationContent = (data: any) => (
     <Stack spacing={3}>
-      <Paper sx={{ p: 3, borderRadius: 3, background: theme.palette.mode === "dark" ? "linear-gradient(145deg, #1E293B, #111827)" : "linear-gradient(to right, #ECFDF5, #D1FAE5)" }}>
+      <Paper
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          background:
+            theme.palette.mode === "dark"
+              ? "linear-gradient(145deg, #1E293B, #111827)"
+              : "linear-gradient(to right, #ECFDF5, #D1FAE5)",
+        }}
+      >
         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-          {data.level && <Chip label={`Level ${data.level}`} size="small" color="primary" />}
-          {data.part_type && <Chip label={`Part ${data.part_type}`} size="small" />}
-          {data.duration && <Chip label={`${Math.floor(data.duration / 1000)} giây`} size="small" variant="outlined" />}
-          {data.display_mode && <Chip label={data.display_mode} size="small" color="info" variant="outlined" />}
+          {data.level && (
+            <Chip label={`Level ${data.level}`} size="small" color="primary" />
+          )}
+          {data.part_type && (
+            <Chip label={`Part ${data.part_type}`} size="small" />
+          )}
+          {data.duration && (
+            <Chip
+              label={`${Math.floor(data.duration / 1000)} giây`}
+              size="small"
+              variant="outlined"
+            />
+          )}
+          {data.display_mode && (
+            <Chip
+              label={data.display_mode}
+              size="small"
+              color="info"
+              variant="outlined"
+            />
+          )}
         </Stack>
         {data.audio_url ? (
           <audio controls src={data.audio_url} style={{ width: "100%" }} />
@@ -532,7 +813,9 @@ export function ActivityPreviewDialog({
 
       {data.transcript && (
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>📝 Nội dung Dictation</Typography>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            📝 Nội dung Dictation
+          </Typography>
           <Paper
             variant="outlined"
             sx={{
@@ -543,7 +826,10 @@ export function ActivityPreviewDialog({
               borderRadius: 2,
             }}
           >
-            <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
+            <Typography
+              variant="body1"
+              sx={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}
+            >
               {data.transcript}
             </Typography>
           </Paper>
@@ -562,11 +848,31 @@ export function ActivityPreviewDialog({
 
   const renderShadowingContent = (data: any) => (
     <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, background: theme.palette.mode === "dark" ? "linear-gradient(145deg, #1E293B, #111827)" : "linear-gradient(to right, #EEF2FF, #F5F7FF)" }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          background:
+            theme.palette.mode === "dark"
+              ? "linear-gradient(145deg, #1E293B, #111827)"
+              : "linear-gradient(to right, #EEF2FF, #F5F7FF)",
+        }}
+      >
         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-          {data.level && <Chip label={`Level ${data.level}`} size="small" color="primary" />}
-          {data.part_type && <Chip label={`Part ${data.part_type}`} size="small" />}
-          {data.duration && <Chip label={`${Math.floor(data.duration / 1000)} giây`} size="small" variant="outlined" />}
+          {data.level && (
+            <Chip label={`Level ${data.level}`} size="small" color="primary" />
+          )}
+          {data.part_type && (
+            <Chip label={`Part ${data.part_type}`} size="small" />
+          )}
+          {data.duration && (
+            <Chip
+              label={`${Math.floor(data.duration / 1000)} giây`}
+              size="small"
+              variant="outlined"
+            />
+          )}
         </Stack>
         {data.audio_url ? (
           <audio controls src={data.audio_url} style={{ width: "100%" }} />
@@ -577,14 +883,22 @@ export function ActivityPreviewDialog({
 
       {data.video_url && (
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>🎥 Video</Typography>
-          <video controls src={data.video_url} style={{ width: "100%", maxHeight: 400, borderRadius: 8 }} />
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            🎥 Video
+          </Typography>
+          <video
+            controls
+            src={data.video_url}
+            style={{ width: "100%", maxHeight: 400, borderRadius: 8 }}
+          />
         </Box>
       )}
 
       {data.transcript && (
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>📝 Transcript (Luyện đọc theo)</Typography>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            📝 Transcript (Luyện đọc theo)
+          </Typography>
           <Paper
             variant="outlined"
             sx={{
@@ -595,7 +909,10 @@ export function ActivityPreviewDialog({
               borderRadius: 2,
             }}
           >
-            <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}>
+            <Typography
+              variant="body1"
+              sx={{ whiteSpace: "pre-wrap", lineHeight: 1.8 }}
+            >
               {data.transcript}
             </Typography>
           </Paper>
@@ -787,7 +1104,9 @@ export function ActivityPreviewDialog({
     >
       <DialogTitle
         sx={{
-          background: kind ? getGradientByKind(kind) : theme.palette.primary.main,
+          background: kind
+            ? getGradientByKind(kind)
+            : theme.palette.primary.main,
           color: "white",
           py: 2.5,
           px: 3,
@@ -829,14 +1148,27 @@ export function ActivityPreviewDialog({
 
       <DialogContent sx={{ py: 4, px: 4 }}>
         {loading ? (
-          <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight={300} gap={2}>
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            minHeight={300}
+            gap={2}
+          >
             <CircularProgress />
             <Typography color="text.secondary">Đang tải dữ liệu...</Typography>
           </Box>
         ) : error ? (
           <Box p={4} textAlign="center">
-            <Typography color="error" gutterBottom>{error}</Typography>
-            <Button variant="contained" onClick={loadActivityDetails} sx={{ mt: 2 }}>
+            <Typography color="error" gutterBottom>
+              {error}
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={loadActivityDetails}
+              sx={{ mt: 2 }}
+            >
               Thử lại
             </Button>
           </Box>

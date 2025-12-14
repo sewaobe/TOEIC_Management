@@ -94,8 +94,12 @@ const LessonSearchDialog: React.FC<LessonSearchDialogProps> = ({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewActivityId, setPreviewActivityId] = useState<string | null>(null);
-  const [previewActivityKind, setPreviewActivityKind] = useState<string | null>(null);
+  const [previewActivityId, setPreviewActivityId] = useState<string | null>(
+    null
+  );
+  const [previewActivityKind, setPreviewActivityKind] = useState<string | null>(
+    null
+  );
   const [previewOpen, setPreviewOpen] = useState(false);
 
   // Get API endpoint based on activity type
@@ -341,9 +345,9 @@ const LessonSearchDialog: React.FC<LessonSearchDialogProps> = ({
             ) : (
               <List disablePadding>
                 {activities.map((activity) => (
-                  <ListItem 
-                    key={activity._id} 
-                    disablePadding 
+                  <ListItem
+                    key={activity._id}
+                    disablePadding
                     divider
                     secondaryAction={
                       <IconButton
@@ -449,7 +453,7 @@ const LessonSearchDialog: React.FC<LessonSearchDialogProps> = ({
           </Paper>
         </Stack>
       </DialogContent>
-      
+
       {/* Activity Preview Dialog */}
       <ActivityPreviewDialog
         open={previewOpen}
