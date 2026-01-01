@@ -7,7 +7,7 @@ export interface Student {
   email: string;
   phone: string;
   avatar?: string;
-  status: "active" | "inactive" | "completed";
+  status: "active" | "inactive" | "completed" | "at_risk" | "paused";
   enrollDate: string;
   lastActive: string;
   currentLevel: string;

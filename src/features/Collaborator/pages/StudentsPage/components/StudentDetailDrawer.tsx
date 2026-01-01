@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import {
   Drawer,
@@ -14,6 +12,8 @@ import {
   CircularProgress,
   Grid,
   Paper,
+  Collapse,
+  IconButton,
 } from "@mui/material";
 import MailIcon from "@mui/icons-material/Mail";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -37,6 +37,10 @@ import { ActivityList } from "./ActivityList";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { AdjustmentHistoryDialog } from "./AdjustmentHistoryDialog";
+// use server-provided status from student object
+import { toast } from "sonner";
+import mailService from "../../../../../services/mail.service";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 // ====================
 // 🧩 Chip trạng thái
@@ -50,12 +54,14 @@ function StatusChip({ status }: { status: string }) {
     inactive: "default",
     paused: "warning",
     completed: "info",
+    at_risk: "error",
   };
   const labelMap: Record<string, string> = {
     active: "Đang học",
     inactive: "Không hoạt động",
     paused: "Tạm dừng",
     completed: "Hoàn thành",
+    at_risk: "Nguy cơ bỏ học",
   };
   return (
     <Chip
@@ -89,6 +95,10 @@ export function StudentDetailDrawer({
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
     null
   );
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const [emailLogs, setEmailLogs] = useState<any[]>([]);
+  const [loadingEmails, setLoadingEmails] = useState(false);
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   useEffect(() => {
     if (studentId && open) {
@@ -106,10 +116,26 @@ export function StudentDetailDrawer({
     try {
       const res = await studentService.getById(studentId);
       setStudent(res);
+      loadEmailLogs();
     } catch (error) {
       console.error("Error loading student detail:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadEmailLogs(page = 1) {
+    if (!studentId) return;
+    setLoadingEmails(true);
+    try {
+      const resp: any = await mailService.getEmailLogs(studentId, page);
+      const items = resp?.data?.items || resp?.items || [];
+      setEmailLogs(items);
+    } catch (err) {
+      console.error('Error loading email logs', err);
+      setEmailLogs([]);
+    } finally {
+      setLoadingEmails(false);
     }
   }
 
@@ -165,14 +191,14 @@ export function StudentDetailDrawer({
                 {student.id}
               </Typography> */}
 
-              <Box mt={1} display="flex" flexWrap="wrap" gap={1}>
-                <StatusChip status={student.status} />
+                <Box mt={1} display="flex" flexWrap="wrap" gap={1}>
+                <StatusChip status={student.status || 'inactive'} />
                 <Chip
-                  label={getLearningPathLabel(student.learningPath)}
+                  label={`Lộ trình: ${getLearningPathLabel(student.learningPath)}`}
                   variant="outlined"
                   size="small"
                 />
-                <Chip label={student.currentLevel} color="info" size="small" />
+                <Chip label={`Cấp độ: ${student.currentLevel}`} color="info" size="small" />
               </Box>
             </Box>
           </Box>
@@ -323,6 +349,44 @@ export function StudentDetailDrawer({
                   </Box>
                 </Paper>
               )}
+
+              <Paper sx={{ p: 2 }}>
+                <Typography fontWeight={600}>Lịch sử email</Typography>
+                {loadingEmails ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                    <CircularProgress size={20} />
+                  </Box>
+                ) : emailLogs.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                    Chưa có email nhắc nhở nào
+                  </Typography>
+                ) : (
+                  <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {emailLogs.map((log) => (
+                      <Box key={String(log._id)} sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ p: 1 }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>{log.subject}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {format(new Date(log.sent_at), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <IconButton size="small" onClick={() => setExpandedLogId(expandedLogId === String(log._id) ? null : String(log._id))} aria-label="expand">
+                              <ExpandMoreIcon sx={{ transform: expandedLogId === String(log._id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 150ms' }} />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                        <Collapse in={expandedLogId === String(log._id)} timeout="auto" unmountOnExit>
+                          <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'background.paper' }}>
+                            <div dangerouslySetInnerHTML={{ __html: log.body_html }} />
+                          </Box>
+                        </Collapse>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Paper>
             </Box>
           )}
 
@@ -407,8 +471,8 @@ export function StudentDetailDrawer({
                             bgcolor: isPending
                               ? "action.hover"
                               : isApproved
-                              ? "success.lighter"
-                              : "error.lighter",
+                                ? "success.lighter"
+                                : "error.lighter",
                           }}
                         >
                           <Box
@@ -436,15 +500,15 @@ export function StudentDetailDrawer({
                                 isPending
                                   ? "Đang chờ"
                                   : isApproved
-                                  ? "Đã duyệt"
-                                  : "Từ chối"
+                                    ? "Đã duyệt"
+                                    : "Từ chối"
                               }
                               color={
                                 isPending
                                   ? "warning"
                                   : isApproved
-                                  ? "success"
-                                  : "error"
+                                    ? "success"
+                                    : "error"
                               }
                               size="small"
                             />
