@@ -49,6 +49,7 @@ import TestApprovalDetailPage from "../features/Admin/pages/TestApprovalPage/Tes
 import LessonApprovalPage from "../features/Admin/pages/LessonApprovalPage/index.tsx";
 import LessonApprovalDetailPage from "../features/Admin/pages/LessonApprovalPage/LessonApprovalDetailPage/index.tsx";
 import AdminReportPage from "../features/Admin/pages/ReportManagementPage";
+import CTVReportPage from "../features/Collaborator/pages/CTVReportPage";
 
 // Error pages
 import NotFound from "../components/NotFound";
@@ -171,7 +172,7 @@ export const AppRouter = () => {
 
             {/* ===== Reports ===== */}
             <Route path="reports" element={<ReportsPage />} />
-            <Route path="report/error" element={<div> Report error </div>} />
+            <Route path="report/error" element={<CTVReportPage />} />
             <Route path="report/comment" element={<CommentPage />} />
           </Route>
 
