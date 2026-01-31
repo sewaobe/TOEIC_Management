@@ -14,6 +14,8 @@ import {
   Paper,
   Collapse,
   IconButton,
+  Rating,
+  LinearProgress,
 } from "@mui/material";
 import MailIcon from "@mui/icons-material/Mail";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -22,11 +24,16 @@ import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import FeedbackIcon from "@mui/icons-material/Feedback";
 
 import type { StudentDetail } from "../../../../../types/student";
 import type { IAdjustmentRequest } from "../../../../../types/adjustment";
 import studentService from "../services/studentService"; // ✅ Dùng service thật
 import { adjustmentService } from "../services/adjustmentService";
+import feedbackService, {
+  ILessonFeedback,
+  IFeedbackStats,
+} from "../services/feedbackService";
 import {
   formatDate,
   formatDuration,
@@ -99,11 +106,17 @@ export function StudentDetailDrawer({
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
   const [loadingEmails, setLoadingEmails] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [feedbacks, setFeedbacks] = useState<ILessonFeedback[]>([]);
+  const [feedbackStats, setFeedbackStats] = useState<IFeedbackStats | null>(
+    null
+  );
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
 
   useEffect(() => {
     if (studentId && open) {
       loadStudentDetail();
       loadAdjustmentHistory();
+      loadFeedbacks();
     }
   }, [studentId, open]);
 
@@ -147,6 +160,25 @@ export function StudentDetailDrawer({
     } catch (error) {
       console.error("Error loading adjustment history:", error);
       setAdjustmentHistory([]);
+    }
+  }
+
+  async function loadFeedbacks() {
+    if (!studentId) return;
+    setLoadingFeedbacks(true);
+    try {
+      const [feedbackList, stats] = await Promise.all([
+        feedbackService.getByUserId(studentId),
+        feedbackService.getStatsByUserId(studentId),
+      ]);
+      setFeedbacks(feedbackList);
+      setFeedbackStats(stats);
+    } catch (error) {
+      console.error("Error loading feedbacks:", error);
+      setFeedbacks([]);
+      setFeedbackStats(null);
+    } finally {
+      setLoadingFeedbacks(false);
     }
   }
 
@@ -302,6 +334,7 @@ export function StudentDetailDrawer({
             <Tab label="Lộ trình" value="learning-path" />
             <Tab label="Tiến độ" value="progress" />
             <Tab label="Hoạt động" value="activities" />
+            <Tab label="Feedback" value="feedback" />
           </Tabs>
 
           {/* 📂 Nội dung các tab */}
@@ -562,6 +595,240 @@ export function StudentDetailDrawer({
           {tab === "activities" && (
             <Box mt={2}>
               <ActivityList activities={student.recentActivities} />
+            </Box>
+          )}
+
+          {tab === "feedback" && (
+            <Box mt={2} display="flex" flexDirection="column" gap={2}>
+              {loadingFeedbacks ? (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  py={4}
+                >
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                <>
+                  {/* Thống kê feedback */}
+                  {feedbackStats && feedbackStats.totalFeedbacks > 0 && (
+                    <Paper sx={{ p: 2 }}>
+                      <Typography fontWeight={600} gutterBottom>
+                        <FeedbackIcon
+                          fontSize="small"
+                          sx={{ mr: 1, verticalAlign: "middle" }}
+                        />
+                        Thống kê đánh giá
+                      </Typography>
+                      <Grid container spacing={2} mt={1}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
+                          <Box textAlign="center">
+                            <Typography variant="h4" fontWeight={700} color="primary">
+                              {feedbackStats.averageRating.toFixed(1)}
+                            </Typography>
+                            <Rating
+                              value={feedbackStats.averageRating}
+                              precision={0.1}
+                              readOnly
+                              size="small"
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              Trung bình
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid size={{ xs: 6, sm: 3 }}>
+                          <Box textAlign="center">
+                            <Typography variant="h4" fontWeight={700}>
+                              {feedbackStats.totalFeedbacks}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Tổng đánh giá
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid size={{ xs: 6, sm: 3 }}>
+                          <Box textAlign="center">
+                            <Typography
+                              variant="h4"
+                              fontWeight={700}
+                              color="success.main"
+                            >
+                              {feedbackStats.positiveFeedbacks}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Tích cực (4-5⭐)
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid size={{ xs: 6, sm: 3 }}>
+                          <Box textAlign="center">
+                            <Typography
+                              variant="h4"
+                              fontWeight={700}
+                              color="warning.main"
+                            >
+                              {feedbackStats.negativeFeedbacks}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Cần cải thiện
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+
+                      {/* Rating Distribution */}
+                      <Box mt={2}>
+                        <Typography variant="body2" fontWeight={600} gutterBottom>
+                          Phân bố đánh giá
+                        </Typography>
+                        {[5, 4, 3, 2, 1].map((star) => {
+                          const count =
+                            feedbackStats.ratingDistribution[
+                              star as keyof typeof feedbackStats.ratingDistribution
+                            ];
+                          const percentage =
+                            feedbackStats.totalFeedbacks > 0
+                              ? (count / feedbackStats.totalFeedbacks) * 100
+                              : 0;
+                          return (
+                            <Box
+                              key={star}
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                              mb={0.5}
+                            >
+                              <Typography variant="caption" sx={{ width: 20 }}>
+                                {star}⭐
+                              </Typography>
+                              <LinearProgress
+                                variant="determinate"
+                                value={percentage}
+                                sx={{
+                                  flex: 1,
+                                  height: 8,
+                                  borderRadius: 1,
+                                  bgcolor: "grey.200",
+                                  "& .MuiLinearProgress-bar": {
+                                    bgcolor:
+                                      star >= 4
+                                        ? "success.main"
+                                        : star === 3
+                                          ? "warning.main"
+                                          : "error.main",
+                                  },
+                                }}
+                              />
+                              <Typography
+                                variant="caption"
+                                sx={{ width: 30, textAlign: "right" }}
+                              >
+                                {count}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
+                    </Paper>
+                  )}
+
+                  {/* Danh sách feedback */}
+                  <Paper sx={{ p: 2 }}>
+                    <Typography fontWeight={600} gutterBottom>
+                      Lịch sử đánh giá ({feedbacks.length})
+                    </Typography>
+                    {feedbacks.length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ py: 2 }}
+                      >
+                        Học viên chưa gửi đánh giá nào
+                      </Typography>
+                    ) : (
+                      <Box
+                        sx={{
+                          mt: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1,
+                          maxHeight: 400,
+                          overflowY: "auto",
+                        }}
+                      >
+                        {feedbacks.map((fb, index) => (
+                          <Box
+                            key={fb._id || index}
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 1,
+                              border: "1px solid",
+                              borderColor: "divider",
+                              bgcolor: fb.is_positive
+                                ? "success.lighter"
+                                : "warning.lighter",
+                            }}
+                          >
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              alignItems="center"
+                            >
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Rating
+                                  value={fb.rating}
+                                  readOnly
+                                  size="small"
+                                />
+                                <Chip
+                                  label={
+                                    fb.is_positive ? "Tích cực" : "Cần cải thiện"
+                                  }
+                                  color={fb.is_positive ? "success" : "warning"}
+                                  size="small"
+                                />
+                              </Box>
+                              <Typography variant="caption" color="text.secondary">
+                                {format(
+                                  new Date(fb.created_at),
+                                  "dd/MM/yyyy HH:mm",
+                                  { locale: vi }
+                                )}
+                              </Typography>
+                            </Box>
+
+                            {fb.reasons.length > 0 && (
+                              <Box display="flex" flexWrap="wrap" gap={0.5} mt={1}>
+                                {fb.reasons.map((reason, i) => (
+                                  <Chip
+                                    key={i}
+                                    label={reason}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ fontSize: "0.7rem" }}
+                                  />
+                                ))}
+                              </Box>
+                            )}
+
+                            {fb.comment && (
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mt: 1, fontStyle: "italic" }}
+                              >
+                                "{fb.comment}"
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Paper>
+                </>
+              )}
             </Box>
           )}
         </Box>
