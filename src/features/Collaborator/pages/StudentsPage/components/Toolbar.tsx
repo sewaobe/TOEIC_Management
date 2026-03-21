@@ -90,6 +90,7 @@ export function Toolbar({
             <MenuItem value="all">Tất cả trạng thái</MenuItem>
             <MenuItem value="active">Đang học</MenuItem>
             <MenuItem value="inactive">Không hoạt động</MenuItem>
+            <MenuItem value="at_risk">Nguy cơ bỏ học</MenuItem>
             <MenuItem value="completed">Hoàn thành</MenuItem>
           </Select>
         </FormControl>

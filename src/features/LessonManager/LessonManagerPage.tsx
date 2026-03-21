@@ -31,7 +31,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import StarIcon from "@mui/icons-material/Star";
 import { useNavigate } from "react-router-dom";
-import { CERFLevel, LessonManager, TestStatus } from "../../types/LessonManager";
+import { CERFLevel, LessonManager, TestStatus, TestStatusLabel } from "../../types/LessonManager";
 import LessonManagerEditModal from "./components/LessonManagerEditModal";
 import LessonManagerDeleteModal from "./components/LessonManagerDeleteModal";
 import { toast } from "sonner";
@@ -55,10 +55,13 @@ const levelColors: Record<CERFLevel, string> = {
     C2: "#f97316",
 };
 
-const statusColor: Record<TestStatus, string> = {
+export const statusColor: Record<TestStatus, string> = {
     draft: "#9ca3af",
     pending: "#facc15",
     approved: "#22c55e",
+    open: "#3b82f6",
+    closed: "#ef4444",
+    rejected: "#6b7280",
 };
 
 // =====================
@@ -95,7 +98,7 @@ const LessonCard = ({ data, onEdit, onDelete }: LessonCardProps) => {
                     className={`w-full h-full object-cover transition-transform duration-500 ${isHover ? 'scale-105' : ''}`}
                 />
                 <Chip
-                    label={data.status === "approved" ? "Đã duyệt" : data.status === "pending" ? "Chờ duyệt" : "Nháp"}
+                    label={TestStatusLabel[data.status]}
                     size="small"
                     sx={{ position: "absolute", top: 8, right: 8, bgcolor: statusColor[data.status], color: "white", fontWeight: 600 }}
                 />

@@ -1,34 +1,37 @@
-import { Box, Typography, CircularProgress } from "@mui/material"
-import { motion } from "framer-motion"
-import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined"
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline"
+import { Box, Typography, CircularProgress, useTheme } from "@mui/material";
+import { motion } from "framer-motion";
+import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 interface EmptyStateProps {
-  mode: "loading" | "error" | "empty"
-  title?: string
-  description?: string
-  icon?: React.ReactNode
+  mode: "loading" | "error" | "empty";
+  title?: string;
+  description?: string;
+  icon?: React.ReactNode;
 }
 
 export const EmptyState = ({ mode, title, description, icon }: EmptyStateProps) => {
-  let content
+  const theme = useTheme();
+  let content;
 
+  // 🎡 Loading
   if (mode === "loading") {
     content = (
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        <CircularProgress />
+        <CircularProgress color="primary" />
         <Typography variant="body2" color="text.secondary">
           {title || "Đang tải dữ liệu..."}
         </Typography>
       </Box>
-    )
+    );
   }
 
+  // ❌ Error
   if (mode === "error") {
     content = (
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        {icon || <ErrorOutlineIcon sx={{ fontSize: 40, color: "error.main" }} />}
-        <Typography variant="h6" color="error" fontWeight="bold">
+        {icon || <ErrorOutlineIcon sx={{ fontSize: 40, color: theme.palette.error.main }} />}
+        <Typography variant="h6" sx={{ color: theme.palette.error.main }} fontWeight="bold">
           {title || "Có lỗi xảy ra"}
         </Typography>
         {description && (
@@ -37,14 +40,15 @@ export const EmptyState = ({ mode, title, description, icon }: EmptyStateProps) 
           </Typography>
         )}
       </Box>
-    )
+    );
   }
 
+  // 📦 Empty
   if (mode === "empty") {
     content = (
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        {icon || <InboxOutlinedIcon sx={{ fontSize: 40, color: "primary.main" }} />}
-        <Typography variant="h6" fontWeight="bold">
+        {icon || <InboxOutlinedIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />}
+        <Typography variant="h6" fontWeight="bold" color="text.primary">
           {title || "Không có dữ liệu"}
         </Typography>
         {description && (
@@ -53,9 +57,10 @@ export const EmptyState = ({ mode, title, description, icon }: EmptyStateProps) 
           </Typography>
         )}
       </Box>
-    )
+    );
   }
 
+  // ✨ Container chính — dùng theme cho border và background
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -64,16 +69,20 @@ export const EmptyState = ({ mode, title, description, icon }: EmptyStateProps) 
     >
       <Box
         sx={{
-          py: 10,
+          py: 8,
           px: 4,
           borderRadius: 2,
-          border: "1px dashed #cbd5e1",
-          bgcolor: "#f9fafb",
+          border: `1px dashed ${theme.palette.divider}`,
+          bgcolor:
+            theme.palette.mode === "dark"
+              ? theme.palette.background.paper
+              : theme.palette.grey[50],
           textAlign: "center",
+          color: theme.palette.text.primary,
         }}
       >
         {content}
       </Box>
     </motion.div>
-  )
-}
+  );
+};

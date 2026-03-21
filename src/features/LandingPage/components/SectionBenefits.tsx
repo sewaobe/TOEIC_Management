@@ -45,7 +45,7 @@ const SectionBenefits = forwardRef<HTMLElement>((_, ref) => (
         variant="body1"
         className="w-full text-gray-600 !mb-12 mx-auto"
       >
-        Khi trở thành cộng tác viên TOEIC Master, bạn không chỉ phát triển bản thân
+        Khi trở thành cộng tác viên TOEIC Smart, bạn không chỉ phát triển bản thân
         mà còn đóng góp vào hành trình lan tỏa tri thức.
       </Typography>
 

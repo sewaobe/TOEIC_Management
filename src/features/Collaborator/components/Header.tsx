@@ -273,7 +273,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, isDarkMode }) => {
               <Avatar src={user ? user.profile.avatar : "*"} sx={{ width: 36, height: 36, background: "linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)", fontSize: "14px", fontWeight: 600, }}></Avatar>
               <Box sx={{ display: { xs: "none", sm: "block" } }}>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>{user ? user.profile.fullname : "Cộng tác viên"}</Typography>
-                <Typography variant="caption" color="text.secondary">Cộng tác viên</Typography>
+                <Typography variant="caption" color="text.secondary">{user?.role_name === "admin" ? "Quản trị viên" : "Cộng tác viên"}</Typography>
               </Box>
             </Box>
           </Tooltip>

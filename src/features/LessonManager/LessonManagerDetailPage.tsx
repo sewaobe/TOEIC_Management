@@ -50,92 +50,8 @@ import lessonService from "../../services/lesson.service";
 import { dictationService } from "../../services/dictation.service";
 import ShadowingModal from "../Shadowing/components/ShadowingModal";
 import { shadowingService } from "../../services/shadowing.service";
-
-
-
-// const mockLessonManagerDetail: LessonManagerDetail = {
-//     _id: "lm01",
-//     title: "Unit 3 - Office Communication",
-//     description: "Rèn luyện kỹ năng giao tiếp trong môi trường công sở.",
-//     thumbnail: "https://picsum.photos/seed/office/1000/400",
-//     level: "A2",
-//     part_type: 2,
-//     status: "approved",
-//     planned_completion_time: 90,
-//     weight: 0.6,
-//     student_count: 235,
-//     rating: 4.6,
-//     created_by: "Nguyễn Văn A",
-//     created_at: new Date("2025-10-01T12:00:00Z"),
-//     updated_at: new Date("2025-10-10T12:00:00Z"),
-//     topic_vocabulary_ids: [
-//         {
-//             id: "v1",
-//             title: "Office Equipment",
-//             word_count: 20,
-//             words: ["printer", "scanner", "desk", "monitor", "keyboard"],
-//         },
-//         {
-//             id: "v2",
-//             title: "Email Communication",
-//             word_count: 15,
-//             words: ["subject", "attachment", "inbox", "draft", "reply"],
-//         },
-//     ],
-//     lesson_ids: [
-//         {
-//             id: "l1",
-//             title: "Present Simple for Office",
-//             duration: 15,
-//             sections: [
-//                 { id: "s1", name: "Grammar Form", duration: 5 },
-//                 { id: "s2", name: "Usage Examples", duration: 10 },
-//             ],
-//         },
-//         {
-//             id: "l2",
-//             title: "Office Etiquette",
-//             duration: 20,
-//             sections: [
-//                 { id: "s3", name: "Greeting and Meeting", duration: 10 },
-//                 { id: "s4", name: "Body Language", duration: 10 },
-//             ],
-//         },
-//     ],
-//     dictation_ids: [
-//         {
-//             id: "d1",
-//             title: "Customer Call Example",
-//             difficulty: "Medium",
-//             scripts: [
-//                 { id: "a1", text: "Hello, how can I help you today?" },
-//                 { id: "a2", text: "Please hold while I transfer your call." },
-//             ],
-//         },
-//     ],
-//     shadowing_ids: [
-//         {
-//             id: "s1",
-//             title: "Office Meeting Practice",
-//             videoUrl: "#",
-//             sentences: [
-//                 { id: "ss1", line: "Let's start the meeting now." },
-//                 { id: "ss2", line: "Please share your updates." },
-//             ],
-//         },
-//     ],
-//     quiz_ids: [
-//         {
-//             id: "q1",
-//             title: "Office Communication Quiz",
-//             questionCount: 10,
-//             questions: [
-//                 { id: "qq1", question: "What is a polite way to start an email?" },
-//                 { id: "qq2", question: "When do we use CC in emails?" },
-//             ],
-//         },
-//     ],
-// };
+import { STATUS_COLOR_MAP, TestStatusLabel } from "../../types/LessonManager";
+import { statusColor } from "./LessonManagerPage";
 
 export default function LessonManagerDetailPage(): JSX.Element {
     const location = useLocation();
@@ -271,6 +187,22 @@ export default function LessonManagerDetailPage(): JSX.Element {
             navigate(`/ctv/quiz/${data._id}/detail`);
         }
     }
+
+    const submitApproveLessonManager = async () => {
+        try {
+            await toast.promise(lessonManagerService.updateStatusLessonManager(lessonManagerId, "pending"), {
+                loading: "Đang gửi duyệt bài học...",
+                success: () => {
+                    fetchLessonManager();
+                    return "Gửi duyệt bài học thành công";
+                },
+                error: "Gửi duyệt bài học thất bại",
+            });
+        } catch (err) {
+            toast.error("Gửi duyệt bài học thất bại");
+        }
+    }
+
     if (loading) {
         return (
             <Box className="min-h-screen p-6">
@@ -347,12 +279,64 @@ export default function LessonManagerDetailPage(): JSX.Element {
                 <img src={lessonManager.thumbnail} alt={lessonManager.title} className="w-full h-64 object-cover" />
                 <Box className="absolute inset-0 bg-black/50 text-white flex flex-col justify-between p-6">
                     <Box className="flex justify-between items-center">
-                        <Button startIcon={<ArrowBackIcon />} variant="outlined" color="inherit" size="small" onClick={handleBack}>
+                        <Button
+                            startIcon={<ArrowBackIcon />}
+                            variant="outlined"
+                            color="inherit"
+                            size="small"
+                            onClick={handleBack}
+                        >
                             Quay lại
                         </Button>
-                        <Button startIcon={<EditIcon />} variant="contained" color="info" size="small" onClick={handleOpenEditLessonManager}>
-                            Chỉnh sửa Lesson Manager
-                        </Button>
+
+                        <Box className="flex items-center gap-2">
+                            {/* Nút gửi duyệt bài học */}
+                            {lessonManager.status === "draft" && (
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
+                                    onClick={submitApproveLessonManager}
+                                >
+                                    Gửi duyệt bài học
+                                </Button>
+                            )}
+
+                            {/* Khi đang chờ duyệt */}
+                            {lessonManager.status === "pending" && (
+                                <Button
+                                    variant="outlined"
+                                    color="warning"
+                                    size="small"
+                                    disabled
+                                >
+                                    Đang chờ duyệt
+                                </Button>
+                            )}
+
+                            {/* Khi đã duyệt */}
+                            {lessonManager.status === "approved" && (
+                                <Button
+                                    variant="outlined"
+                                    color="success"
+                                    size="small"
+                                    disabled
+                                >
+                                    Đã duyệt
+                                </Button>
+                            )}
+
+                            {/* Nút chỉnh sửa */}
+                            <Button
+                                startIcon={<EditIcon />}
+                                variant="contained"
+                                color="info"
+                                size="small"
+                                onClick={handleOpenEditLessonManager}
+                            >
+                                Chỉnh sửa Lesson Manager
+                            </Button>
+                        </Box>
                     </Box>
 
                     <Box>
@@ -367,7 +351,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                                     color: "white",
                                 }}
                             />
-                            <Chip label={lessonManager.status === 'approved' ? 'Đã duyệt' : lessonManager.status} color="success" />
+                            <Chip label={TestStatusLabel[lessonManager.status]} color={STATUS_COLOR_MAP[lessonManager.status] ?? "default"} />
                         </Box>
                         <Typography variant="body2" className="opacity-80 mt-1">
                             ⭐ {lessonManager.rating} | 👥 {lessonManager.student_count} | ⏱ {lessonManager.planned_completion_time} phút

@@ -13,7 +13,7 @@ export default function Navbar({ onNavigate }: NavbarProps) {
                 className="font-bold text-lg tracking-wide text-indigo-700 cursor-pointer"
                 onClick={() => onNavigate(0)}
             >
-                TOEIC Master
+                TOEIC Smart
             </div>
             <ul className="hidden md:flex items-center gap-8 text-sm text-gray-700">
                 <li

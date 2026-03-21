@@ -66,5 +66,5 @@ export function getLearningPathLabel(path: string): string {
     intensive: "Tăng cường",
     custom: "Tùy chỉnh",
   }
-  return labels[path] || path
+  return labels["standard"] || path
 }

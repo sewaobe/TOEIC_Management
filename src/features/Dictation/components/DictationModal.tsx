@@ -50,6 +50,7 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import { uploadToCloudinary } from "../../../services/cloudinary.service";
 import { whisperService } from "../../../services/whisper.service";
 import { lessonManagerService } from "../../../services/lesson_manager.service";
+import { toeicPartsArray } from "../../../utils/toeicPart";
 
 
 export default function DictationModal({
@@ -455,19 +456,73 @@ export default function DictationModal({
                                                     },
                                                 }}
                                             />
-                                            <Box className="flex-1">
-                                                <Typography variant="caption" className="text-gray-600 mb-1 block">
-                                                    Chế độ hiển thị
-                                                </Typography>
-                                                <RadioGroup
-                                                    row
-                                                    value={form.display_mode || "sentence"}
-                                                    onChange={(e) => setForm({ ...form, display_mode: e.target.value as any })}
-                                                >
-                                                    <FormControlLabel value="sentence" control={<Radio />} label="Theo câu" />
-                                                    <FormControlLabel value="word" control={<Radio />} label="Theo từ" />
-                                                </RadioGroup>
-                                            </Box>
+                                            <Autocomplete
+                                                multiple
+                                                options={toeicPartsArray[(form?.part_type ?? 1) - 1 || 0]?.tags || []}
+                                                getOptionLabel={(option) => option}
+                                                renderInput={(params) => (
+                                                    <TextField {...params} label="Danh mục theo part" placeholder="Chọn danh mục" />
+                                                )}
+                                                value={form.tags || []}
+                                                onChange={(event, newValue) => {
+                                                    setForm({
+                                                        ...form,
+                                                        tags: newValue, // newValue là mảng string
+                                                    });
+                                                }}
+                                                sx={{
+                                                    flex: 1,
+                                                    '& .MuiAutocomplete-inputRoot': {
+                                                        flexWrap: 'nowrap !important',
+                                                        overflowX: 'auto',
+                                                        overflowY: 'hidden',
+                                                        scrollbarWidth: 'none',
+                                                        maxWidth: 305,
+                                                        '&::-webkit-scrollbar': {
+                                                            height: 6,
+                                                        },
+                                                        '&::-webkit-scrollbar-thumb': {
+                                                            backgroundColor: 'transparent',
+                                                            borderRadius: 3,
+                                                        },
+                                                        '&:hover::-webkit-scrollbar-thumb': {
+                                                            backgroundColor: '#bbb',
+                                                        },
+                                                        '& input': {
+                                                            minWidth: 120,
+                                                        },
+                                                    },
+                                                    '& .MuiAutocomplete-tag': {
+                                                        fontSize: '0.85rem',
+                                                        backgroundColor: '#f1f3f4',
+                                                        color: '#333',
+                                                        borderRadius: '20px',
+                                                        padding: '2px 8px',
+                                                        marginRight: '4px',
+                                                        transition: 'all 0.2s',
+                                                        '&:hover': {
+                                                            backgroundColor: '#e0e0e0',
+                                                        },
+                                                    },
+                                                }}
+                                                componentsProps={{
+                                                    popper: {
+                                                        modifiers: [
+                                                            {
+                                                                name: 'offset',
+                                                                options: { offset: [0, 4] },
+                                                            },
+                                                        ],
+                                                    },
+                                                    paper: {
+                                                        sx: {
+                                                            borderRadius: 2,
+                                                            boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                                                            overflow: 'hidden',
+                                                        },
+                                                    },
+                                                }}
+                                            />
                                         </Stack>
                                     </Box>
                                 </Box>

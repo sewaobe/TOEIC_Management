@@ -96,6 +96,8 @@ export default function EditMiniTestPage() {
     );
 
   const groupedByPart = vm.groupsByPart;
+  const currentPart = activePart ?? (addedParts[0] ?? null);
+  const currentGroups = currentPart ? groupedByPart[currentPart] || [] : [];
 
   // 🌗 Màu động theo theme
   const bgForm =
@@ -183,10 +185,10 @@ export default function EditMiniTestPage() {
         </TextField>
       </Box>
 
-      {addedParts.length > 0 && (
+      {addedParts.length > 0 && currentPart && (
         <>
           <Tabs
-            value={activePart}
+            value={currentPart}
             onChange={(_, v) => setActivePart(v)}
             variant="scrollable"
             scrollButtons="auto"
@@ -199,81 +201,78 @@ export default function EditMiniTestPage() {
             ))}
           </Tabs>
 
-          {addedParts.map((p) => (
-            <Box
-              key={p}
-              sx={{ display: activePart === p ? "block" : "none", mt: 2 }}
-            >
-              {groupedByPart[p]?.map((g: any, gi: number) => (
-                <Paper
-                  key={`${p}-${gi}`}
-                  sx={{
-                    mb: 2,
-                    borderRadius: 2,
-                    overflow: "hidden",
-                    border: `1px solid ${borderColor}`,
-                    bgcolor: bgForm,
-                  }}
-                >
-                  <Accordion defaultExpanded>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Typography fontWeight={600}>
-                        Group {gi + 1} — Part {p}
-                      </Typography>
-                      <Button
-                        color="error"
-                        size="small"
-                        variant="outlined"
-                        sx={{ ml: "auto" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          vm.removeGroup(p, gi);
-                        }}
-                      >
-                        🗑️ Xóa
-                      </Button>
-                    </AccordionSummary>
-
-                    <AccordionDetails
-                      sx={{
-                        bgcolor:
-                          theme.palette.mode === "light"
-                            ? theme.palette.background.paper
-                            : theme.palette.background.default,
-                      }}
-                    >
-                      <GroupForm
-                        groupIndex={gi}
-                        group={g}
-                        tagOptions={["grammar", "vocabulary"]}
-                        onChange={(gi, f, v) => vm.updateGroup(p, gi, f, v)}
-                        onChangeQuestion={(gi, qi, f, v) =>
-                          vm.updateQuestion(p, gi, qi, f, v)
-                        }
-                        onAddQuestion={(gi) => vm.addQuestion(p, gi)}
-                        onRemoveQuestion={(gi, qi) =>
-                          vm.removeQuestion(p, gi, qi)
-                        }
-                        isQuiz={true}
-                      />
-                    </AccordionDetails>
-                  </Accordion>
-                </Paper>
-              ))}
-
-              <Button
-                variant="outlined"
-                onClick={() => vm.addGroup(p)}
+          <Box sx={{ mt: 2 }}>
+            {currentGroups.map((g: any, gi: number) => (
+              <Paper
+                key={`${currentPart}-${gi}`}
                 sx={{
-                  borderColor: theme.palette.primary.main,
-                  color: theme.palette.primary.main,
-                  ":hover": { bgcolor: theme.palette.action.hover },
+                  mb: 2,
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: `1px solid ${borderColor}`,
+                  bgcolor: bgForm,
                 }}
               >
-                ➕ Thêm Group mới cho Part {p}
-              </Button>
-            </Box>
-          ))}
+                <Accordion defaultExpanded>
+                  <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Typography fontWeight={600}>
+                      Group {gi + 1} — Part {currentPart}
+                    </Typography>
+                    <Button
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: "auto" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        vm.removeGroup(currentPart, gi);
+                      }}
+                    >
+                      🗑️ Xóa
+                    </Button>
+                  </AccordionSummary>
+
+                  <AccordionDetails
+                    sx={{
+                      bgcolor:
+                        theme.palette.mode === "light"
+                          ? theme.palette.background.paper
+                          : theme.palette.background.default,
+                    }}
+                  >
+                    <GroupForm
+                      groupIndex={gi}
+                      group={g}
+                      tagOptions={["grammar", "vocabulary"]}
+                      onChange={(gi, f, v) =>
+                        vm.updateGroup(currentPart, gi, f, v)
+                      }
+                      onChangeQuestion={(gi, qi, f, v) =>
+                        vm.updateQuestion(currentPart, gi, qi, f, v)
+                      }
+                      onAddQuestion={(gi) => vm.addQuestion(currentPart, gi)}
+                      onRemoveQuestion={(gi, qi) =>
+                        vm.removeQuestion(currentPart, gi, qi)
+                      }
+                      isQuiz={true}
+                    />
+                  </AccordionDetails>
+                </Accordion>
+              </Paper>
+            ))}
+
+            <Button
+              variant="outlined"
+              onClick={() => vm.addGroup(currentPart)}
+              sx={{
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
+                ":hover": { bgcolor: theme.palette.action.hover },
+              }}
+            >
+              ➕ Thêm Group mới cho Part {currentPart}
+            </Button>
+          </Box>
         </>
       )}
 

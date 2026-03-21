@@ -43,6 +43,11 @@ const fullTestService = {
 
   delete: (id: string) =>
     axiosClient.delete<ApiResponse<null>>(`/ctv/tests/${id}`),
+
+  updateStatus: async (id: string, status: string) => {
+    const res = await axiosClient.put(`/ctv/tests/${id}/status`, { status });
+    return res.data;
+  }
 };
 
 export default fullTestService;

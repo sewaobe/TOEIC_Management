@@ -42,5 +42,9 @@ export const lessonManagerService = {
     deleteLessonManager: async (lessonManagerId: string): Promise<LessonManager> => {
         const res = await axiosClient.delete(`${BASE_URL}/${lessonManagerId}`);
         return res.data;
+    },
+    updateStatusLessonManager: async (lessonManagerId: string, status: string): Promise<LessonManager> => {
+        const res = await axiosClient.put(`${BASE_URL}/${lessonManagerId}/status`, { status });
+        return res.data;
     }
 }

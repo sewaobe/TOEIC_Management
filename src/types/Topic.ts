@@ -1,17 +1,18 @@
 export interface Topic {
-  id: string
-  title: string
-  topic?: string[]
-  description: string
-  level: string
-  wordCount: number
-  learnerCount: number
-  iconName: string
-  gradient: string
-  bgColor: string
-  new: boolean
-  createdAt: string
-  updatedAt: string
+  id: string;
+  title: string;
+  topic?: string[];
+  description: string;
+  level: string;
+  part_type?: string; // TOEIC Part: Part 1, Part 2, ..., Part 7
+  wordCount: number;
+  learnerCount: number;
+  iconName: string;
+  gradient: string;
+  bgColor: string;
+  new: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const levelOptions = [
@@ -21,15 +22,15 @@ export const levelOptions = [
   { value: "B2", label: "B2 (600 - 799 điểm)" },
   { value: "C1", label: "C1 (800 - 899 điểm)" },
   { value: "C2", label: "C2 (900 - 990 điểm)" },
-]
+];
 
 export interface TopicInfo {
-  id: string
-  name: string
-  description: string
-  totalLearner: number
-  totalWords: number
-  totalBasic: number
-  totalIntermediate: number
-  totalAdvance: number
+  id: string;
+  name: string;
+  description: string;
+  totalLearner: number;
+  totalWords: number;
+  totalBasic: number;
+  totalIntermediate: number;
+  totalAdvance: number;
 }

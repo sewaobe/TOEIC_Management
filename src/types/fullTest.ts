@@ -37,7 +37,12 @@ export interface FullTest {
   countComment: number;
   countSubmit: number;
   created_at: string;
-  created_by?: string;   // có thể populate sau này
+  created_by?: {
+    _id: string;
+    profile: {
+      fullname: string;
+    }
+  }   // có thể populate sau này
   updated_at?: string;
 }
 

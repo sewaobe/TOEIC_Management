@@ -38,6 +38,19 @@ import QuizDetailPage from "../features/Collaborator/pages/QuizPage/QuizDetailPa
 
 import VideoLecturePage from "../features/Collaborator/pages/VideoLecturePage/VideoLecturePage";
 
+// ===== Admin layout & pages =====
+import AdminLayout from "../features/Admin/AdminLayout";
+import AdminDashboardPage from "../features/Admin/pages/DashboardPage/index.tsx";
+import UserManagementPage from "../features/Admin/pages/UserManagementPage/index.tsx";
+import CollaboratorManagementPage from "../features/Admin/pages/CollaboratorManagementPage/index.tsx";
+import TestApprovalPage from "../features/Admin/pages/TestApprovalPage/index.tsx";
+import TestApprovalDetailPage from "../features/Admin/pages/TestApprovalPage/TestApprovalDetailPage/index.tsx";
+
+import LessonApprovalPage from "../features/Admin/pages/LessonApprovalPage/index.tsx";
+import LessonApprovalDetailPage from "../features/Admin/pages/LessonApprovalPage/LessonApprovalDetailPage/index.tsx";
+import AdminReportPage from "../features/Admin/pages/ReportManagementPage";
+import CTVReportPage from "../features/Collaborator/pages/CTVReportPage";
+
 // Error pages
 import NotFound from "../components/NotFound";
 import Unauthorized from "../components/Unauthorized";
@@ -53,6 +66,9 @@ import DictationPage from "../features/Dictation/DictationPage";
 import ShadowingPage from "../features/Shadowing/ShadowingPage";
 import LessonManagerPage from "../features/LessonManager/LessonManagerPage";
 import LessonManagerDetailPage from "../features/LessonManager/LessonManagerDetailPage";
+import RBACRolesPage from "../features/Admin/pages/RBAC/RBACRolesPage.tsx";
+import PracticeVocabularyPage from "../features/Collaborator/pages/PracticeVocabularyPage/PracticeVocabularyPage";
+import PracticeVocabularyDetailPage from "../features/Collaborator/pages/PracticeVocabularyPage/PracticeVocabularyDetailPage";
 
 export const AppRouter = () => {
   return (
@@ -135,6 +151,14 @@ export const AppRouter = () => {
 
             {/* ===== Practice ===== */}
             <Route path="practice" element={<QuizListPage />} />
+            <Route
+              path="practice-vocabulary"
+              element={<PracticeVocabularyPage />}
+            />
+            <Route
+              path="practice-vocabulary/:id"
+              element={<PracticeVocabularyDetailPage />}
+            />
             <Route path="quiz" element={<QuizListPage />} />
             <Route path="quiz/create" element={<CreateQuizPage />} />
             <Route path="quiz/edit/:id" element={<EditQuizPage />} />
@@ -148,20 +172,34 @@ export const AppRouter = () => {
 
             {/* ===== Reports ===== */}
             <Route path="reports" element={<ReportsPage />} />
-            <Route path="report/error" element={<div> Report error </div>} />
+            <Route path="report/error" element={<CTVReportPage />} />
             <Route path="report/comment" element={<CommentPage />} />
           </Route>
 
           {/* Private route - admin */}
-          {/* <Route
+          <Route
             path="/admin"
             element={
               <RouteWrapper
-                element={<Dashboard />}
+                element={<AdminLayout />}
+                requireAuth={true}
                 guard={{ role: "admin" }}
               />
             }
-          /> */}
+          >
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="users" element={<UserManagementPage />} />
+            <Route
+              path="collaborators"
+              element={<CollaboratorManagementPage />}
+            />
+            <Route path="tests" element={<TestApprovalPage />} />
+            <Route path="tests/:id" element={<TestApprovalDetailPage />} />
+            <Route path="lessons" element={<LessonApprovalPage />} />
+            <Route path="lessons/:id" element={<LessonApprovalDetailPage />} />
+            <Route path="reports" element={<AdminReportPage />} />
+            <Route path="roles" element={<RBACRolesPage />} />
+          </Route>
 
           {/* 401 redirect */}
           <Route path="/401" element={<Unauthorized />} />

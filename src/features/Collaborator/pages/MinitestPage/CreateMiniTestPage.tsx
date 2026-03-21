@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import miniTestService from "./services/miniTest.service";
 import { useMiniTestBuilderViewModel } from "./viewmodel/useMinitestBuilderViewModel";
 import GroupForm from "../../components/GroupForm";
+import SelectGroupDialog from "../../components/fulltest/SelectGroupDialog";
 
 export default function CreateMiniTestPage() {
   const vm = useMiniTestBuilderViewModel();
@@ -35,6 +36,9 @@ export default function CreateMiniTestPage() {
 
   const [activePart, setActivePart] = useState<number | null>(null);
   const [addedParts, setAddedParts] = useState<number[]>([]);
+  const [openSelectDialog, setOpenSelectDialog] = useState(false);
+  const [selectPart, setSelectPart] = useState<number | null>(null);
+  const [autoFillLoading, setAutoFillLoading] = useState(false);
 
   const handleChange = (field: string, value: any) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -68,6 +72,31 @@ export default function CreateMiniTestPage() {
   };
 
   const groupedByPart = vm.groupsByPart;
+  const currentPart = activePart ?? (addedParts[0] ?? null);
+  const currentGroups = currentPart ? groupedByPart[currentPart] || [] : [];
+
+  const handleQuickFill = async () => {
+    setAutoFillLoading(true);
+    try {
+      const result = await vm.autoFillFromBank();
+      const parts =
+        result?.addedParts && result.addedParts.length > 0
+          ? result.addedParts
+          : [1, 2, 3, 4, 5, 6, 7];
+      setAddedParts(parts);
+      setActivePart(parts[0] || null);
+      toast.success(
+        `Da tu dien ${result?.totalQuestions ?? 0}/100 cau tu ngan hang.`
+      );
+    } catch (error: any) {
+      console.error(error);
+      toast.error(
+        error?.message || "Khong tu dien duoc du lieu mini test tu ngan hang."
+      );
+    } finally {
+      setAutoFillLoading(false);
+    }
+  };
 
   // 🎨 màu tự đổi theo theme
   const bgForm =
@@ -141,11 +170,11 @@ export default function CreateMiniTestPage() {
         </Grid>
       </Paper>
 
-      {/* 🔸 Tabs các Part */}
+      {/* Tabs cac Part */}
       <Box mb={2} display="flex" gap={2}>
         <TextField
           select
-          label="Thêm Part"
+          label="Them Part"
           size="small"
           sx={{ minWidth: 180 }}
           onChange={(e) => handleAddPart(Number(e.target.value))}
@@ -156,12 +185,33 @@ export default function CreateMiniTestPage() {
             </MenuItem>
           ))}
         </TextField>
+        {/* Nut import tu ngan hang cau hoi */}
+        <Button
+          variant="outlined"
+          onClick={() => {
+            const target = currentPart || (addedParts.length > 0 ? addedParts[0] : 1);
+            setSelectPart(target);
+            setOpenSelectDialog(true);
+          }}
+          sx={{ height: 40 }}
+        >
+          + Them tu ngan hang
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          disabled={autoFillLoading}
+          onClick={handleQuickFill}
+          sx={{ height: 40 }}
+        >
+          {autoFillLoading ? "Dang tu dien..." : "Fill nhanh 100 cau"}
+        </Button>
       </Box>
 
-      {addedParts.length > 0 && (
+      {addedParts.length > 0 && currentPart && (
         <>
           <Tabs
-            value={activePart}
+            value={currentPart}
             onChange={(_, v) => setActivePart(v)}
             variant="scrollable"
             scrollButtons="auto"
@@ -174,83 +224,99 @@ export default function CreateMiniTestPage() {
             ))}
           </Tabs>
 
-          {addedParts.map((p) => (
-            <Box
-              key={p}
-              sx={{ display: activePart === p ? "block" : "none", mt: 2 }}
-            >
-              {groupedByPart[p]?.map((g: any, gi: number) => (
-                <Paper
-                  key={`${p}-${gi}`}
-                  sx={{
-                    mb: 2,
-                    borderRadius: 2,
-                    overflow: "hidden",
-                    border: `1px solid ${borderColor}`,
-                    bgcolor: bgForm,
-                  }}
-                >
-                  <Accordion defaultExpanded>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Typography fontWeight={600}>
-                        Group {gi + 1} — Part {p}
-                      </Typography>
-                      <Button
-                        color="error"
-                        size="small"
-                        variant="outlined"
-                        sx={{ ml: "auto" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          vm.removeGroup(p, gi);
-                        }}
-                      >
-                        🗑️ Xóa
-                      </Button>
-                    </AccordionSummary>
-
-                    <AccordionDetails
-                      sx={{
-                        bgcolor:
-                          theme.palette.mode === "light"
-                            ? theme.palette.background.paper
-                            : theme.palette.background.default,
-                      }}
-                    >
-                      <GroupForm
-                        groupIndex={gi}
-                        group={g}
-                        tagOptions={["grammar", "vocabulary"]}
-                        onChange={(gi, f, v) => vm.updateGroup(p, gi, f, v)}
-                        onChangeQuestion={(gi, qi, f, v) =>
-                          vm.updateQuestion(p, gi, qi, f, v)
-                        }
-                        onAddQuestion={(gi) => vm.addQuestion(p, gi)}
-                        onRemoveQuestion={(gi, qi) =>
-                          vm.removeQuestion(p, gi, qi)
-                        }
-                        isQuiz={true}
-                      />
-                    </AccordionDetails>
-                  </Accordion>
-                </Paper>
-              ))}
-
-              <Button
-                variant="outlined"
-                onClick={() => vm.addGroup(p)}
+          <Box sx={{ mt: 2 }}>
+            {currentGroups.map((g: any, gi: number) => (
+              <Paper
+                key={`${currentPart}-${gi}`}
                 sx={{
-                  borderColor: theme.palette.primary.main,
-                  color: theme.palette.primary.main,
-                  ":hover": { bgcolor: theme.palette.action.hover },
+                  mb: 2,
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: `1px solid ${borderColor}`,
+                  bgcolor: bgForm,
                 }}
               >
-                ➕ Thêm Group mới cho Part {p}
-              </Button>
-            </Box>
-          ))}
+                <Accordion defaultExpanded>
+                  <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Typography fontWeight={600}>
+                      Group {gi + 1} — Part {currentPart}
+                    </Typography>
+                    <Button
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: "auto" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        vm.removeGroup(currentPart, gi);
+                      }}
+                    >
+                      🗑️ Xóa
+                    </Button>
+                  </AccordionSummary>
+
+                  <AccordionDetails
+                    sx={{
+                      bgcolor:
+                        theme.palette.mode === "light"
+                          ? theme.palette.background.paper
+                          : theme.palette.background.default,
+                    }}
+                  >
+                    <GroupForm
+                      groupIndex={gi}
+                      group={g}
+                      tagOptions={["grammar", "vocabulary"]}
+                      onChange={(gi, f, v) =>
+                        vm.updateGroup(currentPart, gi, f, v)
+                      }
+                      onChangeQuestion={(gi, qi, f, v) =>
+                        vm.updateQuestion(currentPart, gi, qi, f, v)
+                      }
+                      onAddQuestion={(gi) => vm.addQuestion(currentPart, gi)}
+                      onRemoveQuestion={(gi, qi) =>
+                        vm.removeQuestion(currentPart, gi, qi)
+                      }
+                      isQuiz={true}
+                    />
+                  </AccordionDetails>
+                </Accordion>
+              </Paper>
+            ))}
+
+            <Button
+              variant="outlined"
+              onClick={() => vm.addGroup(currentPart)}
+              sx={{
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
+                ":hover": { bgcolor: theme.palette.action.hover },
+              }}
+            >
+              ➕ Thêm Group mới cho Part {currentPart}
+            </Button>
+          </Box>
         </>
       )}
+
+      {/* Dialog chọn group từ ngân hàng - reuse component từ FullTest */}
+      <SelectGroupDialog
+        open={openSelectDialog}
+        part={selectPart || (addedParts.length > 0 ? addedParts[0] : 1)}
+        onClose={() => setOpenSelectDialog(false)}
+        onConfirm={(groups) => {
+          // nếu người dùng chưa thêm part tương ứng, tự động thêm part
+          const targetPart =
+            selectPart || (addedParts.length > 0 ? addedParts[0] : 1);
+          if (!addedParts.includes(targetPart)) {
+            handleAddPart(targetPart);
+          }
+          // gọi viewmodel để import
+          // @ts-ignore - viewmodel sẽ cung cấp hàm import
+          vm.handleImportGroupsFromBank(targetPart, groups);
+          setOpenSelectDialog(false);
+        }}
+      />
 
       <Divider sx={{ my: 3 }} />
 

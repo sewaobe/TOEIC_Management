@@ -78,7 +78,7 @@ export default function NotificationDropdown() {
   };
   const handleClose = () => setAnchorEl(null);
 
-  const renderIcon = (type: string) => {
+  const renderIcon = (type: Notification["type"]) => {
     switch (type) {
       case "chat":
         return <Chat sx={{ color: theme.palette.primary.main }} fontSize="small" />;
@@ -86,14 +86,23 @@ export default function NotificationDropdown() {
         return <Comment sx={{ color: theme.palette.success.main }} fontSize="small" />;
       case "error":
         return <ErrorOutline sx={{ color: theme.palette.error.main }} fontSize="small" />;
-      case "system":
+      case "test":
+        return <Info sx={{ color: theme.palette.warning.main }} fontSize="small" />; // icon cảnh báo nhẹ
+      case "lesson":
+        return <Info sx={{ color: theme.palette.info.main }} fontSize="small" />;
+      case "flashcard":
+        return <Info sx={{ color: theme.palette.secondary.main }} fontSize="small" />;
+      case "chatbot":
+        return <Chat sx={{ color: theme.palette.info.main }} fontSize="small" />;
+      case "other":
         return <Info sx={{ color: theme.palette.text.secondary }} fontSize="small" />;
+      case "system":
       default:
         return <NotificationsNone sx={{ color: theme.palette.text.primary }} fontSize="small" />;
     }
   };
 
-  const getAvatarColor = (type: string) => {
+  const getAvatarColor = (type: Notification["type"]) => {
     switch (type) {
       case "chat":
         return theme.palette.info.light;
@@ -101,10 +110,18 @@ export default function NotificationDropdown() {
         return theme.palette.success.light;
       case "error":
         return theme.palette.error.light;
+      case "test":
+        return theme.palette.warning.light;
+      case "lesson":
+        return theme.palette.info.light;
+      case "flashcard":
+        return theme.palette.secondary.light;
+      case "chatbot":
+        return theme.palette.info.light;
       case "system":
-        return theme.palette.grey[200];
+      case "other":
       default:
-        return theme.palette.background.paper;
+        return theme.palette.grey[200];
     }
   };
 
@@ -151,6 +168,8 @@ export default function NotificationDropdown() {
         placement="bottom-end"
         transition
         modifiers={[{ name: "offset", options: { offset: [0, 8] } }]}
+        disablePortal={false}
+        sx={{ zIndex: 1299 }}
       >
         {({ TransitionProps }) => (
           <Fade {...TransitionProps} timeout={200}>

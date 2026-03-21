@@ -1,5 +1,5 @@
-import type React from "react"
-import { useState } from "react"
+import type React from "react";
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -10,7 +10,7 @@ import {
   Collapse,
   Chip,
   Divider,
-} from "@mui/material"
+} from "@mui/material";
 import {
   ArticleOutlined,
   SchoolOutlined,
@@ -19,17 +19,26 @@ import {
   DashboardOutlined,
   PeopleAltOutlined,
   BarChartOutlined,
-} from "@mui/icons-material"
-import { motion, AnimatePresence } from "framer-motion"
-import { useTheme } from "@mui/material/styles"
-import { Link, useLocation } from "react-router-dom"
+} from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@mui/material/styles";
+import { Link, useLocation } from "react-router-dom";
 
 export const sidebarStructure = [
   {
-    main: { text: "Dashboard", icon: <DashboardOutlined />, to: "/ctv/dashboard" },
+    main: {
+      text: "Dashboard",
+      icon: <DashboardOutlined />,
+      to: "/ctv/dashboard",
+    },
   },
   {
-    main: { text: "Học viên", icon: <PeopleAltOutlined />, to: "/ctv/students", badge: 24 },
+    main: {
+      text: "Học viên",
+      icon: <PeopleAltOutlined />,
+      to: "/ctv/students",
+      badge: 24,
+    },
   },
   {
     main: { text: "Đề thi", icon: <ArticleOutlined />, badge: 12 },
@@ -50,6 +59,7 @@ export const sidebarStructure = [
         text: "Bài tập vận dụng",
         badge: 1,
         children: [
+          { text: "Định nghĩa từ vựng", to: "/ctv/practice-vocabulary" },
           { text: "Quiz", to: "/ctv/quiz" },
           { text: "Nghe chép chính tả", to: "/ctv/dictation", badge: 1 },
           { text: "Shadowing", to: "/ctv/shadowing", badge: 1 },
@@ -65,33 +75,33 @@ export const sidebarStructure = [
       { text: "Bình luận", to: "/ctv/report/comment", badge: 2 },
     ],
   },
-]
+];
 
 const Sidebar: React.FC = () => {
-  const [open, setOpen] = useState<{ [key: string]: boolean }>({})
-  const theme = useTheme()
-  const location = useLocation()
+  const [open, setOpen] = useState<{ [key: string]: boolean }>({});
+  const theme = useTheme();
+  const location = useLocation();
 
   const handleClick = (key: string) =>
-    setOpen((prev) => ({ ...prev, [key]: !prev[key] }))
+    setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const matchPath = (to?: string) =>
-    !!to && (location.pathname === to || location.pathname.startsWith(to + "/"))
+    !!to &&
+    (location.pathname === to || location.pathname.startsWith(to + "/"));
 
   // --- ACTIVE LOGIC ---
   const isParentActive = (item: any) =>
     item.subItems?.some(
       (sub: any) =>
-        matchPath(sub.to) ||
-        sub.children?.some((ch: any) => matchPath(ch.to))
-    ) || false
+        matchPath(sub.to) || sub.children?.some((ch: any) => matchPath(ch.to))
+    ) || false;
 
-  const isSubActive = (sub: any) => sub.to && matchPath(sub.to)
+  const isSubActive = (sub: any) => sub.to && matchPath(sub.to);
   const isSubExpanded = (sub: any) =>
-    sub.children?.some((ch: any) => matchPath(ch.to))
-  const isSubSubActive = (child: any) => matchPath(child.to)
+    sub.children?.some((ch: any) => matchPath(ch.to));
+  const isSubSubActive = (child: any) => matchPath(child.to);
   const isMainItemDirectlyActive = (item: any) =>
-    item.main.to && matchPath(item.main.to)
+    item.main.to && matchPath(item.main.to);
 
   return (
     <Box
@@ -145,7 +155,7 @@ const Sidebar: React.FC = () => {
                 variant="h6"
                 sx={{ fontWeight: 700, letterSpacing: "-0.5px" }}
               >
-                TOEIC Pro
+                TOEIC Smart
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Cộng tác viên
@@ -162,8 +172,8 @@ const Sidebar: React.FC = () => {
         <List sx={{ py: 0 }}>
           {sidebarStructure.map((item, index) => {
             const active =
-              (item.main.to && matchPath(item.main.to)) || isParentActive(item)
-            const showMainIndicator = isMainItemDirectlyActive(item)
+              (item.main.to && matchPath(item.main.to)) || isParentActive(item);
+            const showMainIndicator = isMainItemDirectlyActive(item);
 
             return (
               <motion.div
@@ -247,7 +257,9 @@ const Sidebar: React.FC = () => {
                           bgcolor: active
                             ? theme.palette.primary.main
                             : theme.palette.action.selected,
-                          color: active ? "white" : theme.palette.text.secondary,
+                          color: active
+                            ? "white"
+                            : theme.palette.text.secondary,
                           mr: item.subItems ? 1 : 0,
                         }}
                       />
@@ -270,9 +282,9 @@ const Sidebar: React.FC = () => {
                   >
                     <List component="div" disablePadding>
                       {item.subItems.map((subItem: any, subIndex: number) => {
-                        const subActive = isSubActive(subItem)
-                        const subExpanded = isSubExpanded(subItem)
-                        const hasChildren = !!subItem.children?.length
+                        const subActive = isSubActive(subItem);
+                        const subExpanded = isSubExpanded(subItem);
+                        const hasChildren = !!subItem.children?.length;
 
                         return (
                           <motion.div key={subIndex} whileHover={{ x: 4 }}>
@@ -301,7 +313,9 @@ const Sidebar: React.FC = () => {
                               <ListItemButton
                                 component={subItem.to ? Link : "div"}
                                 to={subItem.to || ""}
-                                onClick={() => hasChildren && handleClick(subItem.text)}
+                                onClick={() =>
+                                  hasChildren && handleClick(subItem.text)
+                                }
                                 sx={{
                                   borderRadius: 2,
                                   pl: 7,
@@ -364,7 +378,8 @@ const Sidebar: React.FC = () => {
                                   <List component="div" disablePadding>
                                     {subItem.children.map(
                                       (child: any, childIndex: number) => {
-                                        const subSubActive = isSubSubActive(child)
+                                        const subSubActive =
+                                          isSubSubActive(child);
                                         return (
                                           <ListItemButton
                                             key={childIndex}
@@ -411,7 +426,7 @@ const Sidebar: React.FC = () => {
                                               }}
                                             />
                                           </ListItemButton>
-                                        )
+                                        );
                                       }
                                     )}
                                   </List>
@@ -419,18 +434,18 @@ const Sidebar: React.FC = () => {
                               )}
                             </Box>
                           </motion.div>
-                        )
+                        );
                       })}
                     </List>
                   </Collapse>
                 )}
               </motion.div>
-            )
+            );
           })}
         </List>
       </Box>
     </Box>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

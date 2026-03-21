@@ -1,4 +1,5 @@
 import { ReportType } from "../types/Report"
+import axiosClient from "./axiosClient";
 
 // Mock Data cho Báo cáo 
 export const monthlyContentData = [
@@ -83,4 +84,38 @@ export const reportService = {
       }, 1000) // ⏱ mô phỏng delay 1 giây
     })
   },
+  async fetchReportComment(page = 1, limit = 5) {
+    const res = await axiosClient.get("/ctv/reports/comments", {
+      params: { page, limit }
+    });
+
+    const apiItems = res.data.items;
+
+    const items = apiItems.map((item: any) => ({
+      id: item._id,
+      user: item.user?.profile.fullname || "Người dùng ẩn danh",
+      avatar:
+        item.user?.profile?.avatar ||
+        "https://ui-avatars.com/api/?name=User&background=random",
+      content: item.content,
+      time: new Date(item.create_at).toLocaleString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+      type: item.type === "lesson" ? "lesson" : "test", // fallback nếu BE trả sai
+      flagged: false, // default
+      activityId: item.activity_id,
+      activityTitle: item.activity_title,
+    }));
+
+    return {
+      items,
+      total: res.data.total,
+      page: res.data.page,
+      pageCount: res.data.pageCount,
+    };
+  }
 }
