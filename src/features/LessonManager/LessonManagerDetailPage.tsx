@@ -12,7 +12,11 @@ import {
     IconButton,
     Collapse,
     Tooltip,
-    Divider,
+    TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
 } from "@mui/material";
 import {
     PlayCircleOutline as MediaIcon,
@@ -50,8 +54,34 @@ import lessonService from "../../services/lesson.service";
 import { dictationService } from "../../services/dictation.service";
 import ShadowingModal from "../Shadowing/components/ShadowingModal";
 import { shadowingService } from "../../services/shadowing.service";
-import { STATUS_COLOR_MAP, TestStatusLabel } from "../../types/LessonManager";
-import { statusColor } from "./LessonManagerPage";
+import {
+    ActivityOption,
+    ActivityType,
+    ActivityTypeLabel,
+    isLessonManagerEditable,
+    LessonManager,
+    NodeRoleLabel,
+    PartType,
+    STATUS_COLOR_MAP,
+    TestStatusLabel,
+    UnitTypeLabel,
+} from "../../types/LessonManager";
+
+const toLessonManagerForm = (lesson: LessonManagerDetail): Partial<LessonManager> => ({
+    _id: lesson._id,
+    title: lesson.title,
+    description: lesson.description,
+    thumbnail: lesson.thumbnail,
+    part_type: lesson.part_type,
+    score_band: lesson.score_band,
+    unit_type: lesson.unit_type,
+    node_role: lesson.node_role,
+    target_tags: lesson.target_tags,
+    recommended_activity_order: lesson.recommended_activity_order,
+    status: lesson.status,
+    planned_completion_time: lesson.planned_completion_time,
+    weight: lesson.weight,
+});
 
 export default function LessonManagerDetailPage(): JSX.Element {
     const location = useLocation();
@@ -65,7 +95,12 @@ export default function LessonManagerDetailPage(): JSX.Element {
     const [isOpenModal, setIsOpenModal] = useState<boolean>(false);
     const [isModeModal, setIsModeModal] = useState<"add" | "edit">("add");
     const [formData, setFormData] = useState<any>({});
-    const [form, setForm] = useState<Partial<LessonManagerDetail>>(lessonManager || {});
+    const [form, setForm] = useState<Partial<LessonManager>>({});
+    const [activityType, setActivityType] = useState<ActivityType>("lesson");
+    const [activityQuery, setActivityQuery] = useState("");
+    const [activityPartType, setActivityPartType] = useState<PartType | "">("");
+    const [activityOptions, setActivityOptions] = useState<ActivityOption[]>([]);
+    const [activityLoading, setActivityLoading] = useState(false);
     const navigate = useNavigate();
     useEffect(() => {
         const timer = setTimeout(() => setLoadingTab(false), 800);
@@ -77,7 +112,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
             setLoading(true);
             const res = await lessonManagerService.getLessonManagerDetail(lessonManagerId);
             setLessonsManager(res);
-            setForm(res);
+            setForm(toLessonManagerForm(res));
         }
         catch (err) {
             toast.error("Lấy thông tin Lesson Manager thất bại. Vui lòng thử lại.");
@@ -112,9 +147,13 @@ export default function LessonManagerDetailPage(): JSX.Element {
     }
 
     const handleSaveEditLessonManager = async () => {
+        if (lessonManager && !isLessonManagerEditable(lessonManager.status)) {
+            toast.error("Lesson Manager ở trạng thái này chỉ được xem.");
+            return;
+        }
         try {
             setLoading(true);
-            const res = await lessonManagerService.updateLessonManager(lessonManagerId, form);
+            await lessonManagerService.updateLessonManager(lessonManagerId, form);
             fetchLessonManager();
             toast.success("Lưu Lesson Manager thành công.");
         }
@@ -126,6 +165,119 @@ export default function LessonManagerDetailPage(): JSX.Element {
             setEditModal(false);
         }
     }
+    const saveRecommendedActivityOrder = async (nextOrder: LessonManagerDetail["recommended_activity_order"]) => {
+        if (!lessonManager || !isLessonManagerEditable(lessonManager.status)) {
+            toast.error("Lesson Manager ở trạng thái này chỉ được xem.");
+            return;
+        }
+
+        const payload = {
+            title: lessonManager.title,
+            description: lessonManager.description,
+            thumbnail: lessonManager.thumbnail,
+            part_type: lessonManager.part_type,
+            score_band: lessonManager.score_band,
+            unit_type: lessonManager.unit_type,
+            node_role: lessonManager.node_role,
+            target_tags: lessonManager.target_tags,
+            recommended_activity_order: nextOrder.map((activity, index) => ({
+                ...activity,
+                order: index,
+            })),
+        };
+
+        try {
+            await lessonManagerService.updateLessonManager(lessonManagerId, payload);
+            toast.success("Cập nhật thứ tự hoạt động thành công.");
+            fetchLessonManager();
+        } catch (err) {
+            toast.error("Cập nhật thứ tự hoạt động thất bại.");
+        }
+    };
+
+    const fetchActivityOptions = async () => {
+        try {
+            setActivityLoading(true);
+            const res = await lessonManagerService.getActivityOptions({
+                activity_type: activityType,
+                part_type: activityPartType,
+                query: activityQuery,
+                page: 1,
+                limit: 20,
+            });
+            setActivityOptions(res.data);
+        } catch (err) {
+            toast.error("Không thể tải danh sách hoạt động.");
+        } finally {
+            setActivityLoading(false);
+        }
+    };
+
+    const resolveActivityTitle = (type: ActivityType, activityId: string) => {
+        const id = String(activityId);
+        const source =
+            type === "lesson"
+                ? lessonManager?.lesson_ids
+                : type === "vocabulary"
+                    ? lessonManager?.topic_vocabulary_ids
+                    : type === "dictation"
+                        ? lessonManager?.dictation_ids
+                        : type === "shadowing"
+                            ? lessonManager?.shadowing_ids
+                            : lessonManager?.quiz_ids;
+        return source?.find((item: any) => String(item._id) === id)?.title || id;
+    };
+
+    const addRecommendedActivity = (option: ActivityOption) => {
+        if (!lessonManager) return;
+        const exists = (lessonManager.recommended_activity_order || []).some(
+            (activity) =>
+                activity.activity_type === option.activity_type &&
+                String(activity.activity_id) === option._id
+        );
+        if (exists) {
+            toast.error("Hoạt động này đã có trong thứ tự học.");
+            return;
+        }
+
+        saveRecommendedActivityOrder([
+            ...(lessonManager.recommended_activity_order || []),
+            {
+                activity_type: option.activity_type,
+                activity_id: option._id,
+                estimated_minutes: option.estimated_minutes || 1,
+                is_required: true,
+                order: lessonManager.recommended_activity_order?.length || 0,
+            },
+        ]);
+    };
+
+    const updateRecommendedActivity = (
+        index: number,
+        patch: Partial<LessonManagerDetail["recommended_activity_order"][number]>
+    ) => {
+        if (!lessonManager) return;
+        const nextOrder = [...(lessonManager.recommended_activity_order || [])];
+        nextOrder[index] = { ...nextOrder[index], ...patch };
+        saveRecommendedActivityOrder(nextOrder);
+    };
+
+    const moveRecommendedActivity = (index: number, direction: -1 | 1) => {
+        if (!lessonManager) return;
+        const nextIndex = index + direction;
+        const nextOrder = [...(lessonManager.recommended_activity_order || [])];
+        if (nextIndex < 0 || nextIndex >= nextOrder.length) return;
+        [nextOrder[index], nextOrder[nextIndex]] = [nextOrder[nextIndex], nextOrder[index]];
+        saveRecommendedActivityOrder(nextOrder);
+    };
+
+    const removeRecommendedActivity = (index: number) => {
+        if (!lessonManager) return;
+        const nextOrder = [...(lessonManager.recommended_activity_order || [])];
+        nextOrder.splice(index, 1);
+        saveRecommendedActivityOrder(nextOrder);
+    };
+
     const fade = {
         initial: { opacity: 0, y: 10 },
         animate: { opacity: 1, y: 0 },
@@ -221,6 +373,8 @@ export default function LessonManagerDetailPage(): JSX.Element {
         );
     }
 
+    const editable = isLessonManagerEditable(lessonManager.status);
+
     const renderExpandableList = <T,>(
         items: T[],
         renderHeader: (item: T) => JSX.Element,
@@ -248,7 +402,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                                 {renderBody(item)}
                                 <Box className="flex justify-end mt-3 gap-2">
                                     <Tooltip title="Chỉnh sửa">
-                                        <IconButton color="info" size="small" onClick={() => handleClickEditModal(item)}>
+                                        <IconButton color="info" size="small" disabled={!editable} onClick={() => handleClickEditModal(item)}>
                                             <EditIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
@@ -272,11 +426,129 @@ export default function LessonManagerDetailPage(): JSX.Element {
         </Box>
     );
 
+    const renderRecommendedActivityOrder = () => (
+        <Box className="space-y-4">
+            {editable && (
+                <Card className="p-4 rounded-2xl shadow-sm">
+                    <Box className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                        <FormControl size="small">
+                            <InputLabel>Loại hoạt động</InputLabel>
+                            <Select
+                                value={activityType}
+                                label="Loại hoạt động"
+                                onChange={(e) => setActivityType(e.target.value as ActivityType)}
+                            >
+                                {Object.entries(ActivityTypeLabel).map(([type, label]) => (
+                                    <MenuItem key={type} value={type}>{label}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small">
+                            <InputLabel>Part</InputLabel>
+                            <Select
+                                value={activityPartType}
+                                label="Part"
+                                onChange={(e) => setActivityPartType(e.target.value as PartType | "")}
+                            >
+                                <MenuItem value="">Tất cả</MenuItem>
+                                {[1, 2, 3, 4, 5, 6, 7].map((part) => (
+                                    <MenuItem key={part} value={part}>Part {part}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            size="small"
+                            label="Tìm hoạt động"
+                            value={activityQuery}
+                            onChange={(e) => setActivityQuery(e.target.value)}
+                            className="md:col-span-2"
+                        />
+                        <Button variant="contained" onClick={fetchActivityOptions} disabled={activityLoading}>
+                            {activityLoading ? "Đang tải..." : "Tìm"}
+                        </Button>
+                    </Box>
+
+                    {activityOptions.length > 0 && (
+                        <Box className="mt-3 space-y-2">
+                            {activityOptions.map((option) => (
+                                <Box key={`${option.activity_type}-${option._id}`} className="flex items-center justify-between border rounded-lg p-2">
+                                    <Box>
+                                        <Typography variant="body2" fontWeight={600}>{option.title}</Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {ActivityTypeLabel[option.activity_type]} • Part {option.part_type || "-"} • {option.estimated_minutes} phút
+                                        </Typography>
+                                    </Box>
+                                    <Button size="small" variant="outlined" onClick={() => addRecommendedActivity(option)}>
+                                        Thêm
+                                    </Button>
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
+                </Card>
+            )}
+
+            {(lessonManager.recommended_activity_order || []).length > 0 ? (
+                lessonManager.recommended_activity_order
+                    .slice()
+                    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                    .map((activity, index) => (
+                        <Card key={`${activity.activity_type}-${activity.activity_id}-${index}`} className="rounded-2xl shadow-sm">
+                            <CardContent className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
+                                <Box>
+                                    <Typography variant="subtitle1" fontWeight={700}>
+                                        {index + 1}. {resolveActivityTitle(activity.activity_type, activity.activity_id)}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {ActivityTypeLabel[activity.activity_type]} • {activity.is_required === false ? "Không bắt buộc" : "Bắt buộc"}
+                                    </Typography>
+                                </Box>
+                                <Box className="flex items-center gap-2">
+                                    <TextField
+                                        size="small"
+                                        type="number"
+                                        label="Phút"
+                                        value={activity.estimated_minutes}
+                                        disabled={!editable}
+                                        sx={{ width: 100 }}
+                                        onChange={(e) =>
+                                            updateRecommendedActivity(index, {
+                                                estimated_minutes: Math.max(1, Number(e.target.value)),
+                                            })
+                                        }
+                                    />
+                                    <Button size="small" disabled={!editable || index === 0} onClick={() => moveRecommendedActivity(index, -1)}>
+                                        Lên
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        disabled={!editable || index === lessonManager.recommended_activity_order.length - 1}
+                                        onClick={() => moveRecommendedActivity(index, 1)}
+                                    >
+                                        Xuống
+                                    </Button>
+                                    <Button size="small" color="error" disabled={!editable} onClick={() => removeRecommendedActivity(index)}>
+                                        Xóa
+                                    </Button>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    ))
+            ) : (
+                <EmptyState
+                    mode="empty"
+                    title="Chưa có activity order"
+                    description="Thêm hoạt động vào thứ tự học trước khi gửi duyệt."
+                />
+            )}
+        </Box>
+    );
+
     return (
         <Box className="min-h-screen bg-gray-50 p-6 space-y-6">
             {/* Hero Section with Back and Edit */}
             <Box className="relative rounded-2xl overflow-hidden shadow-md">
-                <img src={lessonManager.thumbnail} alt={lessonManager.title} className="w-full h-64 object-cover" />
+                <img src="https://res.cloudinary.com/dgi1g967z/image/upload/v1780219832/jh1nyaim79isvrgo4yf0.webp" alt={lessonManager.title} className="w-full h-64 object-cover" />
                 <Box className="absolute inset-0 bg-black/50 text-white flex flex-col justify-between p-6">
                     <Box className="flex justify-between items-center">
                         <Button
@@ -291,7 +563,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
 
                         <Box className="flex items-center gap-2">
                             {/* Nút gửi duyệt bài học */}
-                            {lessonManager.status === "draft" && (
+                            {editable && (
                                 <Button
                                     variant="contained"
                                     color="primary"
@@ -332,6 +604,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                                 variant="contained"
                                 color="info"
                                 size="small"
+                                disabled={!editable}
                                 onClick={handleOpenEditLessonManager}
                             >
                                 Chỉnh sửa Lesson Manager
@@ -342,19 +615,24 @@ export default function LessonManagerDetailPage(): JSX.Element {
                     <Box>
                         <Typography variant="h4" fontWeight={700}>{lessonManager.title}</Typography>
                         <Typography variant="body1">{lessonManager.description}</Typography>
-                        <Box className="flex flex-wrap gap-2 mt-2">
-                            <Chip label={lessonManager.level} color="info" />
+                        <Box className="flex flex-wrap gap-2 !mt-2">
                             <Chip
                                 label={`Part ${lessonManager.part_type}`}
-                                color="error"
+                                color="info"
                                 sx={{
                                     color: "white",
                                 }}
                             />
                             <Chip label={TestStatusLabel[lessonManager.status]} color={STATUS_COLOR_MAP[lessonManager.status] ?? "default"} />
+                            <Chip label={`${lessonManager.score_band?.from ?? "-"}-${lessonManager.score_band?.to ?? "-"}`} color="default" />
+                            <Chip label={UnitTypeLabel[lessonManager.unit_type]} color="default" />
+                            <Chip label={NodeRoleLabel[lessonManager.node_role]} color="default" />
+                            {(lessonManager.target_tags || []).slice(0, 4).map((tag) => (
+                                <Chip key={tag} label={tag} color="default" />
+                            ))}
                         </Box>
-                        <Typography variant="body2" className="opacity-80 mt-1">
-                            ⭐ {lessonManager.rating} | 👥 {lessonManager.student_count} | ⏱ {lessonManager.planned_completion_time} phút
+                        <Typography variant="body2" className="opacity-80 !mt-1">
+                            ⭐ {lessonManager.rating || 0} | 👥 {lessonManager.student_count || 0} | ⏱ {lessonManager.planned_completion_time} phút
                         </Typography>
                     </Box>
                 </Box>
@@ -368,14 +646,15 @@ export default function LessonManagerDetailPage(): JSX.Element {
                     <Tab label="Dictation" />
                     <Tab label="Shadowing" />
                     <Tab label="Quiz" />
+                    <Tab label="Activity order" />
                 </Tabs>
-                <Button startIcon={<AddIcon />} variant="contained" color="primary" size="small" onClick={handleClickCreateModal}>
-                    {tab === 0 && 'Thêm chủ đề từ vựng'}
-                    {tab === 1 && 'Thêm bài học chính'}
-                    {tab === 2 && 'Thêm dictation'}
-                    {tab === 3 && 'Thêm bài shadowing'}
-                    {tab === 4 && 'Thêm quiz'}
-                </Button>
+                {tab < 5 && <Button startIcon={<AddIcon />} variant="contained" color="primary" size="small" disabled={!editable} onClick={handleClickCreateModal}>
+                    {tab === 0 && 'Thêm'}
+                    {tab === 1 && 'Thêm'}
+                    {tab === 2 && 'Thêm'}
+                    {tab === 3 && 'Thêm'}
+                    {tab === 4 && 'Thêm'}
+                </Button>}
             </Box>
 
             {/* Tab Content */}
@@ -712,6 +991,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                                 </Box>
                             )
                         )}
+                        {tab === 5 && renderRecommendedActivityOrder()}
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -727,6 +1007,7 @@ export default function LessonManagerDetailPage(): JSX.Element {
                 onChange={setForm}
                 onSave={handleSaveEditLessonManager}
                 isEdit={true}
+                readonly={!editable}
             />
 
             {/* TopicVocabulary modal */}

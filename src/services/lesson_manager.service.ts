@@ -1,9 +1,32 @@
-import { LessonManager } from "../types/LessonManager";
+import { ActivityOption, ActivityType, LessonManager, LessonManagerFilters, PartType } from "../types/LessonManager";
 import { LessonManagerDetail } from "../types/LessonManagerDetail";
 import { PaginationResult } from "../types/PaginationResult";
 import axiosClient from "./axiosClient";
 
 const BASE_URL = "/ctv/lesson-manager";
+
+const normalizePaginationResult = <T>(res: any): PaginationResult<T> => {
+    const data = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.items)
+            ? res.data.items
+            : Array.isArray(res)
+                ? res
+                : [];
+
+    return {
+        data,
+        pagination: res?.meta || res?.pagination || {
+            page: 1,
+            limit: data.length,
+            total: data.length,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+        },
+    };
+};
+
 export const lessonManagerService = {
     getAllTopicTitles: async (): Promise<{
         id: string;
@@ -13,19 +36,30 @@ export const lessonManagerService = {
 
         return res.data;
     },
-    getAllLessonManager: async (page: number, limit: number): Promise<PaginationResult<LessonManager>> => {
+    getAllLessonManager: async (
+        page: number,
+        limit: number,
+        filters: LessonManagerFilters = {}
+    ): Promise<PaginationResult<LessonManager>> => {
         const res = await axiosClient.get(`${BASE_URL}/`, {
             params: {
                 page,
                 limit,
+                ...filters,
             },
         });
 
-        
-        return {
-            data: res.data,
-            pagination: res.meta
-        };
+        return normalizePaginationResult<LessonManager>(res);
+    },
+    getActivityOptions: async (params: {
+        activity_type?: ActivityType;
+        part_type?: PartType | "";
+        query?: string;
+        page?: number;
+        limit?: number;
+    }): Promise<PaginationResult<ActivityOption>> => {
+        const res = await axiosClient.get(`${BASE_URL}/activity-options`, { params });
+        return normalizePaginationResult<ActivityOption>(res);
     },
     getLessonManagerDetail: async (lessonManagerId: string): Promise<LessonManagerDetail> => {
         const res = await axiosClient.get(`${BASE_URL}/${lessonManagerId}`);

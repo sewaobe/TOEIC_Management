@@ -1,29 +1,28 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
     Box,
-    Grid,
-    Pagination,
-    Typography,
-    TextField,
-    MenuItem,
-    InputAdornment,
-    Select,
-    FormControl,
-    InputLabel,
+    Button,
     Card,
     CardContent,
     Chip,
-    Button,
-    IconButton,
-    Menu,
-    MenuItem as MuiMenuItem,
-    Skeleton,
-    Zoom,
-    Tooltip,
     Fab,
+    FormControl,
+    IconButton,
+    InputAdornment,
+    InputLabel,
+    Menu,
+    MenuItem,
+    MenuItem as MuiMenuItem,
+    Pagination,
+    Select,
+    Skeleton,
+    TextField,
+    Tooltip,
+    Typography,
+    Zoom,
 } from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
+import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -31,29 +30,23 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import StarIcon from "@mui/icons-material/Star";
 import { useNavigate } from "react-router-dom";
-import { CERFLevel, LessonManager, TestStatus, TestStatusLabel } from "../../types/LessonManager";
+import {
+    CtvLessonManagerNodeRole,
+    isLessonManagerEditable,
+    LessonManager,
+    LessonManagerFilters,
+    LessonManagerUnitType,
+    NodeRoleLabel,
+    TestStatus,
+    TestStatusLabel,
+    UnitTypeLabel,
+} from "../../types/LessonManager";
 import LessonManagerEditModal from "./components/LessonManagerEditModal";
 import LessonManagerDeleteModal from "./components/LessonManagerDeleteModal";
 import { toast } from "sonner";
 import { lessonManagerService } from "../../services/lesson_manager.service";
 import { PaginationResult } from "../../types/PaginationResult";
-
-// =====================
-// Types
-// =====================
-
-
-// =====================
-// UI helpers
-// =====================
-const levelColors: Record<CERFLevel, string> = {
-    A1: "#22c55e",
-    A2: "#10b981",
-    B1: "#06b6d4",
-    B2: "#3b82f6",
-    C1: "#8b5cf6",
-    C2: "#f97316",
-};
+import { toeicPartsArray } from "../../utils/toeicPart";
 
 export const statusColor: Record<TestStatus, string> = {
     draft: "#9ca3af",
@@ -61,56 +54,71 @@ export const statusColor: Record<TestStatus, string> = {
     approved: "#22c55e",
     open: "#3b82f6",
     closed: "#ef4444",
-    rejected: "#6b7280",
+    rejected: "#ef4444",
 };
 
-// =====================
-// Card component
-// =====================
+const unitTypeOptions: LessonManagerUnitType[] = [
+    "foundation",
+    "skill_drill",
+    "mixed_practice",
+    "exam_practice",
+    "remedial",
+];
+const nodeRoleOptions: CtvLessonManagerNodeRole[] = ["normal", "support"];
+const targetTagOptions = toeicPartsArray
+    .flatMap((part) => part.tags)
+    .filter((tag, index, tags) => tags.indexOf(tag) === index);
+
 interface LessonCardProps {
     data: LessonManager;
     onEdit: (lesson: LessonManager) => void;
     onDelete: (lesson: LessonManager) => void;
 }
+
 const LessonCard = ({ data, onEdit, onDelete }: LessonCardProps) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    const handleMenu = (event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget);
-    const handleClose = () => setAnchorEl(null);
     const [isHover, setIsHover] = useState(false);
-
     const navigate = useNavigate();
-    const handleClickView = () => {
-        navigate(`${data._id}`);
-    }
+    const editable = isLessonManagerEditable(data.status);
 
     return (
-        <Card
-            className="rounded-2xl shadow-md hover:shadow-xl transition-all overflow-hidden w-full h-full"
-        >
+        <Card className="rounded-2xl shadow-md hover:shadow-xl transition-all overflow-hidden w-full h-full">
             <Box
                 className="relative h-44 overflow-hidden cursor-pointer"
                 onMouseEnter={() => setIsHover(true)}
-                onMouseLeave={() => setIsHover(false)}>
+                onMouseLeave={() => setIsHover(false)}
+            >
                 <img
-                    src={data.thumbnail}
+                    src={data.thumbnail || "https://res.cloudinary.com/dgi1g967z/image/upload/v1780219832/jh1nyaim79isvrgo4yf0.webp"}
                     alt={data.title}
-                    className={`w-full h-full object-cover transition-transform duration-500 ${isHover ? 'scale-105' : ''}`}
+                    className={`w-full h-full object-cover transition-transform duration-500 ${isHover ? "scale-105" : ""}`}
                 />
                 <Chip
                     label={TestStatusLabel[data.status]}
                     size="small"
-                    sx={{ position: "absolute", top: 8, right: 8, bgcolor: statusColor[data.status], color: "white", fontWeight: 600 }}
+                    sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        bgcolor: statusColor[data.status],
+                        color: "white",
+                        fontWeight: 600,
+                    }}
                 />
                 {isHover && (
                     <Box className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center transition-opacity duration-300">
                         <Typography variant="h6">{data.title}</Typography>
                         <Typography variant="body2" className="text-gray-200 mt-1">
-                            🕒 {data.planned_completion_time} phút | 👥 {data.student_count}
+                            {data.planned_completion_time || 0} phút | {data.student_count || 0} học viên
                         </Typography>
                         <Box className="flex items-center justify-center mt-1">
                             {Array.from({ length: 5 }).map((_, i) => (
-                                <StarIcon key={i} fontSize="small" color={i < Math.round(data.rating || 0) ? "warning" : "disabled"} />
+                                <StarIcon
+                                    key={i}
+                                    fontSize="small"
+                                    color={i < Math.round(data.rating || 0) ? "warning" : "disabled"}
+                                />
                             ))}
                         </Box>
                     </Box>
@@ -124,23 +132,41 @@ const LessonCard = ({ data, onEdit, onDelete }: LessonCardProps) => {
                 <Typography variant="body2" color="text.secondary" noWrap>
                     {data.description}
                 </Typography>
-                <Box className="flex gap-1 my-2">
-                    <Chip label={data.level} size="small" sx={{ bgcolor: levelColors[data.level], color: "white" }} />
+                <Box className="flex flex-wrap gap-1 my-2">
                     <Chip label={`Part ${data.part_type}`} size="small" variant="outlined" />
+                    <Chip label={`${data.score_band?.from ?? "-"}-${data.score_band?.to ?? "-"}`} size="small" variant="outlined" />
+                    <Chip label={UnitTypeLabel[data.unit_type]} size="small" variant="outlined" />
+                    <Chip label={NodeRoleLabel[data.node_role]} size="small" variant="outlined" />
+                    <Chip label={`Weight ${Number(data.weight || 0).toFixed(3)}`} size="small" variant="outlined" />
+                </Box>
+                <Box className="flex flex-wrap gap-1 mb-2">
+                    {(data.target_tags || []).slice(0, 3).map((tag) => (
+                        <Chip key={tag} label={tag} size="small" />
+                    ))}
+                    {(data.target_tags || []).length > 3 && (
+                        <Chip label={`+${data.target_tags.length - 3}`} size="small" />
+                    )}
                 </Box>
 
                 <Box className="flex justify-between items-center">
-                    <Button className="flex-1" variant="contained" color="info" size="small" startIcon={<VisibilityIcon />} onClick={handleClickView}>
+                    <Button
+                        className="flex-1"
+                        variant="contained"
+                        color="info"
+                        size="small"
+                        startIcon={<VisibilityIcon />}
+                        onClick={() => navigate(`${data._id}`)}
+                    >
                         Xem
                     </Button>
-                    <IconButton size="small" onClick={handleMenu}>
+                    <IconButton size="small" onClick={(event) => setAnchorEl(event.currentTarget)}>
                         <MoreVertIcon />
                     </IconButton>
-                    <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-                        <MuiMenuItem onClick={() => onEdit(data)}>
+                    <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
+                        <MuiMenuItem onClick={() => onEdit(data)} disabled={!editable}>
                             <EditIcon fontSize="small" className="mr-2" /> Chỉnh sửa
                         </MuiMenuItem>
-                        <MuiMenuItem onClick={() => onDelete(data)}>
+                        <MuiMenuItem onClick={() => onDelete(data)} disabled={!editable}>
                             <DeleteIcon fontSize="small" className="mr-2 text-red-500" /> Xóa
                         </MuiMenuItem>
                     </Menu>
@@ -150,22 +176,12 @@ const LessonCard = ({ data, onEdit, onDelete }: LessonCardProps) => {
     );
 };
 
-// =====================
-// Mock data
-// =====================
-
-// =====================
-// Page component
-// =====================
 export default function LessonManagerPage() {
     const [lessons, setLessons] = useState<LessonManager[]>([]);
     const [pagination, setPagination] = useState<PaginationResult<LessonManager>["pagination"] | null>(null);
     const [page, setPage] = useState(1);
-    const [search, setSearch] = useState("");
-    const [levelFilter, setLevelFilter] = useState("");
-    const [statusFilter, setStatusFilter] = useState("");
+    const [filters, setFilters] = useState<LessonManagerFilters>({ query: "" });
     const [loading, setLoading] = useState(true);
-
     const [editModal, setEditModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState(false);
     const [form, setForm] = useState<Partial<LessonManager>>({});
@@ -174,29 +190,32 @@ export default function LessonManagerPage() {
     const initialForm: Partial<LessonManager> = {
         title: "",
         description: "",
-        level: "A1",
+        thumbnail: "",
         part_type: 1,
+        score_band: { from: 200, to: 250 },
+        unit_type: "foundation",
+        node_role: "normal",
+        target_tags: [],
+        recommended_activity_order: [],
         status: "draft",
-        planned_completion_time: 30,
-        weight: 0.5,
+        planned_completion_time: 0,
+        weight: 0,
     };
 
-    // Gọi API backend có phân trang
+    const apiFilters = useMemo(
+        () =>
+            Object.fromEntries(
+                Object.entries(filters).filter(([, value]) => value !== "" && value !== undefined)
+            ) as LessonManagerFilters,
+        [filters]
+    );
+
     const fetchLessonManagers = async (pageNum: number) => {
         try {
             setLoading(true);
-            const start = performance.now();
-
-            const res: PaginationResult<LessonManager> = await lessonManagerService.getAllLessonManager(pageNum, 9);
+            const res = await lessonManagerService.getAllLessonManager(pageNum, 9, apiFilters);
             setLessons(res.data);
             setPagination(res.pagination);
-
-            const elapsed = performance.now() - start;
-            const minDelay = 400;
-            if (elapsed < minDelay) {
-                await new Promise((resolve) => setTimeout(resolve, minDelay - elapsed));
-            }
-
         } catch (err) {
             console.error(err);
             toast.error("Không thể tải danh sách bài học.");
@@ -205,26 +224,14 @@ export default function LessonManagerPage() {
         }
     };
 
-    // Lấy dữ liệu lần đầu
     useEffect(() => {
-        fetchLessonManagers(1);
-    }, []);
+        fetchLessonManagers(page);
+    }, [page, apiFilters]);
 
-    // Khi đổi trang
-    const handleChangePage = (_: any, newPage: number) => {
-        setPage(newPage);
-        fetchLessonManagers(newPage);
+    const setFilter = <K extends keyof LessonManagerFilters>(key: K, value: LessonManagerFilters[K]) => {
+        setPage(1);
+        setFilters((prev) => ({ ...prev, [key]: value }));
     };
-
-    // Lọc client-side (nếu muốn kết hợp)
-    const filteredLessons = useMemo(() => {
-        return lessons.filter((lesson) => {
-            const matchSearch = lesson.title.toLowerCase().includes(search.toLowerCase());
-            const matchLevel = levelFilter ? lesson.level === levelFilter : true;
-            const matchStatus = statusFilter ? lesson.status === statusFilter : true;
-            return matchSearch && matchLevel && matchStatus;
-        });
-    }, [lessons, search, levelFilter, statusFilter]);
 
     const handleOpenEdit = (lesson?: LessonManager) => {
         setSelectedLesson(lesson || null);
@@ -232,32 +239,23 @@ export default function LessonManagerPage() {
         setEditModal(true);
     };
 
-    const handleOpenDelete = (lesson: LessonManager) => {
-        setSelectedLesson(lesson);
-        setDeleteModal(true);
-    };
-
     const handleSave = async (finalForm?: Partial<LessonManager>) => {
         try {
             setLoading(true);
-            if (!finalForm) finalForm = form;
+            const payload = finalForm || form;
             if (selectedLesson) {
-                // Cập nhật
-                await lessonManagerService.updateLessonManager(selectedLesson._id, finalForm);
+                await lessonManagerService.updateLessonManager(selectedLesson._id, payload);
             } else {
-                // Tạo mới
-                await lessonManagerService.createLessonManager(finalForm);
+                await lessonManagerService.createLessonManager(payload);
             }
+            toast.success("Lưu bài học tổng hợp thành công.");
+            setEditModal(false);
+            fetchLessonManagers(page);
         } catch (err) {
             toast.error("Lưu bài học tổng hợp thất bại.");
-            return;
-        }
-        finally {
+        } finally {
             setLoading(false);
         }
-        toast.success("Lưu bài học tổng hợp thành công!");
-        setEditModal(false);
-        fetchLessonManagers(page);
     };
 
     const handleDelete = async () => {
@@ -265,7 +263,8 @@ export default function LessonManagerPage() {
         try {
             setLoading(true);
             await lessonManagerService.deleteLessonManager(selectedLesson._id);
-            toast.success("Xóa bài học tổng hợp thành công!");
+            toast.success("Xóa bài học tổng hợp thành công.");
+            setPage(1);
             fetchLessonManagers(1);
         } catch (err) {
             toast.error("Không thể xóa bài học.");
@@ -276,19 +275,41 @@ export default function LessonManagerPage() {
     };
 
     return (
-        <Box className="min-h-screen bg-gray-50 p-8 space-y-6">
+        <Box
+            className="min-h-screen bg-gray-50 space-y-6"
+            sx={{
+                width: "100%",
+                maxWidth: 1240,
+                mx: "auto",
+                px: { xs: 2, sm: 3, md: 3 },
+                py: { xs: 2, md: 3 },
+                boxSizing: "border-box",
+                overflowX: "hidden",
+            }}
+        >
             <Typography variant="h5" fontWeight={700}>
                 Danh sách bài học tổng hợp
             </Typography>
 
-            {/* Search & Filters */}
-            <Box className="flex flex-col md:flex-row gap-4 md:items-center">
+            <Box
+                sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "1fr 1fr",
+                        md: "repeat(3, minmax(0, 1fr))",
+                        lg: "repeat(4, minmax(0, 1fr))",
+                    },
+                    gap: 2,
+                    alignItems: "center",
+                }}
+            >
                 <TextField
                     placeholder="Tìm kiếm bài học..."
                     variant="outlined"
                     size="small"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    value={filters.query || ""}
+                    onChange={(e) => setFilter("query", e.target.value)}
                     InputProps={{
                         startAdornment: (
                             <InputAdornment position="start">
@@ -296,93 +317,154 @@ export default function LessonManagerPage() {
                             </InputAdornment>
                         ),
                     }}
-                    sx={{ flex: 1 }}
                 />
-
-                <FormControl size="small" sx={{ minWidth: 150 }}>
-                    <InputLabel>Cấp độ</InputLabel>
-                    <Select value={levelFilter} label="Cấp độ" onChange={(e) => setLevelFilter(e.target.value)}>
-                        <MenuItem value="">Tất cả</MenuItem>
-                        <MenuItem value="A1">A1</MenuItem>
-                        <MenuItem value="A2">A2</MenuItem>
-                        <MenuItem value="B1">B1</MenuItem>
-                        <MenuItem value="B2">B2</MenuItem>
-                    </Select>
-                </FormControl>
-
-                <FormControl size="small" sx={{ minWidth: 150 }}>
+                <FormControl size="small">
                     <InputLabel>Trạng thái</InputLabel>
-                    <Select value={statusFilter} label="Trạng thái" onChange={(e) => setStatusFilter(e.target.value)}>
+                    <Select
+                        value={filters.status || ""}
+                        label="Trạng thái"
+                        onChange={(e) => setFilter("status", e.target.value as TestStatus | "")}
+                    >
                         <MenuItem value="">Tất cả</MenuItem>
-                        <MenuItem value="approved">Đã duyệt</MenuItem>
-                        <MenuItem value="pending">Chờ duyệt</MenuItem>
-                        <MenuItem value="draft">Nháp</MenuItem>
+                        {Object.entries(TestStatusLabel).map(([status, label]) => (
+                            <MenuItem key={status} value={status}>{label}</MenuItem>
+                        ))}
                     </Select>
                 </FormControl>
+                <FormControl size="small">
+                    <InputLabel>Unit type</InputLabel>
+                    <Select
+                        value={filters.unit_type || ""}
+                        label="Unit type"
+                        onChange={(e) => setFilter("unit_type", e.target.value as LessonManagerUnitType | "")}
+                    >
+                        <MenuItem value="">Tất cả</MenuItem>
+                        {unitTypeOptions.map((type) => (
+                            <MenuItem key={type} value={type}>{UnitTypeLabel[type]}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <FormControl size="small">
+                    <InputLabel>Node role</InputLabel>
+                    <Select
+                        value={filters.node_role || ""}
+                        label="Node role"
+                        onChange={(e) => setFilter("node_role", e.target.value as CtvLessonManagerNodeRole | "")}
+                    >
+                        <MenuItem value="">Tất cả</MenuItem>
+                        {nodeRoleOptions.map((role) => (
+                            <MenuItem key={role} value={role}>{NodeRoleLabel[role]}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <FormControl size="small">
+                    <InputLabel>Target tag</InputLabel>
+                    <Select
+                        value={filters.target_tag || ""}
+                        label="Target tag"
+                        onChange={(e) => setFilter("target_tag", e.target.value)}
+                    >
+                        <MenuItem value="">Tất cả</MenuItem>
+                        {targetTagOptions.map((tag) => (
+                            <MenuItem key={tag} value={tag}>{tag}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <FormControl size="small">
+                    <InputLabel>Part</InputLabel>
+                    <Select
+                        value={filters.part_type || ""}
+                        label="Part"
+                        onChange={(e) => setFilter("part_type", e.target.value as LessonManager["part_type"] | "")}
+                    >
+                        <MenuItem value="">Tất cả</MenuItem>
+                        {[1, 2, 3, 4, 5, 6, 7].map((part) => (
+                            <MenuItem key={part} value={part}>Part {part}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <TextField
+                    size="small"
+                    label="Score từ"
+                    type="number"
+                    value={filters.score_from || ""}
+                    onChange={(e) => setFilter("score_from", e.target.value ? Number(e.target.value) : "")}
+                />
+                <TextField
+                    size="small"
+                    label="Score đến"
+                    type="number"
+                    value={filters.score_to || ""}
+                    onChange={(e) => setFilter("score_to", e.target.value ? Number(e.target.value) : "")}
+                />
             </Box>
 
-            {/* Grid list */}
-            <Grid container spacing={3}>
-                <AnimatePresence mode="wait">
+            <Box
+                sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "1fr",
+                        md: "repeat(2, minmax(0, 1fr))",
+                        lg: "repeat(3, minmax(0, 1fr))",
+                        xl: "repeat(3, minmax(0, 1fr))",
+                    },
+                    gap: { xs: 2, md: 3 },
+                    width: "100%",
+                }}
+            >
+                <>
                     {loading ? (
                         Array.from({ length: 9 }).map((_, i) => (
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
-                                <motion.div
-                                    key={`skeleton-${i}`}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                >
-                                    <Card className="rounded-2xl shadow-md overflow-hidden w-full h-full">
-                                        <Skeleton variant="rectangular" height={176} width="100%" />
-                                        <CardContent>
-                                            <Skeleton width="90%" height={24} sx={{ mb: 1 }} />
-                                            <Skeleton width="75%" height={20} sx={{ mb: 2 }} />
-                                            <Box className="flex gap-2 mt-2">
-                                                <Skeleton variant="rectangular" width={70} height={28} />
-                                                <Skeleton variant="rectangular" width={70} height={28} />
-                                            </Box>
-                                            <Box className="flex justify-between items-center mt-3">
-                                                <Skeleton variant="rectangular" width={90} height={36} />
-                                                <Skeleton variant="circular" width={36} height={36} />
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            </Grid>
+                            <Box key={i} sx={{ minWidth: 0 }}>
+                                <Card className="rounded-2xl shadow-md overflow-hidden w-full h-full">
+                                    <Skeleton variant="rectangular" height={176} width="100%" />
+                                    <CardContent>
+                                        <Skeleton width="90%" height={24} sx={{ mb: 1 }} />
+                                        <Skeleton width="75%" height={20} sx={{ mb: 2 }} />
+                                        <Box className="flex gap-2 mt-2">
+                                            <Skeleton variant="rectangular" width={70} height={28} />
+                                            <Skeleton variant="rectangular" width={70} height={28} />
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Box>
                         ))
-                    ) : filteredLessons.length > 0 ? (
-                        filteredLessons.map((lesson) => (
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={lesson._id}>
+                    ) : lessons.length > 0 ? (
+                        lessons.map((lesson) => (
+                            <Box key={lesson._id} sx={{ minWidth: 0 }}>
                                 <motion.div
-                                    key={lesson._id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.25 }}
                                 >
-                                    <LessonCard data={lesson} onEdit={handleOpenEdit} onDelete={handleOpenDelete} />
+                                    <LessonCard
+                                        data={lesson}
+                                        onEdit={handleOpenEdit}
+                                        onDelete={(item) => {
+                                            setSelectedLesson(item);
+                                            setDeleteModal(true);
+                                        }}
+                                    />
                                 </motion.div>
-                            </Grid>
+                            </Box>
                         ))
                     ) : (
-                        <Grid size={{ xs: 12 }}>
+                        <Box sx={{ gridColumn: "1 / -1" }}>
                             <Typography variant="body1" color="text.secondary" align="center" className="py-12">
                                 Không tìm thấy bài học nào.
                             </Typography>
-                        </Grid>
+                        </Box>
                     )}
-                </AnimatePresence>
-            </Grid>
+                </>
+            </Box>
 
-            {/* Pagination */}
             {!loading && pagination && pagination.totalPages > 1 && (
                 <Box className="flex justify-center mt-8">
                     <Pagination
                         count={pagination.totalPages}
                         page={pagination.page}
-                        onChange={handleChangePage}
+                        onChange={(_, newPage) => setPage(newPage)}
                         color="primary"
                         shape="rounded"
                     />
@@ -396,6 +478,7 @@ export default function LessonManagerPage() {
                 onChange={setForm}
                 onSave={handleSave}
                 isEdit={!!selectedLesson}
+                readonly={!!selectedLesson && !isLessonManagerEditable(selectedLesson.status)}
             />
 
             <LessonManagerDeleteModal
@@ -405,9 +488,8 @@ export default function LessonManagerPage() {
                 onConfirm={handleDelete}
             />
 
-            {/* Fab */}
             <Tooltip title="Thêm bài học tổng hợp">
-                <Zoom in={true}>
+                <Zoom in>
                     <Fab
                         aria-label="add"
                         color="primary"

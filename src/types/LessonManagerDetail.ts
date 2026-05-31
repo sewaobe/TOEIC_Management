@@ -42,7 +42,11 @@ export interface QuizTrailer {
     }[]
 }
 
-export interface LessonManagerDetail extends LessonManager {
+export interface LessonManagerDetail
+    extends Omit<
+        LessonManager,
+        "topic_vocabulary_ids" | "lesson_ids" | "dictation_ids" | "shadowing_ids" | "quiz_ids"
+    > {
     topic_vocabulary_ids: VocabularyTopicTrailer[];
     lesson_ids: LessonTrailer[];
     dictation_ids: Dictation[];
