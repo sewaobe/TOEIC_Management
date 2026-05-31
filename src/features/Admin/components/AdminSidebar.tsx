@@ -102,20 +102,6 @@ const AdminSidebar: React.FC = () => {
         borderRight: `1px solid ${theme.palette.divider}`,
       }}
     >
-      {/* Gradient top background */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 200,
-          maxWidth: "280px",
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, transparent 100%)`,
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Header */}
       <Box sx={{ p: 3, pb: 2 }}>
         <motion.div
@@ -227,7 +213,7 @@ const AdminSidebar: React.FC = () => {
                     <ListItemText
                       primary={item.main.text}
                       primaryTypographyProps={{
-                        fontWeight: active ? 600 : 500,
+                        fontWeight: active ? 500 : 400,
                         fontSize: "0.9rem",
                       }}
                     />

@@ -1,6 +1,6 @@
 import { Dictation } from "./Dictation";
 import { LessonSection } from "./lesson";
-import { CERFLevel, LessonManager, PartType } from "./LessonManager";
+import { CERFLevel, LessonManager, LessonManagerGraphNode, PartType } from "./LessonManager";
 import { Shadowing } from "./Shadowing";
 
 export interface LessonTrailer {
@@ -45,11 +45,21 @@ export interface QuizTrailer {
 export interface LessonManagerDetail
     extends Omit<
         LessonManager,
-        "topic_vocabulary_ids" | "lesson_ids" | "dictation_ids" | "shadowing_ids" | "quiz_ids"
+        | "topic_vocabulary_ids"
+        | "lesson_ids"
+        | "dictation_ids"
+        | "shadowing_ids"
+        | "quiz_ids"
+        | "next_unit_ids"
+        | "prerequisite_unit_ids"
+        | "auxiliary_unit_ids"
     > {
     topic_vocabulary_ids: VocabularyTopicTrailer[];
     lesson_ids: LessonTrailer[];
     dictation_ids: Dictation[];
     shadowing_ids: Shadowing[];
     quiz_ids: QuizTrailer[];
+    next_unit_ids: LessonManagerGraphNode[];
+    prerequisite_unit_ids: LessonManagerGraphNode[];
+    auxiliary_unit_ids: LessonManagerGraphNode[];
 }

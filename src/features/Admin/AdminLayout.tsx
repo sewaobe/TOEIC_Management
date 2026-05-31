@@ -31,9 +31,19 @@ export default function AdminLayout() {
         }}
       >
         <AdminSidebar /> {/* 🔁 Sidebar riêng cho Admin */}
-        <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
           <Header toggleTheme={toggleTheme} isDarkMode={mode === "dark"} />
-          <Box sx={{ flex: 1, overflow: "auto", p: 2 }} id="layout_container">
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              maxWidth: "100%",
+              overflow: "auto",
+              p: 2,
+              boxSizing: "border-box",
+            }}
+            id="layout_container"
+          >
             <Outlet /> {/* Render nội dung từng trang */}
           </Box>
         </Box>

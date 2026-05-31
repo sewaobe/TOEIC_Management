@@ -27,6 +27,7 @@ import {
   RecordVoiceOver,
   Hearing,
   Quiz,
+  AccountTree,
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -42,6 +43,14 @@ import TabMainLesson from "./tabs/TabMainLesson";
 import TabDictation from "./tabs/TabDictation";
 import TabShadowing from "./tabs/TabShadowing";
 import TabQuiz from "./tabs/TabQuiz";
+import TabGraphEdges from "./tabs/TabGraphEdges";
+import { NodeRoleLabel, UnitTypeLabel } from "../../../../../types/LessonManager";
+
+const getCreatorName = (createdBy: any) => {
+  if (!createdBy) return "-";
+  if (typeof createdBy === "string") return createdBy;
+  return createdBy.displayName || createdBy.username || createdBy.email || "-";
+};
 
 export default function LessonApprovalDetailPage(): JSX.Element {
   const theme = useTheme();
@@ -181,6 +190,8 @@ export default function LessonApprovalDetailPage(): JSX.Element {
         return { label: "Bản nháp", color: "default" };
       case TestStatus.CLOSED:
         return { label: "Đã đóng", color: "error" };
+      case TestStatus.REJECTED:
+        return { label: "Bị từ chối", color: "error" };
       default:
         return { label: "Khác", color: "default" };
     }
@@ -209,7 +220,7 @@ export default function LessonApprovalDetailPage(): JSX.Element {
         <img
           src={
             lessonManager.thumbnail ||
-            "https://images.unsplash.com/photo-1584697964154-5b0e1a0dbb09?auto=format&fit=crop&w=1200&q=60"
+            "https://res.cloudinary.com/dgi1g967z/image/upload/v1780219832/jh1nyaim79isvrgo4yf0.webp"
           }
           alt={lessonManager.title}
           style={{ width: "100%", height: "16rem", objectFit: "cover" }}
@@ -239,15 +250,27 @@ export default function LessonApprovalDetailPage(): JSX.Element {
               alignItems: "center",
             }}
           >
-            <Button
-              startIcon={<ArrowBack />}
-              variant="outlined"
-              color="inherit"
-              size="small"
-              onClick={handleBack}
-            >
-              Quay lại
-            </Button>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                startIcon={<ArrowBack />}
+                variant="outlined"
+                color="inherit"
+                size="small"
+                onClick={handleBack}
+              >
+                Quay lại
+              </Button>
+              <Button
+                startIcon={<AccountTree />}
+                variant="contained"
+                size="small"
+                onClick={() =>
+                  navigate(`/admin/lessons/graph?highlight=${lessonManagerId}`)
+                }
+              >
+                Xem trong graph
+              </Button>
+            </Box>
 
             {lessonManager.status === TestStatus.PENDING ? (
               <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -292,18 +315,47 @@ export default function LessonApprovalDetailPage(): JSX.Element {
               {lessonManager.description}
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2, mt: 2 }}>
-              <Chip label={lessonManager.level} color="info" />
               <Chip
                 label={`Part ${lessonManager.part_type}`}
                 color="secondary"
                 sx={{ color: "white" }}
               />
+              <Chip
+                label={`${lessonManager.score_band?.from ?? "-"}-${lessonManager.score_band?.to ?? "-"}`}
+                color="info"
+              />
+              <Chip
+                label={
+                  lessonManager.unit_type
+                    ? UnitTypeLabel[lessonManager.unit_type]
+                    : "-"
+                }
+                color="default"
+              />
+              <Chip
+                label={
+                  lessonManager.node_role
+                    ? NodeRoleLabel[lessonManager.node_role]
+                    : "-"
+                }
+                color="default"
+              />
               <Chip label={statusChip.label} color={statusChip.color as any} />
+              {(lessonManager.target_tags || []).map((tag) => (
+                <Chip
+                  key={tag}
+                  label={tag}
+                  variant="outlined"
+                  sx={{ color: "white", borderColor: "white" }}
+                />
+              ))}
             </Box>
             <Typography variant="body2" sx={{ opacity: 0.85, mt: 1 }}>
               ⭐ {lessonManager.rating || 0} | 👥{" "}
               {lessonManager.student_count || 0} | ⏱{" "}
-              {lessonManager.planned_completion_time || 0} phút
+              {lessonManager.planned_completion_time || 0} phút | Weight{" "}
+              {lessonManager.weight ?? 0} | Creator{" "}
+              {getCreatorName(lessonManager.created_by)}
             </Typography>
           </Box>
         </Box>
@@ -338,6 +390,7 @@ export default function LessonApprovalDetailPage(): JSX.Element {
           iconPosition="start"
         />
         <Tab label="Quiz" icon={<Quiz />} iconPosition="start" />
+        <Tab label="Graph Edges" icon={<AccountTree />} iconPosition="start" />
       </Tabs>
 
       {/* 🧠 Tab content */}
@@ -351,6 +404,12 @@ export default function LessonApprovalDetailPage(): JSX.Element {
             {tab === 2 && <TabDictation lessonManager={lessonManager} />}
             {tab === 3 && <TabShadowing lessonManager={lessonManager} />}
             {tab === 4 && <TabQuiz lessonManager={lessonManager} />}
+            {tab === 5 && (
+              <TabGraphEdges
+                lessonManager={lessonManager}
+                onSaved={fetchLessonManager}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

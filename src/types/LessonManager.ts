@@ -34,6 +34,19 @@ export interface ActivityOption {
     estimated_minutes: number;
 }
 
+export interface LessonManagerGraphNode {
+    _id: string;
+    title: string;
+    part_type: PartType;
+    score_band: ScoreBand;
+    unit_type: LessonManagerUnitType;
+    node_role: LessonManagerNodeRole;
+    target_tags: string[];
+    status: TestStatus;
+    planned_completion_time?: number;
+    weight?: number;
+}
+
 export interface LessonManagerFilters {
     query?: string;
     part_type?: PartType | "";
@@ -100,6 +113,9 @@ export interface LessonManager {
     node_role: LessonManagerNodeRole;
     target_tags: string[];
     recommended_activity_order: RecommendedActivity[];
+    next_unit_ids?: string[] | LessonManagerGraphNode[];
+    prerequisite_unit_ids?: string[] | LessonManagerGraphNode[];
+    auxiliary_unit_ids?: string[] | LessonManagerGraphNode[];
     lesson_ids?: string[];
     topic_vocabulary_ids?: string[];
     dictation_ids?: string[];

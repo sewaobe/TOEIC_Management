@@ -14,78 +14,96 @@ import {
   Tooltip,
   TablePagination,
   IconButton,
+  Stack,
+  Button,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import adminLessonService from "./services/adminLesson.service";
-import { STATUS_COLOR_MAP, TestStatusLabel } from "../../../../types/LessonManager";
+import {
+  LessonManager,
+  LessonManagerNodeRole,
+  LessonManagerUnitType,
+  NodeRoleLabel,
+  PartType,
+  STATUS_COLOR_MAP,
+  TestStatus,
+  TestStatusLabel,
+  UnitTypeLabel,
+} from "../../../../types/LessonManager";
 
-interface LessonManager {
-  _id: string;
-  title: string;
-  part_type?: string;
-  level?: string;
-  created_by?: any;
-  created_at?: string;
-  status?: string;
-  thumbnail?: string;
-}
-
-const partOptions = [
-  "Part 1",
-  "Part 2",
-  "Part 3",
-  "Part 4",
-  "Part 5",
-  "Part 6",
-  "Part 7",
+const partOptions: PartType[] = [1, 2, 3, 4, 5, 6, 7];
+const unitTypeOptions: LessonManagerUnitType[] = [
+  "foundation",
+  "skill_drill",
+  "mixed_practice",
+  "exam_practice",
+  "remedial",
 ];
-const levelOptions = ["A1", "A2", "B1", "B2", "C1"];
+const nodeRoleOptions: LessonManagerNodeRole[] = [
+  "entry",
+  "normal",
+  "target",
+  "support",
+];
+const statusOptions: TestStatus[] = [
+  "draft",
+  "pending",
+  "approved",
+  "open",
+  "closed",
+  "rejected",
+];
+
+const getCreatorName = (createdBy: any) => {
+  if (!createdBy) return "-";
+  if (typeof createdBy === "string") return createdBy;
+  return createdBy.displayName || createdBy.username || createdBy.email || "-";
+};
 
 export default function LessonApprovalPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [part, setPart] = useState("");
-  const [level, setLevel] = useState("");
-  const [creator, setCreator] = useState("");
+  const [status, setStatus] = useState<TestStatus | "">("");
+  const [partType, setPartType] = useState<PartType | "">("");
+  const [unitType, setUnitType] = useState<LessonManagerUnitType | "">("");
+  const [nodeRole, setNodeRole] = useState<LessonManagerNodeRole | "">("");
+  const [scoreFrom, setScoreFrom] = useState<number | "">("");
+  const [scoreTo, setScoreTo] = useState<number | "">("");
+  const [targetTag, setTargetTag] = useState("");
   const [showPending, setShowPending] = useState(true);
-  // server-side paging
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
   const [items, setItems] = useState<LessonManager[]>([]);
-
-  // pending table separate paging
   const [pendingPage, setPendingPage] = useState(0);
   const [pendingRows, setPendingRows] = useState(5);
   const [pendingItems, setPendingItems] = useState<LessonManager[]>([]);
-  const [pendingTotal, setPendingTotal] = useState<number | undefined>(
-    undefined
-  );
+  const [pendingTotal, setPendingTotal] = useState(0);
 
-  // fetch list from server
-  const fetchList = async (opts?: {
-    page?: number;
-    limit?: number;
-    status?: string;
-  }) => {
+  const commonParams = {
+    search,
+    part_type: partType,
+    unit_type: unitType,
+    node_role: nodeRole,
+    score_from: scoreFrom,
+    score_to: scoreTo,
+    target_tag: targetTag,
+  };
+
+  const fetchList = async (opts?: { page?: number; limit?: number }) => {
     try {
-      const p = (opts?.page ?? page) + 1; // server 1-based
-      const limit = opts?.limit ?? rowsPerPage;
       const res: any = await adminLessonService.list({
-        page: p,
-        limit,
-        search: search || undefined,
-        status: status || undefined,
-        part: part || undefined,
-        level: level || undefined,
+        ...commonParams,
+        page: (opts?.page ?? page) + 1,
+        limit: opts?.limit ?? rowsPerPage,
+        status,
       });
       setItems(res.items || []);
       setTotal(res.total || 0);
-    } catch (err) {
-      // ignore for now
+    } catch {
       setItems([]);
       setTotal(0);
     }
@@ -93,41 +111,60 @@ export default function LessonApprovalPage() {
 
   const fetchPending = async (opts?: { page?: number; limit?: number }) => {
     try {
-      const p = (opts?.page ?? pendingPage) + 1;
-      const limit = opts?.limit ?? pendingRows;
       const res: any = await adminLessonService.list({
-        page: p,
-        limit,
+        ...commonParams,
+        page: (opts?.page ?? pendingPage) + 1,
+        limit: opts?.limit ?? pendingRows,
         status: "pending",
       });
       setPendingItems(res.items || []);
+      setPendingTotal(res.total || 0);
     } catch {
       setPendingItems([]);
+      setPendingTotal(0);
     }
   };
 
   useEffect(() => {
-    // reset to first page when filters change
     setPage(0);
     fetchList({ page: 0, limit: rowsPerPage });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status, part, level, rowsPerPage]);
+  }, [search, status, partType, unitType, nodeRole, scoreFrom, scoreTo, targetTag, rowsPerPage]);
 
   useEffect(() => {
-    fetchPending({ page: pendingPage, limit: pendingRows });
+    setPendingPage(0);
+    fetchPending({ page: 0, limit: pendingRows });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, part, level, pendingPage, pendingRows]);
+  }, [search, partType, unitType, nodeRole, scoreFrom, scoreTo, targetTag, pendingRows]);
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h5" fontWeight={700} mb={2}>
-        Duyệt bài học tổng hợp
-      </Typography>
+    <Box
+      sx={{
+        p: 2,
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
+        overflowX: "hidden",
+      }}
+    >
+      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} gap={1.5} mb={2}>
+        <Typography variant="h5" fontWeight={700}>
+          Duyệt LessonManager
+        </Typography>
+        <Button variant="contained" onClick={() => navigate("/admin/lessons/graph")}>
+          Xem graph
+        </Button>
+      </Stack>
 
       <Paper
         sx={{
           p: 2,
           mb: 2,
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          boxSizing: "border-box",
           display: "flex",
           gap: 2,
           alignItems: "center",
@@ -135,91 +172,95 @@ export default function LessonApprovalPage() {
           flexWrap: "wrap",
         }}
       >
-        <Box sx={{ display: "flex", gap: 2, flex: 1, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", gap: 2, flex: 1, flexWrap: "wrap", minWidth: 0 }}>
           <TextField
             label="Tìm kiếm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            sx={{ width: "40%" }}
+            sx={{ minWidth: 260, flex: "1 1 260px" }}
           />
           <TextField
             label="Trạng thái"
             select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => setStatus(e.target.value as TestStatus | "")}
             sx={{ width: 150 }}
           >
             <MenuItem value="">Tất cả</MenuItem>
-            <MenuItem value="draft">Bản nháp</MenuItem>
-            <MenuItem value="pending">Chờ duyệt</MenuItem>
-            <MenuItem value="approved">Đã duyệt</MenuItem>
-            <MenuItem value="open">Đang mở</MenuItem>
-            <MenuItem value="closed">Đã đóng / Từ chối</MenuItem>
+            {statusOptions.map((value) => (
+              <MenuItem key={value} value={value}>
+                {TestStatusLabel[value]}
+              </MenuItem>
+            ))}
           </TextField>
-
           <TextField
             label="Part"
             select
-            value={part}
-            onChange={(e) => setPart(e.target.value)}
-            sx={{ width: 120 }}
+            value={partType}
+            onChange={(e) =>
+              setPartType(e.target.value === "" ? "" : (Number(e.target.value) as PartType))
+            }
+            sx={{ width: 110 }}
           >
             <MenuItem value="">Tất cả</MenuItem>
-            {partOptions.map((p) => (
-              <MenuItem key={p} value={p}>
-                {p}
+            {partOptions.map((value) => (
+              <MenuItem key={value} value={value}>
+                Part {value}
               </MenuItem>
             ))}
           </TextField>
-
           <TextField
-            label="Trình độ"
+            label="Unit type"
             select
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-            sx={{ width: 120 }}
-          >
-            <MenuItem value="">Tất cả</MenuItem>
-            {levelOptions.map((lv) => (
-              <MenuItem key={lv} value={lv}>
-                {lv}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            label="Người tạo"
-            select
-            value={creator}
-            onChange={(e) => setCreator(e.target.value)}
+            value={unitType}
+            onChange={(e) => setUnitType(e.target.value as LessonManagerUnitType | "")}
             sx={{ width: 180 }}
           >
             <MenuItem value="">Tất cả</MenuItem>
-            {Array.from(
-              new Set(
-                [
-                  ...items.map(
-                    (it) =>
-                      (it.created_by &&
-                        (it.created_by.displayName ||
-                          it.created_by.username)) ||
-                      ""
-                  ),
-                  ...pendingItems.map(
-                    (it) =>
-                      (it.created_by &&
-                        (it.created_by.displayName ||
-                          it.created_by.username)) ||
-                      ""
-                  ),
-                ].filter(Boolean)
-              )
-            ).map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
+            {unitTypeOptions.map((value) => (
+              <MenuItem key={value} value={value}>
+                {UnitTypeLabel[value]}
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            label="Node role"
+            select
+            value={nodeRole}
+            onChange={(e) => setNodeRole(e.target.value as LessonManagerNodeRole | "")}
+            sx={{ width: 150 }}
+          >
+            <MenuItem value="">Tất cả</MenuItem>
+            {nodeRoleOptions.map((value) => (
+              <MenuItem key={value} value={value}>
+                {NodeRoleLabel[value]}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label="Score từ"
+            type="number"
+            value={scoreFrom}
+            onChange={(e) =>
+              setScoreFrom(e.target.value === "" ? "" : Number(e.target.value))
+            }
+            sx={{ width: 120 }}
+          />
+          <TextField
+            label="Score đến"
+            type="number"
+            value={scoreTo}
+            onChange={(e) =>
+              setScoreTo(e.target.value === "" ? "" : Number(e.target.value))
+            }
+            sx={{ width: 120 }}
+          />
+          <TextField
+            label="Target tag"
+            value={targetTag}
+            onChange={(e) => setTargetTag(e.target.value)}
+            sx={{ width: 170 }}
+          />
         </Box>
 
         {!status && (
@@ -246,14 +287,14 @@ export default function LessonApprovalPage() {
           page={pendingPage}
           rowsPerPage={pendingRows}
           total={pendingTotal}
-          onPageChange={(p) => {
-            setPendingPage(p);
-            fetchPending({ page: p, limit: pendingRows });
+          onPageChange={(nextPage) => {
+            setPendingPage(nextPage);
+            fetchPending({ page: nextPage, limit: pendingRows });
           }}
-          onRowsPerPageChange={(r) => {
-            setPendingRows(r);
+          onRowsPerPageChange={(nextRows) => {
+            setPendingRows(nextRows);
             setPendingPage(0);
-            fetchPending({ page: 0, limit: r });
+            fetchPending({ page: 0, limit: nextRows });
           }}
         />
       )}
@@ -263,14 +304,14 @@ export default function LessonApprovalPage() {
         page={page}
         rowsPerPage={rowsPerPage}
         total={total}
-        onPageChange={(p) => {
-          setPage(p);
-          fetchList({ page: p, limit: rowsPerPage });
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          fetchList({ page: nextPage, limit: rowsPerPage });
         }}
-        onRowsPerPageChange={(r) => {
-          setRowsPerPage(r);
+        onRowsPerPageChange={(nextRows) => {
+          setRowsPerPage(nextRows);
           setPage(0);
-          fetchList({ page: 0, limit: r });
+          fetchList({ page: 0, limit: nextRows });
         }}
       />
     </Box>
@@ -288,110 +329,166 @@ function SectionTable({
 }: {
   title: string;
   items: LessonManager[];
-  page?: number;
-  rowsPerPage?: number;
-  total?: number;
-  onPageChange?: (p: number) => void;
-  onRowsPerPageChange?: (r: number) => void;
+  page: number;
+  rowsPerPage: number;
+  total: number;
+  onPageChange: (p: number) => void;
+  onRowsPerPageChange: (r: number) => void;
 }) {
   const navigate = useNavigate();
-  const [localPage, setLocalPage] = useState(0);
-  const [localRowsPerPage, setLocalRowsPerPage] = useState(5);
-  const serverMode = typeof total === "number";
-  const paginated = serverMode
-    ? items
-    : items.slice(
-      localPage * localRowsPerPage,
-      localPage * localRowsPerPage + localRowsPerPage
-    );
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      style={{ marginBottom: 32 }}
+      style={{
+        marginBottom: 32,
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+        overflow: "hidden",
+      }}
     >
       <Typography fontWeight={600} mb={1}>
         {title}
       </Typography>
-      <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
-        <TableContainer>
-          <Table>
+      <Paper sx={{ borderRadius: 3, overflow: "hidden", width: "100%", maxWidth: "100%" }}>
+        <TableContainer sx={{ overflowX: "auto", width: "100%", maxWidth: "100%" }}>
+          <Table
+            size="small"
+            sx={{
+              minWidth: 1180,
+              tableLayout: "fixed",
+              "& th, & td": {
+                px: 1.25,
+                whiteSpace: "nowrap",
+                verticalAlign: "middle",
+              },
+            }}
+          >
             <TableHead>
               <TableRow sx={{ bgcolor: "action.hover" }}>
-                <TableCell>#</TableCell>
-                <TableCell>Tên bài học</TableCell>
-                <TableCell>Part</TableCell>
-                <TableCell>Trình độ</TableCell>
-                <TableCell>Người tạo</TableCell>
-                <TableCell>Ngày tạo</TableCell>
-                <TableCell>Trạng thái</TableCell>
+                <TableCell sx={{ width: 44 }}>#</TableCell>
+                <TableCell sx={{ width: 220 }}>Tên bài học</TableCell>
+                <TableCell sx={{ width: 52 }}>Part</TableCell>
+                <TableCell sx={{ width: 90 }}>Score band</TableCell>
+                <TableCell sx={{ width: 116 }}>Unit type</TableCell>
+                <TableCell sx={{ width: 100 }}>Node role</TableCell>
+                <TableCell sx={{ width: 150 }}>Target tags</TableCell>
+                <TableCell sx={{ width: 104 }}>Trạng thái</TableCell>
+                <TableCell sx={{ width: 120 }}>Người tạo</TableCell>
+                <TableCell sx={{ width: 90 }}>Ngày tạo</TableCell>
+                <TableCell sx={{ width: 82 }}>Thời gian</TableCell>
+                <TableCell sx={{ width: 68 }}>Weight</TableCell>
+                <TableCell align="right" sx={{ width: 64 }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginated.map((l, i) => (
+              {items.map((lesson, index) => (
                 <TableRow
-                  key={(l as any)._id || (l as any).id || i}
+                  key={lesson._id}
                   hover
                   sx={{ cursor: "pointer" }}
-                  onClick={() =>
-                    navigate(
-                      `/admin/lessons/${(l as any)._id || (l as any).id}`
-                    )
-                  } // ✅ chuyển sang trang chi tiết
+                  onClick={() => navigate(`/admin/lessons/${lesson._id}`)}
                 >
+                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>
-                    {(page ?? localPage) * (rowsPerPage ?? localRowsPerPage) +
-                      i +
-                      1}
+                    <Typography
+                      variant="body2"
+                      noWrap
+                      title={lesson.title}
+                      sx={{ maxWidth: 200 }}
+                    >
+                      {lesson.title}
+                    </Typography>
                   </TableCell>
-                  <TableCell>{l.title}</TableCell>
-                  <TableCell>{l.part_type || "-"}</TableCell>
-                  <TableCell>{l.level || "-"}</TableCell>
+                  <TableCell>{lesson.part_type || "-"}</TableCell>
                   <TableCell>
-                    {(l.created_by &&
-                      (l.created_by.displayName || l.created_by.username)) ||
-                      "-"}
-                  </TableCell>
-                  <TableCell>
-                    {l.created_at
-                      ? new Date(l.created_at).toLocaleDateString()
+                    {lesson.score_band
+                      ? `${lesson.score_band.from}-${lesson.score_band.to}`
                       : "-"}
                   </TableCell>
                   <TableCell>
+                    {lesson.unit_type ? UnitTypeLabel[lesson.unit_type] : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {lesson.node_role ? NodeRoleLabel[lesson.node_role] : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" gap={0.5} sx={{ overflow: "hidden" }}>
+                      {(lesson.target_tags || []).slice(0, 3).map((tag) => (
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
+                          variant="outlined"
+                          sx={{ maxWidth: 120 }}
+                        />
+                      ))}
+                      {(lesson.target_tags || []).length > 3 && (
+                        <Chip
+                          label={`+${lesson.target_tags.length - 3}`}
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
                     <Chip
-                      label={l.status ? TestStatusLabel[l.status as keyof typeof TestStatusLabel] : "Unknown"}
-                      color={STATUS_COLOR_MAP[l.status as keyof typeof STATUS_COLOR_MAP] || "default"}
+                      label={
+                        lesson.status
+                          ? TestStatusLabel[lesson.status as TestStatus]
+                          : "Unknown"
+                      }
+                      color={
+                        STATUS_COLOR_MAP[lesson.status as TestStatus] || "default"
+                      }
+                      size="small"
                     />
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      noWrap
+                      title={getCreatorName(lesson.created_by)}
+                    >
+                      {getCreatorName(lesson.created_by)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {lesson.created_at
+                      ? new Date(lesson.created_at).toLocaleDateString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell>{lesson.planned_completion_time ?? 0} phút</TableCell>
+                  <TableCell>{Number(lesson.weight ?? 0).toFixed(2)}</TableCell>
+                  <TableCell align="right">
+                    <Button size="small" variant="outlined">
+                      Xem
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
+              {items.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={13} align="center">
+                    Không có dữ liệu
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
         <TablePagination
           component="div"
-          count={serverMode ? total || 0 : items.length}
-          page={serverMode ? page ?? 0 : localPage}
-          onPageChange={(_, newPage) => {
-            if (serverMode) {
-              onPageChange && onPageChange(newPage);
-            } else {
-              setLocalPage(newPage);
-            }
-          }}
-          rowsPerPage={
-            serverMode ? rowsPerPage ?? localRowsPerPage : localRowsPerPage
-          }
-          onRowsPerPageChange={(e) => {
-            const val = parseInt(e.target.value, 10);
-            if (serverMode) {
-              onRowsPerPageChange && onRowsPerPageChange(val);
-            } else {
-              setLocalRowsPerPage(val);
-              setLocalPage(0);
-            }
+          count={total}
+          page={page}
+          onPageChange={(_, nextPage) => onPageChange(nextPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) => {
+            onRowsPerPageChange(parseInt(event.target.value, 10));
           }}
           labelRowsPerPage="Số dòng mỗi trang:"
           sx={{ borderTop: "1px solid #e0e0e0" }}
