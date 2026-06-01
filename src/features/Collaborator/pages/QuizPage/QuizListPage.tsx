@@ -17,12 +17,13 @@ import {
   Stack,
   Chip,
 } from "@mui/material";
-import { Edit, Delete, Visibility, Search } from "@mui/icons-material";
+import { Edit, Delete, Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import quizService from "./services/quiz.service";
 import QuizDetailDialog from "./QuizDetailDialog";
 import { lessonManagerService } from "../../../../services/lesson_manager.service";
+import { TOEIC_PARTS } from "./quizPartRules";
 
 export default function QuizListPage() {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ export default function QuizListPage() {
   const [topicId, setTopicId] = useState("");
   const [level, setLevel] = useState("");
   const [status, setStatus] = useState("");
+  const [partType, setPartType] = useState("");
   const [total, setTotal] = useState(0);
 
   // 📚 Danh sách topic thật
@@ -76,6 +78,7 @@ export default function QuizListPage() {
         topic: topicId,
         level,
         status,
+        part_type: partType ? Number(partType) : undefined,
       });
 
       const result = res.data!;
@@ -91,7 +94,7 @@ export default function QuizListPage() {
   // 🔁 Fetch lại khi đổi filter / phân trang / debounce search
   useEffect(() => {
     fetchData();
-  }, [debouncedSearch, topicId, level, status, page, limit]);
+  }, [debouncedSearch, topicId, level, status, partType, page, limit]);
 
   // 🗑️ Xóa quiz
   const handleDelete = async (id: string) => {
@@ -179,6 +182,25 @@ export default function QuizListPage() {
             <MenuItem value="C1">C1</MenuItem>
           </TextField>
 
+          <TextField
+            select
+            label="Part"
+            size="small"
+            value={partType}
+            onChange={(e) => {
+              setPartType(e.target.value);
+              setPage(0);
+            }}
+            sx={{ minWidth: 130 }}
+          >
+            <MenuItem value="">Tất cả</MenuItem>
+            {TOEIC_PARTS.map((part) => (
+              <MenuItem key={part} value={part}>
+                Part {part}
+              </MenuItem>
+            ))}
+          </TextField>
+
           {/* Lọc theo trạng thái */}
           <TextField
             select
@@ -208,7 +230,9 @@ export default function QuizListPage() {
               <TableHead>
                 <TableRow>
                   <TableCell>Tên Quiz</TableCell>
+                  <TableCell>Part</TableCell>
                   <TableCell>Topic</TableCell>
+                  <TableCell>Số câu</TableCell>
                   <TableCell>Level</TableCell>
                   <TableCell>Trạng thái</TableCell>
                   <TableCell align="right">Hành động</TableCell>
@@ -218,7 +242,7 @@ export default function QuizListPage() {
               <TableBody>
                 {quizzes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={7} align="center">
                       Không có dữ liệu
                     </TableCell>
                   </TableRow>
@@ -234,6 +258,7 @@ export default function QuizListPage() {
                       onClick={() => navigate(`/ctv/quiz/${q._id}/detail`)} // ✅ Điều hướng tới trang chi tiết
                     >
                       <TableCell>{q.title}</TableCell>
+                      <TableCell>{q.part_type ? `Part ${q.part_type}` : "—"}</TableCell>
 
                       {/* 🔹 Hiển thị nhiều topic */}
                       <TableCell>
@@ -257,6 +282,7 @@ export default function QuizListPage() {
                         )}
                       </TableCell>
 
+                      <TableCell>{q.question_ids?.length || 0}</TableCell>
                       <TableCell>{q.level ?? "—"}</TableCell>
                       <TableCell>{q.status ?? "draft"}</TableCell>
 

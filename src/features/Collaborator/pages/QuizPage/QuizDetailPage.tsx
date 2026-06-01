@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import {
   Box,
   CircularProgress,
@@ -7,7 +8,6 @@ import {
   Button,
   Chip,
   Divider,
-  useTheme,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -15,17 +15,20 @@ import {
   Delete,
   AccessTime,
   Layers,
+  Quiz as QuizIcon,
 } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import quizService from "./services/quiz.service";
 import { toast } from "sonner";
 
-/* ────────────────────────────────
-   TRANG CHI TIẾT QUIZ (Model mới)
-──────────────────────────────── */
+const getChoiceValue = (choices: any, key: string) => {
+  if (!choices) return "";
+  if (typeof choices.get === "function") return choices.get(key) || "";
+  return choices[key] || "";
+};
+
 export default function QuizDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const theme = useTheme();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -45,20 +48,22 @@ export default function QuizDetailPage() {
     fetchQuiz();
   }, [id]);
 
-  if (loading)
+  if (loading) {
     return (
       <Box className="flex flex-col items-center justify-center h-[80vh] gap-4">
         <CircularProgress />
         <Typography color="text.secondary">Đang tải dữ liệu...</Typography>
       </Box>
     );
+  }
 
-  if (!quiz)
+  if (!quiz) {
     return (
       <Typography align="center" color="text.secondary" mt={4}>
         Không tìm thấy quiz
       </Typography>
     );
+  }
 
   const handleDelete = async () => {
     if (!confirm("Xác nhận xóa quiz này?")) return;
@@ -73,7 +78,6 @@ export default function QuizDetailPage() {
 
   return (
     <Box className="p-4 md:p-8 max-w-6xl mx-auto">
-      {/* 🟦 Header */}
       <Paper
         sx={{
           p: 2,
@@ -82,8 +86,6 @@ export default function QuizDetailPage() {
           justifyContent: "space-between",
           alignItems: "center",
           borderRadius: 2,
-          background: `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.secondary.light})`,
-          color: theme.palette.getContrastText(theme.palette.primary.light),
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -115,7 +117,6 @@ export default function QuizDetailPage() {
         </Box>
       </Paper>
 
-      {/* 🧾 Thông tin Quiz */}
       <Paper sx={{ p: 4, mb: 4, borderRadius: 2, boxShadow: 2 }}>
         <Typography variant="h5" color="primary" fontWeight="bold">
           {quiz.title}
@@ -132,9 +133,14 @@ export default function QuizDetailPage() {
             <InfoRow
               icon={<AccessTime color="primary" />}
               label="Thời gian"
-              value={quiz.planned_completion_time + " phút"}
+              value={`${quiz.planned_completion_time || 0} phút`}
             />
-            <InfoRow label="Trạng thái" value={quiz.status === "draft" ? "Nháp" : "Công khai"} />
+            <InfoRow
+              icon={<QuizIcon color="primary" />}
+              label="Số câu hỏi"
+              value={`${quiz.question_ids?.length || 0}`}
+            />
+            <InfoRow label="Trạng thái" value={quiz.status === "draft" ? "Nháp" : quiz.status || "—"} />
           </Box>
 
           <Box>
@@ -164,7 +170,48 @@ export default function QuizDetailPage() {
         </Box>
       </Paper>
 
-      {/* 🧩 Danh sách câu hỏi */}
+      {(quiz.audio_url || quiz.image_url || quiz.content_html) && (
+        <Paper sx={{ p: 4, mb: 4, borderRadius: 2, boxShadow: 2 }}>
+          <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
+            Media / Passage
+          </Typography>
+
+          {quiz.audio_url && (
+            <Box mb={3}>
+              <Typography variant="body2" fontWeight={600} mb={1}>
+                Audio bài nghe
+              </Typography>
+              <audio controls src={quiz.audio_url} style={{ width: "100%" }} />
+            </Box>
+          )}
+
+          {quiz.image_url && (
+            <Box mb={3}>
+              <Typography variant="body2" fontWeight={600} mb={1}>
+                Ảnh minh họa
+              </Typography>
+              <Box
+                component="img"
+                src={quiz.image_url}
+                alt={quiz.title}
+                sx={{ maxWidth: "100%", maxHeight: 420, borderRadius: 2, objectFit: "contain" }}
+              />
+            </Box>
+          )}
+
+          {quiz.content_html && (
+            <Box>
+              <Typography variant="body2" fontWeight={600} mb={1}>
+                Nội dung đoạn văn / passage
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: "white" }}>
+                <Typography sx={{ whiteSpace: "pre-wrap" }}>{quiz.content_html}</Typography>
+              </Paper>
+            </Box>
+          )}
+        </Paper>
+      )}
+
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 1 }}>
         <Typography variant="h6" color="primary" fontWeight="bold" mb={2}>
           Danh sách câu hỏi
@@ -173,7 +220,7 @@ export default function QuizDetailPage() {
         {quiz.question_ids?.length ? (
           quiz.question_ids.map((q: any, i: number) => (
             <Box
-              key={i}
+              key={q._id || i}
               sx={{
                 p: 2,
                 mb: 2,
@@ -186,7 +233,7 @@ export default function QuizDetailPage() {
                 Câu {i + 1}: {q.textQuestion || "—"}
               </Typography>
 
-              <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={1}>
+              <Box display="grid" gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }} gap={1}>
                 {["A", "B", "C", "D"].map((opt) => (
                   <Typography
                     key={opt}
@@ -194,7 +241,7 @@ export default function QuizDetailPage() {
                     color={q.correctAnswer === opt ? "primary" : "text.secondary"}
                     fontWeight={q.correctAnswer === opt ? 700 : 400}
                   >
-                    {opt}. {q.choices?.[opt] || ""}
+                    {opt}. {getChoiceValue(q.choices, opt)}
                   </Typography>
                 ))}
               </Box>
@@ -214,15 +261,12 @@ export default function QuizDetailPage() {
   );
 }
 
-/* ────────────────────────────────
-   COMPONENT PHỤ DÙNG LẠI (InfoRow)
-──────────────────────────────── */
 function InfoRow({
   icon,
   label,
   value,
 }: {
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   label: string;
   value?: string;
 }) {

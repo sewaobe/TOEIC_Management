@@ -5,12 +5,15 @@ export interface Quiz {
   _id: string;
   title: string;
   topic?: (string | { _id: string; title: string })[];
-  question_ids?: any[]; // ✅ đổi từ group_ids → question_ids
+  question_ids?: any[];
   part_type?: number;
   level?: string;
   status?: string;
   planned_completion_time?: number;
   weight?: number;
+  content_html?: string;
+  image_url?: string;
+  audio_url?: string;
   created_at?: string;
   updated_at?: string;
 }
