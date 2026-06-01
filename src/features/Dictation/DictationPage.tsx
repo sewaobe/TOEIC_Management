@@ -44,7 +44,8 @@ import { EmptyState } from "../../components/EmptyState";
 // --------------------------
 export const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 export const PART_TYPES = [1, 2, 3, 4]
-export const fmtTime = (ms?: number) => (typeof ms === "number" ? `${(ms / 1000).toFixed(2)}s` : "-");
+export const fmtTime = (seconds?: number) =>
+    typeof seconds === "number" ? `${seconds.toFixed(2)}s` : "-";
 
 // =========================================================
 // MAIN COMPONENT

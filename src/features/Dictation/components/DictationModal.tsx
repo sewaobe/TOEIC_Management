@@ -88,7 +88,7 @@ export default function DictationModal({
         if (!el || !form.timings?.length) return;
 
         const onTime = () => {
-            const t = el.currentTime * 1000;
+            const t = el.currentTime;
             const idx = form.timings!.findIndex(
                 (s) => t >= s.startTime && t < s.endTime
             );
@@ -197,20 +197,37 @@ export default function DictationModal({
 
 
     const addSegment = () => {
+        const lastEnd = form.timings?.length
+            ? form.timings[form.timings.length - 1].endTime
+            : 0;
+
         const seg: Timing = {
             text: "(new segment)",
-            startTime: form.timings?.length ? form.timings[form.timings.length - 1].endTime + 1 : 0,
-            endTime: (form.timings?.length ? form.timings[form.timings.length - 1].endTime : 0) + 1000,
+            startTime: Number((lastEnd + 0.1).toFixed(2)),
+            endTime: Number((lastEnd + 1.1).toFixed(2)),
         };
+
         setForm((p) => ({ ...p, timings: [...(p.timings || []), seg] }));
     };
 
     const splitSegment = (idx: number) => {
         if (!form.timings) return;
+
         const s = form.timings[idx];
-        const mid = Math.floor((s.startTime + s.endTime) / 2);
-        const left: Timing = { text: s.text + " (1)", startTime: s.startTime, endTime: mid };
-        const right: Timing = { text: s.text + " (2)", startTime: mid + 1, endTime: s.endTime };
+        const mid = Number(((s.startTime + s.endTime) / 2).toFixed(2));
+
+        const left: Timing = {
+            text: s.text + " (1)",
+            startTime: s.startTime,
+            endTime: mid,
+        };
+
+        const right: Timing = {
+            text: s.text + " (2)",
+            startTime: mid,
+            endTime: s.endTime,
+        };
+
         const next = [...form.timings];
         next.splice(idx, 1, left, right);
         setForm((p) => ({ ...p, timings: next }));
@@ -735,8 +752,8 @@ export default function DictationModal({
                                             <TableHead>
                                                 <TableRow className="bg-gray-50">
                                                     <TableCell>#</TableCell>
-                                                    <TableCell>Start (ms)</TableCell>
-                                                    <TableCell>End (ms)</TableCell>
+                                                    <TableCell>Start (s)</TableCell>
+                                                    <TableCell>End (s)</TableCell>
                                                     <TableCell>Text</TableCell>
                                                     <TableCell align="right">Actions</TableCell>
                                                 </TableRow>
