@@ -13,6 +13,7 @@ import FullTestPage from "../features/Collaborator/pages/FullTestPage/FullTestPa
 import CreateFullTestPage from "../features/Collaborator/pages/FullTestPage/FullTestCreatePage";
 import EditFullTestPage from "../features/Collaborator/pages/FullTestPage/EditFullTestPage";
 import DetailFullTestPage from "../features/Collaborator/pages/FullTestPage/FullTestDetailPage/index";
+import FullTestPreviewPage from "../features/Collaborator/pages/FullTestPage/FullTestPreviewPage";
 
 // ===== Question Bank =====
 import QuestionPage from "../features/Collaborator/pages/QuestionPage/QuestionPage";
@@ -109,6 +110,10 @@ export const AppRouter = () => {
             <Route path="full-tests" element={<FullTestPage />} />
             <Route path="full-tests/create" element={<CreateFullTestPage />} />
             <Route path="full-tests/:id/edit" element={<EditFullTestPage />} />
+            <Route
+              path="full-tests/:id/preview"
+              element={<FullTestPreviewPage />}
+            />
             <Route
               path="full-tests/:id/detail"
               element={<DetailFullTestPage />}
