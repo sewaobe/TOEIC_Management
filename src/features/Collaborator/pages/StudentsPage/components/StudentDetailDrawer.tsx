@@ -5,8 +5,6 @@ import {
   Typography,
   Avatar,
   Chip,
-  Button,
-  Divider,
   Tabs,
   Tab,
   CircularProgress,
@@ -18,18 +16,14 @@ import {
   LinearProgress,
 } from "@mui/material";
 import MailIcon from "@mui/icons-material/Mail";
-import PhoneIcon from "@mui/icons-material/Phone";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import FeedbackIcon from "@mui/icons-material/Feedback";
 
 import type { StudentDetail } from "../../../../../types/student";
-import type { IAdjustmentRequest } from "../../../../../types/adjustment";
 import studentService from "../services/studentService"; // ✅ Dùng service thật
-import { adjustmentService } from "../services/adjustmentService";
 import feedbackService, {
   ILessonFeedback,
   IFeedbackStats,
@@ -37,17 +31,16 @@ import feedbackService, {
 import {
   formatDate,
   formatDuration,
-  getLearningPathLabel,
+  getLearningRouteDisplay,
+  getScoreSourceLabel,
 } from "../utils/formatters";
-import { ProgressCharts } from "./ProgressCharts";
 import { ActivityList } from "./ActivityList";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { AdjustmentHistoryDialog } from "./AdjustmentHistoryDialog";
 // use server-provided status from student object
-import { toast } from "sonner";
 import mailService from "../../../../../services/mail.service";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { AbilityInterventionPanel } from "./AbilityInterventionPanel";
 
 // ====================
 // 🧩 Chip trạng thái
@@ -57,6 +50,7 @@ function StatusChip({ status }: { status: string }) {
     string,
     "default" | "success" | "warning" | "info" | "error"
   > = {
+    not_started: "default",
     active: "success",
     inactive: "default",
     paused: "warning",
@@ -64,6 +58,7 @@ function StatusChip({ status }: { status: string }) {
     at_risk: "error",
   };
   const labelMap: Record<string, string> = {
+    not_started: "Chưa bắt đầu",
     active: "Đang học",
     inactive: "Không hoạt động",
     paused: "Tạm dừng",
@@ -90,19 +85,10 @@ export function StudentDetailDrawer({
   studentId,
   open,
   onClose,
-  onAdjustLearningPath,
 }: StudentDetailDrawerProps) {
   const [student, setStudent] = useState<StudentDetail | null>(null);
-  const [adjustmentHistory, setAdjustmentHistory] = useState<
-    IAdjustmentRequest[]
-  >([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("info");
-  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
-    null
-  );
-  const [sendingReminder, setSendingReminder] = useState(false);
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
   const [loadingEmails, setLoadingEmails] = useState(false);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
@@ -115,7 +101,6 @@ export function StudentDetailDrawer({
   useEffect(() => {
     if (studentId && open) {
       loadStudentDetail();
-      loadAdjustmentHistory();
       loadFeedbacks();
     }
   }, [studentId, open]);
@@ -149,17 +134,6 @@ export function StudentDetailDrawer({
       setEmailLogs([]);
     } finally {
       setLoadingEmails(false);
-    }
-  }
-
-  async function loadAdjustmentHistory() {
-    if (!studentId) return;
-    try {
-      const history = await adjustmentService.getByStudentId(studentId);
-      setAdjustmentHistory(history);
-    } catch (error) {
-      console.error("Error loading adjustment history:", error);
-      setAdjustmentHistory([]);
     }
   }
 
@@ -223,14 +197,8 @@ export function StudentDetailDrawer({
                 {student.id}
               </Typography> */}
 
-                <Box mt={1} display="flex" flexWrap="wrap" gap={1}>
+              <Box mt={1} display="flex" flexWrap="wrap" gap={1}>
                 <StatusChip status={student.status || 'inactive'} />
-                <Chip
-                  label={`Lộ trình: ${getLearningPathLabel(student.learningPath)}`}
-                  variant="outlined"
-                  size="small"
-                />
-                <Chip label={`Cấp độ: ${student.currentLevel}`} color="info" size="small" />
               </Box>
             </Box>
           </Box>
@@ -238,7 +206,7 @@ export function StudentDetailDrawer({
           {/* 📊 Chỉ số nhanh */}
           <Grid container spacing={1} mt={2}>
             <Grid size={{ xs: 6, sm: 3 }}>
-              <Paper sx={{ p: 1.5, borderRadius: 2 }}>
+              <Paper sx={{ p: 1.5, borderRadius: 2, height: "100%" }}>
                 <Box
                   display="flex"
                   alignItems="center"
@@ -246,19 +214,24 @@ export function StudentDetailDrawer({
                   color="text.secondary"
                 >
                   <TrackChangesIcon fontSize="small" />
-                  <Typography variant="caption">Điểm</Typography>
+                  <Typography variant="caption">Điểm ước tính</Typography>
                 </Box>
                 <Typography variant="h6" fontWeight={600}>
                   {student.currentScore}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  / {student.targetScore}
+                  {student.estimatedListeningScore != null && student.estimatedReadingScore != null
+                    ? `L: ${student.estimatedListeningScore} · R: ${student.estimatedReadingScore}`
+                    : `/ ${student.targetScore}`}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {getScoreSourceLabel(student.scoreSource)}
                 </Typography>
               </Paper>
             </Grid>
 
             <Grid size={{ xs: 6, sm: 3 }}>
-              <Paper sx={{ p: 1.5, borderRadius: 2 }}>
+              <Paper sx={{ p: 1.5, borderRadius: 2, height: "100%" }}>
                 <Box
                   display="flex"
                   alignItems="center"
@@ -266,22 +239,33 @@ export function StudentDetailDrawer({
                   color="text.secondary"
                 >
                   <TrendingUpIcon fontSize="small" />
-                  <Typography variant="caption">Tiến độ</Typography>
+                  <Typography variant="caption">Lộ trình hiện tại</Typography>
                 </Box>
-                <Typography variant="h6" fontWeight={600}>
-                  {Math.round(
-                    (student.completedLessons / student.totalLessons) * 100
-                  )}
-                  %
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {student.completedLessons}/{student.totalLessons}
-                </Typography>
+                {(() => {
+                  const route = getLearningRouteDisplay(student);
+                  return (
+                    <>
+                      <Typography variant="h6" fontWeight={600}>
+                        {route.primary}
+                      </Typography>
+                      {route.secondary && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {route.secondary}
+                        </Typography>
+                      )}
+                      {route.caption && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {route.caption}
+                        </Typography>
+                      )}
+                    </>
+                  );
+                })()}
               </Paper>
             </Grid>
 
             <Grid size={{ xs: 6, sm: 3 }}>
-              <Paper sx={{ p: 1.5, borderRadius: 2 }}>
+              <Paper sx={{ p: 1.5, borderRadius: 2, height: "100%" }}>
                 <Box
                   display="flex"
                   alignItems="center"
@@ -304,21 +288,21 @@ export function StudentDetailDrawer({
             </Grid>
 
             <Grid size={{ xs: 6, sm: 3 }}>
-              <Paper sx={{ p: 1.5, borderRadius: 2 }}>
+              <Paper sx={{ p: 1.5, borderRadius: 2, height: "100%" }}>
                 <Box
                   display="flex"
                   alignItems="center"
                   gap={1}
                   color="text.secondary"
                 >
-                  <AccessTimeIcon fontSize="small" />
-                  <Typography variant="caption">Thời gian</Typography>
+                  <TrackChangesIcon fontSize="small" />
+                  <Typography variant="caption">Mục tiêu</Typography>
                 </Box>
-                <Typography variant="body2" fontWeight={600}>
-                  {formatDuration(student.totalStudyTime)}
+                <Typography variant="h6" fontWeight={600}>
+                  {student.targetScore || "—"}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  tổng
+                  điểm TOEIC
                 </Typography>
               </Paper>
             </Grid>
@@ -327,7 +311,7 @@ export function StudentDetailDrawer({
           {/* 🧭 Tabs */}
           <Tabs
             value={tab}
-            onChange={(e, v) => setTab(v)}
+            onChange={(_, v) => setTab(v)}
             sx={{ mt: 3, borderBottom: 1, borderColor: "divider" }}
           >
             <Tab label="Thông tin" value="info" />
@@ -348,10 +332,6 @@ export function StudentDetailDrawer({
                     <Typography variant="body2">{student.email}</Typography>
                   </Box>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <PhoneIcon fontSize="small" color="action" />
-                    <Typography variant="body2">{student.phone}</Typography>
-                  </Box>
-                  <Box display="flex" alignItems="center" gap={1}>
                     <CalendarTodayIcon fontSize="small" color="action" />
                     <Typography variant="body2">
                       Ngày đăng ký: {formatDate(student.enrollDate)}
@@ -359,29 +339,6 @@ export function StudentDetailDrawer({
                   </Box>
                 </Box>
               </Paper>
-
-              <Paper sx={{ p: 2 }}>
-                <Typography fontWeight={600}>Ghi chú</Typography>
-                <Typography variant="body2" color="text.secondary" mt={0.5}>
-                  {student.notes || "Không có ghi chú"}
-                </Typography>
-              </Paper>
-
-              {student.tags.length > 0 && (
-                <Paper sx={{ p: 2 }}>
-                  <Typography fontWeight={600}>Tags</Typography>
-                  <Box display="flex" flexWrap="wrap" gap={0.5} mt={1}>
-                    {student.tags.map((tag, i) => (
-                      <Chip
-                        key={i}
-                        label={tag}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
-                </Paper>
-              )}
 
               <Paper sx={{ p: 2 }}>
                 <Typography fontWeight={600}>Lịch sử email</Typography>
@@ -432,163 +389,89 @@ export function StudentDetailDrawer({
                   alignItems="center"
                 >
                   <Typography fontWeight={600}>Cấu hình lộ trình</Typography>
-                  <Button
+                  <Chip
+                    label="IRT tự tối ưu"
                     size="small"
-                    onClick={() => onAdjustLearningPath?.(student.id)}
-                  >
-                    Điều chỉnh
-                  </Button>
+                    color="info"
+                    variant="outlined"
+                  />
                 </Box>
                 <Box mt={1.5} display="flex" flexDirection="column" gap={0.5}>
-                  <Typography variant="body2">
-                    <b>Số buổi/tuần:</b>{" "}
-                    {student.learningPathConfig.lessonsPerWeek}
-                  </Typography>
-                  <Typography variant="body2">
-                    <b>Số giờ/ngày:</b> {student.learningPathConfig.hoursPerDay}
-                  </Typography>
                   <Typography variant="body2">
                     <b>Ngày bắt đầu:</b>{" "}
                     {formatDate(student.learningPathConfig.startDate)}
                   </Typography>
                   <Typography variant="body2">
-                    <b>Ngày mục tiêu:</b>{" "}
+                    <b>Ngày kết thúc dự kiến:</b>{" "}
                     {formatDate(student.learningPathConfig.targetDate)}
                   </Typography>
-                </Box>
-              </Paper>
-
-              <Paper sx={{ p: 2 }}>
-                <Typography fontWeight={600}>Lĩnh vực tập trung</Typography>
-                <Box display="flex" flexWrap="wrap" gap={0.5} mt={1}>
-                  {student.learningPathConfig.focusAreas.map((area, i) => (
-                    <Chip
-                      key={i}
-                      label={area}
-                      size="small"
-                      variant="outlined"
-                    />
-                  ))}
-                </Box>
-              </Paper>
-
-              {/* Lịch sử điều chỉnh */}
-              <Paper sx={{ p: 2 }}>
-                <Typography fontWeight={600} gutterBottom>
-                  Lịch sử điều chỉnh ({adjustmentHistory.length})
-                </Typography>
-                {adjustmentHistory.length === 0 ? (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ py: 2 }}
-                  >
-                    Chưa có yêu cầu điều chỉnh nào
+                  <Typography variant="body2">
+                    <b>Mục tiêu điểm:</b> {student.targetScore || "Chưa có"}
                   </Typography>
-                ) : (
-                  <Box sx={{ mt: 1 }}>
-                    {adjustmentHistory.map((request) => {
-                      const isApproved = request.status === "APPROVED";
-                      const isRejected = request.status === "REJECTED";
-                      const isPending = request.status === "PENDING";
+                  <Typography variant="body2">
+                    <b>Nhịp học đăng ký:</b>{" "}
+                    {student.learningPathConfig.lessonsPerWeek} buổi/tuần ·{" "}
+                    {student.learningPathConfig.hoursPerDay} giờ/ngày
+                  </Typography>
+                </Box>
+              </Paper>
 
-                      return (
-                        <Box
-                          key={request._id}
-                          sx={{
-                            p: 1.5,
-                            mb: 1,
-                            borderRadius: 1,
-                            border: "1px solid",
-                            borderColor: "divider",
-                            bgcolor: isPending
-                              ? "action.hover"
-                              : isApproved
-                                ? "success.lighter"
-                                : "error.lighter",
-                          }}
-                        >
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                          >
-                            <Box>
-                              <Typography variant="body2" fontWeight={600}>
-                                {request.reason}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {format(
-                                  new Date(request.createdAt),
-                                  "dd/MM/yyyy HH:mm",
-                                  { locale: vi }
-                                )}
-                              </Typography>
-                            </Box>
-                            <Chip
-                              label={
-                                isPending
-                                  ? "Đang chờ"
-                                  : isApproved
-                                    ? "Đã duyệt"
-                                    : "Từ chối"
-                              }
-                              color={
-                                isPending
-                                  ? "warning"
-                                  : isApproved
-                                    ? "success"
-                                    : "error"
-                              }
-                              size="small"
-                            />
-                          </Box>
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            mt={0.5}
-                          >
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {request.changes.length} thay đổi
-                            </Typography>
-                            <Button
-                              size="small"
-                              onClick={() => {
-                                setSelectedRequestId(request._id);
-                                setHistoryDialogOpen(true);
-                              }}
-                            >
-                              Xem chi tiết
-                            </Button>
-                          </Box>
-                          {isRejected && request.rejectionReason && (
-                            <Typography
-                              variant="caption"
-                              color="error.main"
-                              sx={{ mt: 0.5, display: "block" }}
-                            >
-                              Lý do từ chối: {request.rejectionReason}
-                            </Typography>
-                          )}
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                )}
+              <Paper sx={{ p: 2 }}>
+                <Typography fontWeight={600}>Vị trí hiện tại</Typography>
+                {(() => {
+                  const route = getLearningRouteDisplay(student);
+                  return (
+                    <Box mt={1.5} display="flex" flexDirection="column" gap={0.5}>
+                      <Typography variant="body2">
+                        <b>{route.primary}</b>
+                        {route.secondary ? ` · ${route.secondary}` : ""}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Roadmap là kế hoạch thích nghi; IRT có thể thêm, bớt hoặc đổi trọng tâm sau checkpoint.
+                      </Typography>
+                      <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
+                        <Chip
+                          label={`Hoàn thành ${student.completedCycles ?? 0}/${student.totalCycles ?? 0} cycle`}
+                          size="small"
+                          variant="outlined"
+                        />
+                        {student.currentCycleProgress && (
+                          <Chip
+                            label={`Stage hiện tại ${student.currentCycleProgress.completedStages}/${student.currentCycleProgress.totalStages}`}
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                        <Chip label="IRT tự điều chỉnh" size="small" color="info" variant="outlined" />
+                      </Box>
+                    </Box>
+                  );
+                })()}
+              </Paper>
+
+              <Paper sx={{ p: 2 }}>
+                <Typography fontWeight={600}>Theo dõi từ CTV</Typography>
+                <Box mt={1.5} display="flex" flexDirection="column" gap={0.5}>
+                  <Typography variant="body2">
+                    <b>Điểm ước tính:</b> {student.currentScore}
+                    {student.estimatedListeningScore != null && student.estimatedReadingScore != null
+                      ? ` (Listening ${student.estimatedListeningScore}, Reading ${student.estimatedReadingScore})`
+                      : ""}
+                  </Typography>
+                  <Typography variant="body2">
+                    <b>Hoạt động gần nhất:</b> {formatDate(student.lastActive)}
+                  </Typography>
+                  <Typography variant="body2">
+                    <b>Tổng thời gian học:</b> {formatDuration(student.totalStudyTime)}
+                  </Typography>
+                </Box>
               </Paper>
             </Box>
           )}
 
           {tab === "progress" && (
             <Box mt={2}>
-              <ProgressCharts data={student.progressHistory} />
+              <AbilityInterventionPanel student={student} onChanged={loadStudentDetail} />
             </Box>
           )}
 
@@ -845,19 +728,6 @@ export function StudentDetailDrawer({
         </Box>
       )}
 
-      {/* Dialog xem chi tiết adjustment request */}
-      {student && (
-        <AdjustmentHistoryDialog
-          open={historyDialogOpen}
-          onClose={() => {
-            setHistoryDialogOpen(false);
-            setSelectedRequestId(null);
-          }}
-          studentId={student.id}
-          studentName={student.name}
-          initialRequestId={selectedRequestId}
-        />
-      )}
     </Drawer>
   );
 }

@@ -9,7 +9,7 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ value, max, label, showPercentage = true, color = "primary" }: ProgressBarProps) {
-  const percentage = Math.round((value / max) * 100)
+  const percentage = max > 0 ? Math.round((value / max) * 100) : 0
 
   const colorClasses = {
     primary: "bg-blue-600 dark:bg-blue-500",

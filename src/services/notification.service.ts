@@ -3,6 +3,28 @@ import { Notification } from "../types/Notification";
 import axiosClient from "./axiosClient";
 
 export const notificationService = {
+  sendNotification: async (payload: {
+    recipientId: string;
+    message: string;
+    description?: string;
+    type?: Notification["type"];
+    metadata?: Record<string, any>;
+  }): Promise<Notification> => {
+    const res = await axiosClient.post<ApiResponse<any>>("/notifications/send", payload);
+    const n = res.data ?? res;
+    return {
+      id: n._id,
+      senderId: n.senderId,
+      recipientId: n.recipientId,
+      message: n.message,
+      description: n.description,
+      type: n.type,
+      isRead: n.isRead,
+      metadata: n.metadata || undefined,
+      createdAt: n.createdAt,
+    };
+  },
+
   //  GET all (có phân trang)
   getAllNotifications: async (
     params: { page?: number; limit?: number } = { page: 1, limit: 4 }
@@ -33,6 +55,7 @@ export const notificationService = {
       description: n.description,
       type: n.type,
       isRead: n.isRead,
+      metadata: n.metadata || undefined,
       createdAt: n.createdAt,
     }));
 
@@ -59,8 +82,10 @@ export const notificationService = {
       senderId: n.senderId,
       recipientId: n.recipientId,
       message: n.message,
+      description: n.description,
       type: n.type,
       isRead: n.isRead,
+      metadata: n.metadata || undefined,
       createdAt: n.createdAt,
     };
   },

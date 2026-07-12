@@ -8,5 +8,6 @@ export interface Notification {
   description?: string;
   type: "system" | "comment" | "error" | "chat" | "test" | "lesson" | AdminReportType;
   isRead?: boolean;
+  metadata?: Record<string, any>;
   createdAt: string;
 }

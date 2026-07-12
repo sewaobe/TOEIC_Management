@@ -1,37 +1,38 @@
-// Component hiển thị trạng thái học viên dạng chip
+// Component hien thi trang thai hoc vien dang chip
 
-import type { Student } from "../../../../../types/student"; // ✅ import type thực tế
+import type { Student } from "../../../../../types/student";
 
 interface StatusChipProps {
-  status: Student["status"]; // ✅ Lấy type status trực tiếp từ Student
+  status: Student["status"];
 }
 
 export function StatusChip({ status }: StatusChipProps) {
-  // 🎨 Màu sắc theo trạng thái (Tailwind + hỗ trợ dark mode)
-  const statusColors: Record<
-    NonNullable<Student["status"]>,
-    string
-  > = {
+  const statusColors: Record<NonNullable<Student["status"]>, string> = {
+    not_started:
+      "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300",
     active:
       "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    at_risk:
+      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
     inactive:
       "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
+    paused:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
     completed:
       "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   };
 
-  // ⚙️ Map nhãn hiển thị (có thể tách riêng formatter nếu bạn muốn)
-  const statusLabels: Record<
-    NonNullable<Student["status"]>,
-    string
-  > = {
+  const statusLabels: Record<NonNullable<Student["status"]>, string> = {
+    not_started: "Chưa bắt đầu",
     active: "Đang học",
+    at_risk: "Cần chú ý",
     inactive: "Không hoạt động",
+    paused: "Tạm dừng",
     completed: "Hoàn thành",
   };
 
-  const color = statusColors[status ?? "inactive"];
-  const label = statusLabels[status ?? "inactive"];
+  const color = statusColors[status];
+  const label = statusLabels[status];
 
   return (
     <span

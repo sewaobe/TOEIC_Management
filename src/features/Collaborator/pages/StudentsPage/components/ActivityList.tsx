@@ -14,7 +14,10 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import LoginIcon from "@mui/icons-material/Login";
+import EditNoteIcon from "@mui/icons-material/EditNote";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import type { Activity } from "../../../../../types/student";
 import { formatDateTime } from "../utils/formatters";
 
@@ -22,50 +25,196 @@ interface ActivityListProps {
   activities: Activity[];
 }
 
+type PaletteKey =
+  | "primary"
+  | "success"
+  | "warning"
+  | "info"
+  | "secondary"
+  | "error";
+
+function getTimestampValue(timestamp: string) {
+  if (!timestamp) return null;
+  const value = new Date(timestamp).getTime();
+  return Number.isNaN(value) ? null : value;
+}
+
+function getActivityIcon(type: string) {
+  const normalizedType = type.toLowerCase();
+
+  switch (normalizedType) {
+    case "activity_completed":
+    case "stage_completed":
+    case "lesson_complete":
+    case "lesson":
+      return <MenuBookIcon fontSize="small" />;
+    case "cycle_completed":
+      return <EmojiEventsIcon fontSize="small" />;
+    case "test_submit":
+    case "test":
+      return <TaskAltIcon fontSize="small" />;
+    case "adjustment_requested":
+      return <EditNoteIcon fontSize="small" />;
+    case "adjustment_approved":
+      return <CheckCircleIcon fontSize="small" />;
+    case "adjustment_rejected":
+      return <CancelIcon fontSize="small" />;
+    case "streak_milestone":
+      return <LocalFireDepartmentIcon fontSize="small" />;
+    default:
+      return <AccessTimeIcon fontSize="small" />;
+  }
+}
+
+function getActivityColor(type: string): PaletteKey {
+  const normalizedType = type.toLowerCase();
+
+  switch (normalizedType) {
+    case "activity_completed":
+    case "stage_completed":
+    case "lesson_complete":
+    case "lesson":
+      return "primary";
+    case "cycle_completed":
+    case "streak_milestone":
+      return "warning";
+    case "test_submit":
+    case "test":
+    case "adjustment_approved":
+      return "success";
+    case "adjustment_requested":
+      return "info";
+    case "adjustment_rejected":
+      return "error";
+    default:
+      return "secondary";
+  }
+}
+
+function renderMetadataChips(activity: Activity) {
+  const metadata = activity.metadata;
+  if (!metadata) return null;
+  const activityKind = metadata.activityKind ?? metadata.activity_kind;
+  const sessionNo = metadata.sessionNo ?? metadata.session_no;
+
+  return (
+    <Box
+      display="flex"
+      flexWrap="wrap"
+      gap={1}
+      mt={1}
+      sx={{ "& .MuiChip-root": { fontSize: "0.75rem" } }}
+    >
+      {typeof metadata.score === "number" && (
+        <Chip
+          label={`Điểm: ${metadata.score}`}
+          size="small"
+          color="info"
+          variant="outlined"
+        />
+      )}
+      {typeof activityKind === "string" && (
+        <Chip
+          label={`Loại bài: ${activityKind}`}
+          size="small"
+          color="primary"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.dayOfWeek === "number" && (
+        <Chip
+          label={`Stage: ${metadata.dayOfWeek + 1}`}
+          size="small"
+          color="primary"
+          variant="outlined"
+        />
+      )}
+      {typeof sessionNo === "number" && (
+        <Chip
+          label={`Session: ${sessionNo}`}
+          size="small"
+          color="secondary"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.duration === "number" && (
+        <Chip
+          label={`Thời gian: ${metadata.duration} phút`}
+          size="small"
+          color="secondary"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.totalQuestions === "number" && (
+        <Chip
+          label={`Số câu: ${metadata.totalQuestions}`}
+          size="small"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.total_activities === "number" && (
+        <Chip
+          label={`Hoạt động: ${metadata.total_activities}`}
+          size="small"
+          color="primary"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.avg_accuracy === "number" && (
+        <Chip
+          label={`Độ chính xác: ${Math.round(metadata.avg_accuracy)}%`}
+          size="small"
+          color="success"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.week_no === "number" && (
+        <Chip
+          label={`Cycle: ${metadata.week_no}`}
+          size="small"
+          color="warning"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.changesCount === "number" && (
+        <Chip
+          label={`Thay đổi: ${metadata.changesCount}`}
+          size="small"
+          color="info"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.status === "string" && (
+        <Chip
+          label={`Trạng thái: ${metadata.status}`}
+          size="small"
+          color="secondary"
+          variant="outlined"
+        />
+      )}
+      {typeof metadata.milestone === "number" && (
+        <Chip
+          label={`Streak: ${metadata.milestone} ngày`}
+          size="small"
+          color="warning"
+          variant="outlined"
+        />
+      )}
+    </Box>
+  );
+}
+
 export function ActivityList({ activities }: ActivityListProps) {
   const theme = useTheme();
+  const sortedActivities = [...activities]
+    .filter((activity) => getTimestampValue(activity.timestamp) !== null)
+    .sort(
+      (a, b) =>
+        (getTimestampValue(b.timestamp) || 0) -
+        (getTimestampValue(a.timestamp) || 0)
+    );
 
-  // 🧩 Map icon theo type
-  const getActivityIcon = (type: string) => {
-    const t = type.toLowerCase();
-    switch (t) {
-      case "lesson_complete":
-      case "lesson":
-        return <MenuBookIcon fontSize="small" />;
-      case "test_submit":
-      case "test":
-        return <TaskAltIcon fontSize="small" />;
-      case "achievement":
-        return <EmojiEventsIcon fontSize="small" />;
-      case "login":
-        return <LoginIcon fontSize="small" />;
-      default:
-        return <AccessTimeIcon fontSize="small" />;
-    }
-  };
-
-  // 🎨 Map màu chip / avatar theo type
-  const getActivityColor = (
-    type: string
-  ): "primary" | "success" | "warning" | "info" | "secondary" => {
-    const t = type.toLowerCase();
-    switch (t) {
-      case "lesson_complete":
-      case "lesson":
-        return "primary";
-      case "test_submit":
-      case "test":
-        return "success";
-      case "achievement":
-        return "warning";
-      case "login":
-        return "secondary";
-      default:
-        return "info";
-    }
-  };
-
-  if (activities.length === 0) {
+  if (sortedActivities.length === 0) {
     return (
       <Box
         display="flex"
@@ -79,12 +228,6 @@ export function ActivityList({ activities }: ActivityListProps) {
       </Box>
     );
   }
-
-  // 🔹 Sort mới nhất trước
-  const sortedActivities = [...activities].sort(
-    (a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
 
   return (
     <Stack spacing={2}>
@@ -105,7 +248,6 @@ export function ActivityList({ activities }: ActivityListProps) {
               bgcolor: theme.palette.background.paper,
             }}
           >
-            {/* Icon trái */}
             <Avatar
               sx={{
                 bgcolor: palette.light,
@@ -118,7 +260,6 @@ export function ActivityList({ activities }: ActivityListProps) {
               {getActivityIcon(activity.type)}
             </Avatar>
 
-            {/* Nội dung chính */}
             <CardContent
               sx={{
                 flex: 1,
@@ -130,46 +271,15 @@ export function ActivityList({ activities }: ActivityListProps) {
                 {activity.title}
               </Typography>
 
-              <Typography variant="body2" color="text.secondary">
-                {activity.description}
-              </Typography>
-
-              {activity.metadata && (
-                <Box
-                  display="flex"
-                  flexWrap="wrap"
-                  gap={1}
-                  mt={1}
-                  sx={{ "& .MuiChip-root": { fontSize: "0.75rem" } }}
-                >
-                  {typeof activity.metadata.score === "number" && (
-                    <Chip
-                      label={`Điểm: ${activity.metadata.score}`}
-                      size="small"
-                      color="info"
-                      variant="outlined"
-                    />
-                  )}
-                  {typeof activity.metadata.duration === "number" && (
-                    <Chip
-                      label={`Thời gian: ${activity.metadata.duration} phút`}
-                      size="small"
-                      color="secondary"
-                      variant="outlined"
-                    />
-                  )}
-                  {typeof activity.metadata.totalQuestions === "number" && (
-                    <Chip
-                      label={`Số câu: ${activity.metadata.totalQuestions}`}
-                      size="small"
-                      variant="outlined"
-                    />
-                  )}
-                </Box>
+              {activity.description && (
+                <Typography variant="body2" color="text.secondary">
+                  {activity.description}
+                </Typography>
               )}
+
+              {renderMetadataChips(activity)}
             </CardContent>
 
-            {/* Thời gian bên phải */}
             <Typography
               variant="caption"
               color="text.secondary"

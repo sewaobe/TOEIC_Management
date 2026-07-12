@@ -14,12 +14,8 @@ import { Toolbar } from "./components/Toolbar";
 import { StudentTable } from "./components/StudentTable";
 import { StudentGrid } from "./components/StudentGrid";
 import { StudentDetailDrawer } from "./components/StudentDetailDrawer";
-import { LearningPathAdjustDialog } from "./components/LearningPathAdjustDialog";
-import { LearningPathEditorDialog } from "./components/LearningPathEditorDialog";
-import { StudentReportSection } from "./components/StudentReportSection";
 import studentService from "./services/studentService";
-import { Student, StudentDetail } from "../../../../types/student";
-import { useAdjustmentSocket } from "../../../../hooks/useAdjustmentSocket";
+import { Student } from "../../../../types/student";
 
 export default function StudentsPage() {
   // =========================
@@ -35,10 +31,6 @@ export default function StudentsPage() {
     null
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
-  const [editorDialogOpen, setEditorDialogOpen] = useState(false); // New state for Editor
-  const [studentForAdjustment, setStudentForAdjustment] =
-    useState<StudentDetail | null>(null);
   const [tabValue, setTabValue] = useState("students");
 
   const [toast, setToast] = useState<{
@@ -55,11 +47,6 @@ export default function StudentsPage() {
     message: string,
     severity: "success" | "error" = "success"
   ) => setToast({ open: true, message, severity });
-
-  // =========================
-  // 🔌 SOCKET LISTENER
-  // =========================
-  useAdjustmentSocket(); // Listen for REQUEST_RESPONDED event
 
   // =========================
   // 📦 LOAD DỮ LIỆU
@@ -100,22 +87,6 @@ export default function StudentsPage() {
     setSelectedStudentId(null);
   }
 
-  async function handleAdjustLearningPath(studentId: string) {
-    try {
-      const detail = await studentService.getById(studentId);
-      setStudentForAdjustment(detail);
-      // setAdjustDialogOpen(true); // Old dialog
-      setEditorDialogOpen(true); // New Editor Dialog
-    } catch (error) {
-      console.error("Error loading student for adjustment:", error);
-      showToast("Không thể tải thông tin học viên", "error");
-    }
-  }
-
-  async function handleSubmitAdjustment() {
-    showToast("Chức năng cập nhật lộ trình học chưa khả dụng", "error");
-  }
-
   // =========================
   // 🧱 RENDER
   // =========================
@@ -138,7 +109,6 @@ export default function StudentsPage() {
         sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}
       >
         <Tab label="Danh sách học viên" value="students" />
-        <Tab label="Báo cáo nhóm" value="reports" />
       </Tabs>
 
       {/* Tab 1: Danh sách học viên */}
@@ -205,19 +175,14 @@ export default function StudentsPage() {
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Paper sx={{ p: 2, borderRadius: 2 }}>
                 <Typography variant="h5" fontWeight="bold">
-                  {Math.round(
-                    students.reduce((acc, s) => {
-                      const percent =
-                        s.totalLessons && s.totalLessons > 0
-                          ? (s.completedLessons / s.totalLessons) * 100
-                          : 0;
-                      return acc + percent;
-                    }, 0) / (students.length || 1)
-                  )}
-                  %
+                  {
+                    students.filter(
+                      (s: any) => s.status === "at_risk" || s.status === "inactive"
+                    ).length
+                  }
                 </Typography>
                 <Typography color="text.secondary">
-                  Tiến độ trung bình
+                  Cần chú ý
                 </Typography>
               </Paper>
             </Grid>
@@ -231,17 +196,10 @@ export default function StudentsPage() {
                     ) / students.length || 0
                   )}
                 </Typography>
-                <Typography color="text.secondary">Điểm trung bình</Typography>
+                <Typography color="text.secondary">Điểm ước tính TB</Typography>
               </Paper>
             </Grid>
           </Grid>
-        </Box>
-      )}
-
-      {/* Tab 2: Báo cáo nhóm */}
-      {tabValue === "reports" && (
-        <Box sx={{ mt: 2 }}>
-          <StudentReportSection />
         </Box>
       )}
 
@@ -249,20 +207,6 @@ export default function StudentsPage() {
         studentId={selectedStudentId}
         open={drawerOpen}
         onClose={handleCloseDrawer}
-        onAdjustLearningPath={handleAdjustLearningPath}
-      />
-
-      <LearningPathAdjustDialog
-        student={studentForAdjustment}
-        open={adjustDialogOpen}
-        onClose={() => setAdjustDialogOpen(false)}
-        onSubmit={handleSubmitAdjustment}
-      />
-
-      <LearningPathEditorDialog
-        student={studentForAdjustment}
-        open={editorDialogOpen}
-        onClose={() => setEditorDialogOpen(false)}
       />
 
       <Snackbar

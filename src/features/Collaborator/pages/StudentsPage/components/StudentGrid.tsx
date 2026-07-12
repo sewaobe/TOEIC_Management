@@ -5,7 +5,6 @@ import {
   Box,
   Chip,
   Grid,
-  LinearProgress,
   Paper,
   Typography,
   Stack,
@@ -20,6 +19,8 @@ import {
   formatRelativeTime,
   getLearningPathLabel,
   formatDuration,
+  getLearningRouteDisplay,
+  getScoreSourceLabel,
 } from "../utils/formatters";
 
 // =====================
@@ -30,13 +31,17 @@ function StatusChip({ status }: { status: string }) {
     string,
     "default" | "success" | "warning" | "info" | "error"
   > = {
+    not_started: "default",
     active: "success",
+    at_risk: "error",
     inactive: "default",
     paused: "warning",
     completed: "info",
   };
 
   const labelMap: Record<string, string> = {
+    not_started: "Chưa bắt đầu",
+    at_risk: "Cần chú ý",
     active: "Đang học",
     inactive: "Không hoạt động",
     paused: "Tạm dừng",
@@ -50,43 +55,6 @@ function StatusChip({ status }: { status: string }) {
       size="small"
       variant="outlined"
     />
-  );
-}
-
-// =====================
-// 🟦 Component con: Thanh tiến độ
-// =====================
-function ProgressBar({
-  value,
-  max,
-  label,
-}: {
-  value: number;
-  max: number;
-  label?: string;
-}) {
-  const percent = max > 0 ? Math.round((value / max) * 100) : 0;
-  return (
-    <Box>
-      {label && (
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {label}
-        </Typography>
-      )}
-      <LinearProgress
-        variant="determinate"
-        value={percent}
-        sx={{
-          height: 8,
-          borderRadius: 1,
-          mb: 0.5,
-          "& .MuiLinearProgress-bar": { borderRadius: 1 },
-        }}
-      />
-      <Typography variant="caption" color="text.secondary">
-        {percent}%
-      </Typography>
-    </Box>
   );
 }
 
@@ -184,12 +152,31 @@ export function StudentGrid({ students, onStudentClick }: StudentGridProps) {
               />
             </Stack>
 
-            {/* Tiến độ học */}
-            <ProgressBar
-              value={student.completedLessons ?? 0}
-              max={student.totalLessons ?? 100}
-              label="Tiến độ học"
-            />
+            {/* Lộ trình hiện tại */}
+            {(() => {
+              const route = getLearningRouteDisplay(student);
+              return (
+                <Box mb={1.5}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Lộ trình hiện tại
+                  </Typography>
+                  <Typography fontWeight={600}>{route.primary}</Typography>
+                  {route.secondary && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {route.secondary}
+                    </Typography>
+                  )}
+                  {route.caption && (
+                    <Chip
+                      label={route.caption}
+                      size="small"
+                      variant="outlined"
+                      sx={{ mt: 0.5 }}
+                    />
+                  )}
+                </Box>
+              );
+            })()}
 
             {/* Thống kê nhanh */}
             <Grid container spacing={1} sx={{ mt: 2 }}>
@@ -201,7 +188,10 @@ export function StudentGrid({ students, onStudentClick }: StudentGridProps) {
                       {student.currentScore}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Điểm hiện tại
+                      Điểm ước tính
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {getScoreSourceLabel(student.scoreSource)}
                     </Typography>
                   </Box>
                 </Stack>
@@ -243,7 +233,7 @@ export function StudentGrid({ students, onStudentClick }: StudentGridProps) {
                   <TrendingUpIcon fontSize="small" color="action" />
                   <Box>
                     <Typography variant="caption" fontWeight={500}>
-                      {formatRelativeTime(student.lastActive || "")}
+                      {formatRelativeTime(student.lastActive)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Hoạt động
@@ -252,21 +242,6 @@ export function StudentGrid({ students, onStudentClick }: StudentGridProps) {
                 </Stack>
               </Grid>
             </Grid>
-
-            {/* Tags */}
-            {student.tags && student.tags.length > 0 && (
-              <Stack direction="row" flexWrap="wrap" gap={0.5} mt={2}>
-                {student.tags.map((tag, i) => (
-                  <Chip
-                    key={i}
-                    label={tag}
-                    size="small"
-                    variant="outlined"
-                    color="secondary"
-                  />
-                ))}
-              </Stack>
-            )}
           </Paper>
         </Grid>
       ))}

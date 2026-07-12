@@ -11,56 +11,22 @@ import {
   Typography,
   Paper,
   Chip,
-  LinearProgress,
   Box,
   Button,
 } from "@mui/material";
 
 import { Student } from "../../../../../types/student";
 import { useState, useEffect } from "react";
-import { IconButton, Tooltip, CircularProgress } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 // Mail icon removed — action column replaces the inline icon
 import { motion, AnimatePresence } from "framer-motion";
-import { formatRelativeTime, getLearningPathLabel } from "../utils/formatters";
+import {
+  formatRelativeTime,
+  getLearningRouteDisplay,
+  getScoreSourceLabel,
+} from "../utils/formatters";
 import mailService from "../../../../../services/mail.service";
-import axiosClient from "../../../../../services/axiosClient";
 import { toast } from "sonner";
-
-// =============================
-// 🧩 Component con: Tiến độ
-// =============================
-function ProgressBar({
-  value,
-  max,
-  showPercentage = true,
-}: {
-  value: number;
-  max: number;
-  showPercentage?: boolean;
-}) {
-  const percent = max > 0 ? Math.round((value / max) * 100) : 0;
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-      <LinearProgress
-        variant="determinate"
-        value={percent}
-        sx={{
-          height: 8,
-          borderRadius: 1,
-          backgroundColor: "action.hover",
-          "& .MuiLinearProgress-bar": {
-            borderRadius: 1,
-          },
-        }}
-      />
-      {showPercentage && (
-        <Typography variant="caption" color="text.secondary">
-          {percent}%
-        </Typography>
-      )}
-    </Box>
-  );
-}
 
 // =============================
 // 🧩 Component con: Trạng thái
@@ -68,6 +34,8 @@ function ProgressBar({
 function StatusChip({ status }: { status: string }) {
   const getColor = () => {
     switch (status) {
+      case "not_started":
+        return "default";
       case "active":
         return "success";
       case "at_risk":
@@ -84,6 +52,8 @@ function StatusChip({ status }: { status: string }) {
   };
   const getLabel = () => {
     switch (status) {
+      case "not_started":
+        return "Chưa bắt đầu";
       case "active":
         return "Đang học";
       case "at_risk":
@@ -108,8 +78,8 @@ function StatusChip({ status }: { status: string }) {
   );
 }
 
-// Client-side helpers: determine at-risk (no backend changes)
-const AT_RISK_DAYS = 7; // threshold days to consider at-risk
+const LEARNING_PATH_DELETION_RISK_DAYS = 14;
+const REMINDER_SCHEDULE_DAYS = [5, 9, 13] as const;
 
 export function startOfDayUTC(d?: string | Date | null) {
   if (!d) return null;
@@ -124,22 +94,17 @@ export function daysBetween(d1?: string | Date | null, d2?: Date | Date | null) 
   return Math.round((b - a) / (24 * 60 * 60 * 1000));
 }
 
-function getDisplayStatus(student: Student) {
-  const completionRate = (student.completedLessons && student.totalLessons)
-    ? Math.round((student.completedLessons / student.totalLessons) * 100)
-    : student.currentScore >= student.targetScore
-    ? 100
-    : 0;
+function getInactiveDays(student: Student) {
+  const days = daysBetween(student.lastActive, new Date());
+  return Number.isFinite(days) ? days : null;
+}
 
-  if (completionRate >= 100) return "completed";
+function getNextReminderTargetDay(sentCount: number) {
+  return REMINDER_SCHEDULE_DAYS[Math.min(Math.max(sentCount, 0), 2)];
+}
 
-  const last = student.lastActive || null;
-  if (!last) return completionRate > 0 ? "active" : "inactive";
-
-  const gap = daysBetween(last, new Date());
-  if (gap === 0 || gap === 1) return "active";
-  if (gap >= AT_RISK_DAYS) return "at_risk";
-  return completionRate > 0 ? "active" : "inactive";
+function getReminderStep(sentCount: number): 1 | 2 | 3 {
+  return Math.min(Math.max(sentCount + 1, 1), 3) as 1 | 2 | 3;
 }
 
 // Send reminder (FE only). Calls backend endpoint which may be implemented later.
@@ -158,28 +123,58 @@ async function sendReminderRequest(studentId: string, template?: EmailTemplate) 
 // -----------------------
 type ToneType = "gentle" | "professional" | "urgent";
 
-const EMAIL_TEMPLATES: Record<ToneType, (s: Student) => EmailTemplate> = {
-  gentle: (s) => ({
-    subject: `Nhớ bạn quá, ${s.name} ơi!`,
-    body: `Chào ${s.name},\n\nChúng mình nhận thấy đã ${daysBetween(s.lastActive, new Date()) || "nhiều"} ngày rồi bạn chưa ghé thăm lớp học.\n\nHọc tập là một hành trình dài, đôi khi chúng ta cần nghỉ ngơi một chút nhưng đừng quên quay lại để hoàn thành mục tiêu nhé. Nếu có khó khăn gì, hãy nhắn tin ngay cho đội ngũ hỗ trợ nha!\n\nThân mến,\nPhòng Quản lý học viên.`,
+const reminderStepLabel: Record<1 | 2 | 3, string> = {
+  1: "lần 1",
+  2: "lần 2",
+  3: "lần 3",
+};
+
+function buildStepMessage(student: Student, reminderStep: 1 | 2 | 3) {
+  const inactiveDays = getInactiveDays(student);
+  const daysText = inactiveDays === null ? "nhiều" : String(inactiveDays);
+  const daysLeft =
+    inactiveDays === null
+      ? null
+      : Math.max(0, LEARNING_PATH_DELETION_RISK_DAYS - inactiveDays);
+
+  if (reminderStep === 1) {
+    return `Chào ${student.name},\n\nHệ thống ghi nhận bạn đã ${daysText} ngày chưa quay lại học. Bạn nên học một phiên ngắn hôm nay để giữ nhịp và tránh bị gián đoạn lộ trình.\n\nNếu bạn đang gặp khó khăn về thời gian hoặc nội dung học, hãy phản hồi email này để CTV hỗ trợ.\n\nThân mến,\nPhòng Quản lý học viên.`;
+  }
+
+  if (reminderStep === 2) {
+    return `Chào ${student.name},\n\nBạn đã ${daysText} ngày chưa có hoạt động học mới. Lộ trình học có thể bị ảnh hưởng nếu tình trạng này tiếp tục kéo dài.\n\nBạn vui lòng quay lại học trong hôm nay hoặc phản hồi email này nếu cần hỗ trợ điều chỉnh cách học.\n\nTrân trọng,\nPhòng Quản lý học viên.`;
+  }
+
+  return `Chào ${student.name},\n\nĐây là nhắc nhở sát mốc 14 ngày không học. Bạn đã ${daysText} ngày chưa có hoạt động học mới${daysLeft !== null ? `, còn ${daysLeft} ngày trước mốc xóa lộ trình` : ""}.\n\nBạn vui lòng quay lại học sớm nhất có thể. Nếu bạn đang gặp khó khăn, hãy phản hồi email này để CTV hỗ trợ kịp thời.\n\nTrân trọng,\nPhòng Quản lý học viên.`;
+}
+
+const EMAIL_TEMPLATES: Record<
+  ToneType,
+  (s: Student, reminderStep: 1 | 2 | 3) => EmailTemplate
+> = {
+  gentle: (s, reminderStep) => ({
+    subject: `Nhắc học ${reminderStepLabel[reminderStep]} - ${s.name}`,
+    body: buildStepMessage(s, reminderStep),
   }),
-  professional: (s) => ({
-    subject: `[Thông báo] Nhắc nhở tiến độ học tập - Học viên ${s.name}`,
-    body: `Kính gửi anh/chị ${s.name},\n\nTheo hệ thống theo dõi, chúng tôi ghi nhận anh/chị đã không truy cập vào khóa học trong vòng ${daysBetween(s.lastActive, new Date()) || "nhiều"} ngày qua.\n\nĐể đảm bảo tiến độ và chất lượng đầu ra, anh/chị vui lòng sắp xếp thời gian quay lại học tập sớm nhất có thể. Nếu anh/chị gặp vấn đề kỹ thuật hoặc cần gia hạn, vui lòng phản hồi email này.\n\nTrân trọng,\nPhòng Quản lý học viên.`,
+  professional: (s, reminderStep) => ({
+    subject: `[TOEIC Smart] Nhắc tiến độ học ${reminderStepLabel[reminderStep]} - ${s.name}`,
+    body: buildStepMessage(s, reminderStep),
   }),
-  urgent: (s) => ({
-    subject: `CẢNH BÁO: Nguy cơ bỏ lỡ khóa học - ${s.name}`,
-    body: `Chào ${s.name},\n\nBạn đã nghỉ học ${daysBetween(s.lastActive, new Date()) || "nhiều"} ngày! Đây là mức thời gian đáng báo động có thể dẫn đến việc mất kiến thức nền tảng.\n\nNếu bạn không đăng nhập và hoạt động trong 48 giờ tới, tài khoản của bạn có thể bị chuyển sang trạng thái "Ngừng hoạt động". Hãy quay lại ngay để bảo vệ quyền lợi học tập của mình!\n\nTrân trọng,\nPhòng Quản lý học viên.`,
+  urgent: (s, reminderStep) => ({
+    subject: `[TOEIC Smart] Cảnh báo sát mốc 14 ngày - ${s.name}`,
+    body: buildStepMessage(s, reminderStep),
   }),
 };
 
 function EmailModal({
   student,
+  reminderStep,
   open,
   onClose,
   onConfirm,
 }: {
   student: Student | null;
+  reminderStep: 1 | 2 | 3;
   open: boolean;
   onClose: () => void;
   onConfirm: (template: EmailTemplate) => void;
@@ -188,8 +183,8 @@ function EmailModal({
   const [template, setTemplate] = useState<EmailTemplate | null>(null);
 
   useEffect(() => {
-    if (student) setTemplate(EMAIL_TEMPLATES[tone](student));
-  }, [student, tone]);
+    if (student) setTemplate(EMAIL_TEMPLATES[tone](student, reminderStep));
+  }, [student, reminderStep, tone]);
 
   const displayDays = student?.lastActive ? daysBetween(student.lastActive, new Date()) : 'nhiều';
 
@@ -284,8 +279,8 @@ export function StudentTable({ students, onStudentClick }: StudentTableProps) {
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({});
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStudent, setModalStudent] = useState<Student | null>(null);
+  const [modalReminderStep, setModalReminderStep] = useState<1 | 2 | 3>(1);
   const [emailSummaries, setEmailSummaries] = useState<Record<string, { count: number; lastSent?: string | null; daysSince?: number | null }>>({});
-  const [markingMap, setMarkingMap] = useState<Record<string, boolean>>({});
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
 
 
@@ -318,23 +313,6 @@ export function StudentTable({ students, onStudentClick }: StudentTableProps) {
       toast.error("Gửi email nhắc nhở thất bại");
     } finally {
       setSendingMap((s) => ({ ...s, [studentId]: false }));
-    }
-  }
-
-  async function handleMarkInactive(studentId: string) {
-    setMarkingMap(m => ({ ...m, [studentId]: true }));
-    try {
-      const res = await axiosClient.post(`/ctv/students/${studentId}/mark-inactive`);
-      toast.success("Học viên đã được chuyển sang Inactive");
-      // reflect immediately in UI
-      setEmailSummaries(m => ({ ...m, [studentId]: { ...(m[studentId] || { count: 3 }), count: 3 } }));
-      // also update local students list so status shows inactive
-      setLocalStudents(prev => prev.map(s => s.id === studentId ? { ...s, status: 'inactive' } : s));
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể chuyển trạng thái");
-    } finally {
-      setMarkingMap(m => ({ ...m, [studentId]: false }));
     }
   }
 
@@ -388,10 +366,12 @@ export function StudentTable({ students, onStudentClick }: StudentTableProps) {
         {/* Email modal */}
         <EmailModal
           student={modalStudent}
+          reminderStep={modalReminderStep}
           open={modalOpen}
           onClose={() => {
             setModalOpen(false);
             setModalStudent(null);
+            setModalReminderStep(1);
           }}
           onConfirm={async (template) => {
             if (!modalStudent) return;
@@ -405,8 +385,8 @@ export function StudentTable({ students, onStudentClick }: StudentTableProps) {
               <TableCell sx={{ fontWeight: 600 }}>Học viên</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Trạng thái</TableCell>
               {/* <TableCell sx={{ fontWeight: 600 }}>Lộ trình</TableCell> */}
-              <TableCell sx={{ fontWeight: 600 }}>Tiến độ</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Điểm hiện tại</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Lộ trình hiện tại</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Điểm ước tính</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Hoạt động gần nhất</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Lịch sử nhắc</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Hành động</TableCell>
@@ -476,23 +456,46 @@ export function StudentTable({ students, onStudentClick }: StudentTableProps) {
                     />
                   </TableCell> */}
 
-                  {/* Cột tiến độ */}
+                  {/* Cột lộ trình hiện tại */}
                   <TableCell sx={{ minWidth: 200 }}>
-                    <ProgressBar
-                      value={student.completedLessons ?? 0}
-                      max={student.totalLessons ?? 100}
-                      showPercentage
-                    />
+                    {(() => {
+                      const route = getLearningRouteDisplay(student);
+                      return (
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            {route.primary}
+                          </Typography>
+                          {route.secondary && (
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              {route.secondary}
+                            </Typography>
+                          )}
+                          {route.caption && (
+                            <Chip
+                              label={route.caption}
+                              size="small"
+                              variant="outlined"
+                              sx={{ mt: 0.5 }}
+                            />
+                          )}
+                        </Box>
+                      );
+                    })()}
                   </TableCell>
 
-                  {/* Cột điểm hiện tại */}
+                  {/* Cột điểm ước tính */}
                   <TableCell>
                     <Box textAlign="center">
                       <Typography variant="body1" fontWeight={600}>
                         {student.currentScore}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        / {student.targetScore}
+                        {student.estimatedListeningScore != null && student.estimatedReadingScore != null
+                          ? `L: ${student.estimatedListeningScore} · R: ${student.estimatedReadingScore}`
+                          : `/ ${student.targetScore}`}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {getScoreSourceLabel(student.scoreSource)}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -504,7 +507,7 @@ export function StudentTable({ students, onStudentClick }: StudentTableProps) {
                       color="text.secondary"
                       sx={{ whiteSpace: "nowrap" }}
                     >
-                      {formatRelativeTime(student.lastActive || "")}
+                      {formatRelativeTime(student.lastActive)}
                     </Typography>
                   </TableCell>
 
@@ -529,43 +532,46 @@ export function StudentTable({ students, onStudentClick }: StudentTableProps) {
                         (() => {
                           const summary = emailSummaries[student.id] ?? { count: 0, lastSent: null, daysSince: null };
                           const count = summary.count ?? 0;
-                          const days = summary.daysSince ?? Infinity;
+                          const inactiveDays = getInactiveDays(student);
                           const status = student.status || 'inactive';
                           // only students in 'at_risk' should have the send button
                           if (status !== 'at_risk') {
                             return <StatusChip status={status} />;
                           }
-                          // already maxed out
-                          if (count >= 3) {
-                            return (
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="warning"
-                                onClick={(e) => { e.stopPropagation(); handleMarkInactive(student.id); }}
-                                disabled={!!markingMap[student.id]}
-                              >
-                                {markingMap[student.id] ? <CircularProgress size={14} /> : 'Chuyển Inactive'}
-                              </Button>
-                            );
+
+                          if (inactiveDays !== null && inactiveDays >= LEARNING_PATH_DELETION_RISK_DAYS) {
+                            return <Chip label="Nguy cơ xóa lộ trình" color="error" variant="outlined" />;
                           }
-                          // can send now (>=7 days since last) or no last
-                          if (!summary.lastSent || days === null || days >= AT_RISK_DAYS) {
-                            const label = count > 0 ? `Gửi lần ${count + 1}/3` : 'Gửi nhắc nhở';
+
+                          if (count >= 3) {
+                            return <Chip label="Đã nhắc 3/3" color="warning" variant="outlined" />;
+                          }
+
+                          const targetDay = getNextReminderTargetDay(count);
+                          const canSend = inactiveDays !== null && inactiveDays >= targetDay;
+                          if (canSend) {
+                            const reminderStep = getReminderStep(count);
+                            const label = `Gửi lần ${reminderStep}/3`;
                             return (
                               <Button
                                 size="small"
                                 variant="contained"
                                 color={count >= 2 ? 'warning' : 'primary'}
-                                onClick={(e) => { e.stopPropagation(); setModalStudent(student); setModalOpen(true); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setModalStudent(student);
+                                  setModalReminderStep(reminderStep);
+                                  setModalOpen(true);
+                                }}
                                 disabled={!!sendingMap[student.id]}
                               >
                                 {sendingMap[student.id] ? <CircularProgress size={14} color="inherit" /> : label}
                               </Button>
                             );
                           }
-                          // otherwise show wait badge
-                          const wait = Math.max(0, AT_RISK_DAYS - (typeof days === 'number' && isFinite(days) ? days : 0));
+
+                          const currentDays = inactiveDays ?? 0;
+                          const wait = Math.max(0, targetDay - currentDays);
                           return <Chip label={`Đợi ${wait} ngày`} variant="outlined" />;
                         })()
                       }

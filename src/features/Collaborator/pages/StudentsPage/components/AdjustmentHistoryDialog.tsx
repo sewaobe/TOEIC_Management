@@ -187,15 +187,6 @@ export const AdjustmentHistoryDialog: React.FC<
                 </Typography>
                 <List dense>
                   {selectedRequest.changes.map((change, index) => {
-                    const getLessonTitle = (
-                      item: any,
-                      fallback: string
-                    ): string => {
-                      if (!item) return fallback;
-                      return typeof item === "string"
-                        ? fallback
-                        : item.title || fallback;
-                    };
                     const locationText = [
                       change.weekTitle ||
                         (change.weekNumber ? `Tuần ${change.weekNumber}` : ""),
