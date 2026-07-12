@@ -4,6 +4,15 @@ import { ApiResponse } from "../../../../../types/api";
 export interface ILessonFeedback {
   _id?: string;
   day_study_id: string;
+  dayStudy?: {
+    id: string;
+    stageNo?: number | null;
+    status?: string | null;
+    accuracyOverall?: number | null;
+    cycleNo?: number | null;
+    cycleStatus?: string | null;
+    lessonTitles: string[];
+  } | null;
   rating: number;
   reasons: string[];
   comment?: string;
